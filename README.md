@@ -120,6 +120,13 @@ Everything is OSI-licensed apart from Salesforce, the one commercial component:
 - OpenTelemetry (Apache-2.0)
 - bpmn-js (MIT + watermark condition)
 
+Licence rules:
+
+- **GraphQL:** this demo uses Strawberry (MIT). If an Apollo component is ever added, use Apollo Server (MIT) only. Apollo Router (Elastic Licence v2) is excluded.
+- **LiteLLM and Langfuse:** MIT cores only, with no `enterprise/` or `ee/` code.
+- **bpmn-js:** the bpmn.io watermark stays visible.
+- **Excluded:** Camunda 8, Redpanda and Restate.
+
 The full table is in `web/src/bom.json` and in the BOM view of the UI.
 
 **Alternative for L5:** Temporal can play the same role as the deterministic execution fabric (durable workflows with code-level
