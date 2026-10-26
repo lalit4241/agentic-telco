@@ -36,7 +36,7 @@ def start_live_instance(delay=6):
     H.put(OSS + "/serviceOrder", json={"delaySeconds": delay, "customer": "C-1004"})
     res = {}
     th = threading.Thread(target=lambda: res.update(id=intent("live", "C-1004", UPGRADE))); th.start()
-    for _ in range(300):
+    for _ in range(900):   # up to 180 s: real-org mode adds Salesforce round trips before the saga reaches TMF641
         s = q1("select g.workflow_id, g.run_id from l5.saga_step s join l5.saga g using(workflow_id) join l8.runs r on r.run_id=g.run_id "
                "where r.scenario='test-live' and s.step='tmf641-activate' and s.status='started' "
                "and not exists (select 1 from l5.saga_step x where x.workflow_id=g.workflow_id and x.step='tmf641-activate' and x.status='completed') "
@@ -134,11 +134,12 @@ def test_customer_data_never_routed_to_us_model_and_pii_redacted():
     assert z["piiRedacted"] >= 3 and z["stub"] is False
 
 def test_semantic_cache_hits_on_repeat():
-    body = {"messages": [{"role": "system", "content": "Classify the message."}, {"role": "user", "content": "my wifi drops every night"}]}
+    nonce = f" [test {time.time_ns()}]"   # fresh scope per run, so entries cached by an earlier run cannot satisfy this test
+    body = {"messages": [{"role": "system", "content": "Classify the message." + nonce}, {"role": "user", "content": "my wifi drops every night"}]}
     h = {"x-zg-caller": "l2-care-agent", "x-zg-task-class": "classification", "x-zg-data-class": "internal"}
     H.post(GW, headers=h, json=body)
     assert H.post(GW, headers=h, json=body).json()["zg_route"]["cache"] == "hit"
-    body["messages"][0]["content"] = "Translate the message to French."
+    body["messages"][0]["content"] = "Translate the message to French." + nonce
     assert H.post(GW, headers=h, json=body).json()["zg_route"]["cache"] != "hit", "different instructions must not share a cache entry"
 
 # ---------------- GraphQL (ADR-008) read-only
