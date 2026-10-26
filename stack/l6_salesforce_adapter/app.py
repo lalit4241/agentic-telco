@@ -278,7 +278,26 @@ async def list_orders(externalId: str | None = None):
     rows = [o for o in r.json() if not externalId or o.get("externalId") == externalId]
     return tr.respond(rows, CUSTOM)
 
+async def _ensure_app_usage(tr, oid):
+    """The org has an active record-triggered flow 'Custom Assetize Order' (Order updated to Status=Activated, async after commit).
+    It looks up an AppUsageAssignment(RecordId=order, AppUsageType=SubscriptionManagement); when none exists it calls the
+    createOrUpdateAssetFromOrder action, which fails without a Revenue Lifecycle/Subscription Management assignment and
+    emails a FlowApplication error. Our layer assetizes itself (TMF637 write on standard Asset), so before completing an
+    AgenticTelco order we add the standard AppUsageAssignment through OOTB sObject REST. The flow then takes its own
+    'record exists' branch and ends cleanly. The flow and org setup are untouched; idempotent, AgenticTelco orders only."""
+    rows = await soql(tr, f"SELECT Id FROM Order WHERE Id='{oid}' AND Name LIKE 'AgenticTelco%' AND Id NOT IN "
+                          "(SELECT RecordId FROM AppUsageAssignment WHERE AppUsageType='SubscriptionManagement')")
+    if not rows:
+        return "present-or-not-ours"
+    r = await tr.sf("POST", f"{D}/sobjects/AppUsageAssignment", {"RecordId": oid, "AppUsageType": "SubscriptionManagement"}, runtime=OOTB)
+    if r.status_code not in (200, 201):
+        # Verified OOTB on sfcomms (no licence block). If a future org blocks it, stop BEFORE activation so the flow is never tripped.
+        fail(tr, r, "AppUsageAssignment (OOTB)")
+    return "created"
+
 async def _patch_state(tr, oid, state):
+    if state == "completed":
+        await _ensure_app_usage(tr, oid)
     r = await tr.sf("PATCH", f"{APEX}/tmf622/productOrder/{oid}", {"state": state}, runtime=CUSTOM)
     if r.status_code != 200:
         fail(tr, r, "TMF622 PATCH")
