@@ -10,7 +10,7 @@ All results below come from runs on 26 Oct 2026. The stack ran in real-org mode:
 
 | Suite | Command | Result |
 |---|---|---|
-| Python unit (policy client, router, PII redaction, ledger, adapter labelling, …) | `.venv/bin/python -m pytest -q tests/test_unit.py` | **24 passed** |
+| Python unit (policy client, router, PII redaction, ledger, adapter labelling, …) | `.venv/bin/python -m pytest -q tests/test_unit.py` | **25 passed** |
 | OPA policy tests (Rego) | `.tools/bin/opa test stack/l4_context/policy stack/inference/policy` | **12/12 passed** |
 | Apex tests in `sfcomms` (deploy `0AfQH00000Q1p370AB`) | `sf project deploy start … --tests AgenticTelco_TmfTest` | **6/6 passed, 97.3% coverage** of the AgenticTelco_ classes (gate: 85%) |
 | Stack integration against the real org | `pytest tests/test_stack.py` | see [Stack integration](#stack-integration) |
@@ -22,10 +22,10 @@ All results below come from runs on 26 Oct 2026. The stack ran in real-org mode:
 
 ## Real-org journeys
 
-**Recording:** `recordings/run-2026-10-26.json`, 19:27–19:32 UK time.
+**Recording:** `recordings/run-2026-10-26.json`, 19:53–20:00 UK time (re-recorded after the AppUsageAssignment fix).
 
 - The recording started with a cold semantic cache. The demo inventory was reset first (AgenticTelco Assets only).
-- **SoR counts:** 90 L6 adapter calls → **149 Salesforce REST calls**. Adapter calls by runtime: **58 OOTB**, **24 custom TMF API on Salesforce**, **8 TMF679 calls** that were tried natively, returned 400 and were handled by our layer.
+- **SoR counts:** 90 L6 adapter calls → **161 Salesforce REST calls**. Adapter calls by runtime: **58 OOTB**, **24 custom TMF API on Salesforce**, **8 TMF679 calls** that were tried natively, returned 400 and were handled by our layer.
 
 | # | Journey | Customer | Outcome | Ledger calls | BPMN end (Operaton 2.2.0) | Inference |
 |---|---|---|---|---|---|---|
@@ -67,10 +67,11 @@ Inference governance:
 | 23 | GET customermanagement/v4/customer/{id} (TMF629) | OOTB |
 | 23 | GET partymanagement/v5/organization/{id} (TMF632) | OOTB |
 | 23 | GET partymanagement/v5/individual/{id} (TMF632) | OOTB |
-| 16 | GET query (SOQL: AgenticTelco Account / Asset ids) | OOTB |
+| 24 | GET query (SOQL: AgenticTelco Account / Asset ids, AppUsageAssignment guard) | OOTB |
 | 12 | GET productinventorymanagement/v5/productinventory/{id} (TMF637) | OOTB |
 | 8 | POST productofferingqualification/v5/checkProductOfferingQualification (TMF679) | OOTB attempt → 400 → our-layer rule |
 | 4 / 4 | POST / PATCH sobjects/Asset | OOTB |
+| 4 | POST sobjects/AppUsageAssignment (SubscriptionManagement, before activation) | OOTB |
 | 17 + 3 | GET apexrest/agentictelco/tmf620/{id} (+ `?isBundle=true`) | custom TMF API on Salesforce |
 | 6 | POST apexrest/agentictelco/tmf648/quote | custom TMF API on Salesforce |
 | 5 / 5 | POST / PATCH apexrest/agentictelco/tmf622/productOrder | custom TMF API on Salesforce |
@@ -80,6 +81,22 @@ Rules held throughout the run:
 - No DELETE was issued.
 - Only AgenticTelco-prefixed records were created or changed.
 - The recording contains no host name or token.
+
+## Org flow check: "Custom Assetize Order"
+
+The org has an active record-triggered flow, `Custom_Assetize_Order` v3. It runs on Order update to `Status = Activated`, on an async-after-commit path. Each AgenticTelco Order activated before the fix made it fail at `CreateOrUpdateRelatedAsset`, which sent a FlowApplication error email. The fix and its evidence are in [org capabilities](docs/api/org-capabilities.md#org-automation-custom-assetize-order-flow).
+
+**Fix:** since 19:50 UK time, before activating an AgenticTelco Order the adapter creates an OOTB `AppUsageAssignment` with `SubscriptionManagement`. The flow then takes its own no-op branch. The flow and org setup are unchanged.
+
+| Check (fix in place from 19:50 UK time) | Result |
+|---|---|
+| Orders activated after the fix (single check order `801QH00002LKUxjYAH` + journeys 1, 7, 8, 9) | 5/5 have a `SubscriptionManagement` AppUsageAssignment, created 1–2 s before activation (OOTB POST 201) |
+| Journey 4 (fallout) order | Ends in `Exception`, which does not match the flow's `Activated` entry criteria, so the flow is not triggered |
+| `FlowInterview` errors after the fix | Every one we traced belongs to an Order activated **before** the fix. They are Salesforce retries of the async path. None belongs to a post-fix Order |
+| FlowApplication emails after the fix (Gmail, read-only check) | 10 traced (19:51–19:58 UK time). The `$Record` in each one is a pre-fix Order (for example `801QH00002LKTGvYAP`, `…LKXfWYAX`, `…LKbj3YAD`, `…LK8E3YAL`). **0 name a post-fix Order** |
+| Double assetization | None. The flow ends without calling the assetize action, and our layer writes the Asset once (sObject REST) |
+
+**Known residue:** Orders activated before the fix cannot be repaired from our side. Salesforce rejects a SubscriptionManagement AppUsageAssignment on an Order that is already activated (`FIELD_INTEGRITY_EXCEPTION`), and we do not edit existing records. Salesforce may keep retrying those async interviews for a while, so some error emails may still arrive for them.
 
 ## Stack integration
 

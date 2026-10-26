@@ -34,6 +34,34 @@ The decision rule (see [ADR amendment 001](../adr-amendments/001-custom-tmf-apis
 
 Customer, party, product inventory, catalogue, qualification check, quote and order calls all reach the real org. Nothing on the journey path uses the stand-in in real-org mode.
 
+## Org automation: Custom Assetize Order flow
+
+This check was read-only. Flow `301QH00002LKPPUYA5` is `Custom_Assetize_Order` v3, active, API 64. Nothing in the flow or the org setup was edited or deactivated.
+
+- **Trigger:** record-triggered (`RecordAfterSave`) on **Order update** where `Status = Activated`, firing only when the record changes to meet that criterion. It runs on an `AsyncAfterCommit` scheduled path.
+- **Path:**
+  1. `GetApplicationUsageAssignment` finds an `AppUsageAssignment` where `RecordId = $Record.Id` and `AppUsageType = 'SubscriptionManagement'`.
+  2. Decision `HaveRecord`: if `AppUsageAssignment.Id` **is null**, the flow calls `createOrUpdateAssetFromOrder`. Otherwise it ends.
+- **Problem:** AgenticTelco Orders had no AppUsageAssignment, so the action ran. It failed with "The order must have a related Application Usage Assignment with an Application Usage Type of RevenueLifecycleManagement or SubscriptionManagement", and Salesforce emailed a FlowApplication error for every activation.
+- **Fix (OOTB, no licence block):** before an AgenticTelco Order is activated, the L6 adapter (`_ensure_app_usage`) does two things:
+  1. Runs a SOQL guard that limits the step to AgenticTelco Orders and makes it idempotent.
+  2. Sends `POST /services/data/v68.0/sobjects/AppUsageAssignment` with `{"RecordId": <order>, "AppUsageType": "SubscriptionManagement"}`, labelled **OOTB**. The org returns 201.
+- **Effect:** the flow finds the record and ends on its default branch.
+- **Why `SubscriptionManagement` rather than `RevenueLifecycleManagement`:** an RLM record would not satisfy this flow's lookup, so the assetize action would still run. Even if that action succeeded, it would assetize a second time, and our layer already writes the Asset through sObject REST (TMF637). With SM there is no flow error and no double assetization.
+- **Platform rule we hit:** an SM AppUsageAssignment can only be created **before** activation. On an already activated Order the org returns `FIELD_INTEGRITY_EXCEPTION`: "You can't assign or unassign an Subscription Management Application Usage Type to activated orders". Two consequences:
+  - The adapter creates the assignment immediately before the Apex TMF622 PATCH that sets `Activated`. If the POST fails, the adapter stops **before** activation, so the flow is never tripped.
+  - The 23 AgenticTelco Orders activated before the fix cannot be given an assignment, and we do not modify existing records. Their earlier error emails remain, and Salesforce may retry their async interviews for a while.
+- **Orders that end in `Exception`** (fallout/cancel) do not match the flow's entry criteria.
+- **Evidence (26 Oct 2026, fix live from 19:50 UK time):**
+  - All 5 Orders activated after the fix have an SM assignment.
+  - Every FlowApplication email and `FlowInterview` error traced after the fix names a pre-fix Order. See [TEST_RESULTS.md](../../TEST_RESULTS.md#org-flow-check-custom-assetize-order).
+
+### Licence workarounds
+
+- **None needed so far.** The `AppUsageAssignment` create works as OOTB sObject REST for the integration user.
+- **Standing rule from the owner:** if an OOTB route is blocked by licensing, the equivalent is implemented as `AgenticTelco_*` Apex REST under `/services/apexrest/agentictelco/...`, labelled "custom TMF API on Salesforce". It must keep test coverage at 85% or more and must not trip or edit the flow. Each workaround is recorded here.
+- **Existing custom TMF APIs:** TMF620, TMF622, TMF648 and TMF671 are custom TMF APIs on Salesforce because the native APIs are missing or broken (404, 400 or 500), not because of licensing. See the table above.
+
 ## What is real Salesforce data, and what is not
 
 | Data | Where it lives in real-org mode |

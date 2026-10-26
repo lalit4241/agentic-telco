@@ -26,9 +26,9 @@ Every call is written to the L8 ledger (`l8.api_calls`) with:
 | `our layer (native TMF679 tried: 400)` | The native TMF679 call was made first. The org has no default qualification procedure, so a labelled rule was applied instead |
 | `our layer` | L1–L5, L7 and L8 services. These sit outside Salesforce by design |
 
-## Salesforce REST calls in the recorded run (2026-10-26, 19:27–19:32 UK time)
+## Salesforce REST calls in the recorded run (2026-10-26, 19:53–20:00 UK time)
 
-- **Totals:** 90 adapter calls and 149 Salesforce REST calls.
+- **Totals:** 90 adapter calls and 161 Salesforce REST calls.
 - **Adapter calls by runtime:** 58 OOTB, 24 custom TMF API on Salesforce, 8 TMF679 attempts that fell back to our layer.
 
 | Count | Salesforce call | Runtime |
@@ -36,10 +36,11 @@ Every call is written to the L8 ledger (`l8.api_calls`) with:
 | 23 | `GET /services/data/v68.0/connect/comms/customermanagement/v4/customer/{id}` (TMF629) | OOTB |
 | 23 | `GET …/connect/comms/partymanagement/v5/organization/{id}` (TMF632) | OOTB |
 | 23 | `GET …/connect/comms/partymanagement/v5/individual/{id}` (TMF632) | OOTB |
-| 16 | `GET /services/data/v68.0/query?…` (SOQL: Account by AccountNumber, Asset ids) | OOTB |
+| 24 | `GET /services/data/v68.0/query?…` (SOQL: Account by AccountNumber, Asset ids, AppUsageAssignment guard) | OOTB |
 | 12 | `GET …/connect/comms/productinventorymanagement/v5/productinventory/{id}` (TMF637) | OOTB |
 | 8 | `POST …/connect/comms/productofferingqualification/v5/checkProductOfferingQualification` (TMF679) | OOTB attempt → 400 |
 | 4 / 4 | `POST` / `PATCH /services/data/v68.0/sobjects/Asset` (inventory write after order completion) | OOTB |
+| 4 | `POST /services/data/v68.0/sobjects/AppUsageAssignment` (`SubscriptionManagement`, before activating an AgenticTelco order; see [org capabilities](org-capabilities.md#org-automation-custom-assetize-order-flow)) | OOTB |
 | 17 | `GET /services/apexrest/agentictelco/tmf620/{id}` | custom TMF API on Salesforce |
 | 3 | `GET /services/apexrest/agentictelco/tmf620/{id}?isBundle=true` | custom TMF API on Salesforce |
 | 6 | `POST /services/apexrest/agentictelco/tmf648/quote` | custom TMF API on Salesforce |

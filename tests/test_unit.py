@@ -38,6 +38,28 @@ def test_adapter_offer_translation_and_apex_paths():
     src = (ROOT / "stack/l6_salesforce_adapter/app.py").read_text()
     assert "/services/apexrest/agentictelco" in src and "ACCESS_TOKEN" not in src and "Bearer" not in src
 
+def test_adapter_adds_sm_app_usage_before_activation(monkeypatch):
+    """Org flow 'Custom Assetize Order' ends cleanly when an SM AppUsageAssignment exists; it must be created OOTB before the PATCH."""
+    import asyncio, types
+    from stack.l6_salesforce_adapter import app as ad
+    seen = []
+    def fake(method, path, body=None):
+        seen.append((method, path.split("?")[0], body))
+        if "/query" in path:
+            return types.SimpleNamespace(status_code=200, json=lambda: {"records": [{"Id": "801X"}]}, text="")
+        if path.endswith("/sobjects/AppUsageAssignment"):
+            return types.SimpleNamespace(status_code=201, json=lambda: {"id": "0j8X"}, text="")
+        return types.SimpleNamespace(status_code=200, json=lambda: {"state": "completed"}, text="")
+    monkeypatch.setattr(ad, "sf_request", fake)
+    tr = ad.Trace()
+    asyncio.run(ad._patch_state(tr, "801X", "completed"))
+    kinds = [(m, p.rsplit("/", 1)[-1]) for m, p, _ in seen]
+    assert kinds[1] == ("POST", "AppUsageAssignment") and seen[1][2]["AppUsageType"] == "SubscriptionManagement"
+    assert kinds[2][0] == "PATCH" and tr.calls[1]["runtime"] == "OOTB"
+    seen.clear(); asyncio.run(ad._patch_state(ad.Trace(), "801X", "cancelled"))
+    assert all("AppUsageAssignment" not in p for _, p, _ in seen)
+    assert "DELETE" not in (ROOT / "stack/l6_salesforce_adapter/app.py").read_text().split("def _ensure_app_usage")[1].split("async def _patch_state")[0]
+
 def test_tmf688_events_are_kafka_in_l3():
     from stack.zg_common.registry import APIS
     assert APIS["TMF688"]["layer"] == "L3" and "Kafka" in APIS["TMF688"]["note"]
