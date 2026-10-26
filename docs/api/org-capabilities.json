@@ -1,0 +1,451 @@
+{
+  "generatedAt": "2026-10-26T18:33:34+00:00",
+  "org": "00DQH00000P7uDa (alias sfcomms)",
+  "instance": "https://<my-domain>.my.salesforce.com (withheld)",
+  "apiVersion": "v68.0",
+  "method": "sf api request rest (Salesforce CLI); read-only",
+  "installedPackageNamespaces": [
+    "cdpactvstrgptnr",
+    "sf_com_apps",
+    "slackplatform",
+    "ssot"
+  ],
+  "probes": [
+    {
+      "api": "TMF620",
+      "label": "Direct Access v5 (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/productcatalogmanagement/v5/productOffering",
+      "status": 404,
+      "evidence": "NOT_FOUND: The requested resource does not exist",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF620",
+      "label": "Direct Access v4 (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/productCatalogManagement/v4/productOffering",
+      "status": 404,
+      "evidence": "NOT_FOUND: The requested resource does not exist",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF620",
+      "label": "Managed package vlocity_cmt v4",
+      "method": "GET",
+      "path": "/services/apexrest/vlocity_cmt/tmforum/productopenapi/v1/productOffering",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF620",
+      "label": "Managed package no-ns v4",
+      "method": "GET",
+      "path": "/services/apexrest/tmforum/productopenapi/v1/productOffering",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF620",
+      "label": "Industries PCM catalogs",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/pcm/catalogs",
+      "status": 400,
+      "evidence": "JSON object keys catalogs, correlationId, status",
+      "verdict": "exposed (request shape rejected)"
+    },
+    {
+      "api": "TMF621",
+      "label": "Direct Access v4 (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/troubleTicket/v4/troubleTicket",
+      "status": 400,
+      "evidence": "ILLEGAL_QUERY_PARAMETER_VALUE: Required type must not be null",
+      "verdict": "exposed (request shape rejected)"
+    },
+    {
+      "api": "TMF621",
+      "label": "Direct Access v5 (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/troubleticketmanagement/v5/troubleTicket",
+      "status": 404,
+      "evidence": "NOT_FOUND: The requested resource does not exist",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF621",
+      "label": "Managed package vlocity_cmt",
+      "method": "GET",
+      "path": "/services/apexrest/vlocity_cmt/tmforum/troubleTicket/v1/troubleTicket",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF621",
+      "label": "Managed package no-ns",
+      "method": "GET",
+      "path": "/services/apexrest/tmforum/troubleTicket/v1/troubleTicket",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF622",
+      "label": "Direct Access v5",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/productOrderingManagement/v5/productOrder?pageLimit=2",
+      "status": 400,
+      "evidence": "BAD_REQUEST: Failed to execute GraphQL query.\nError: GraphQL execution failed.\nError: 245: Validation error (FieldUndefined@[uiapi/query/Order/edges/node/PoNumber]) : Field ",
+      "verdict": "exposed (request shape rejected)"
+    },
+    {
+      "api": "TMF622",
+      "label": "Managed package vlocity_cmt v4",
+      "method": "GET",
+      "path": "/services/apexrest/vlocity_cmt/tmforum/productopenapi/v1/productorder",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF622",
+      "label": "Managed package no-ns v4",
+      "method": "GET",
+      "path": "/services/apexrest/tmforum/productopenapi/v1/productorder",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF629",
+      "label": "Direct Access v4",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/customermanagement/v4/customer?limit=2",
+      "status": 200,
+      "evidence": "JSON array, 0 item(s)",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF632",
+      "label": "Direct Access v5 individual (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/partymanagement/v5/individual",
+      "status": 200,
+      "evidence": "JSON array, 9 item(s); first keys contactMedium, @baseType, @type, familyName, givenName, name",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF632",
+      "label": "Direct Access v5 organization (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/partymanagement/v5/organization",
+      "status": 200,
+      "evidence": "JSON array, 21 item(s); first keys organizationType, contactMedium, @baseType, @type, name, id",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF632",
+      "label": "Direct Access v5 individual (guess, camel)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/partyManagement/v5/individual",
+      "status": 200,
+      "evidence": "JSON array, 9 item(s); first keys contactMedium, @baseType, @type, familyName, givenName, name",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF637",
+      "label": "Direct Access v5",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/productinventorymanagement/v5/productinventory?limit=2",
+      "status": 200,
+      "evidence": "JSON array, 0 item(s)",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF637",
+      "label": "Managed package vlocity_cmt v4",
+      "method": "GET",
+      "path": "/services/apexrest/vlocity_cmt/tmforum/productopenapi/v1/product",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF637",
+      "label": "Managed package no-ns v4",
+      "method": "GET",
+      "path": "/services/apexrest/tmforum/productopenapi/v1/product",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF648",
+      "label": "Direct Access v4 (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/quoteManagement/v4/quote",
+      "status": 404,
+      "evidence": "NOT_FOUND: The requested resource does not exist",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF648",
+      "label": "Direct Access v5 (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/quotemanagement/v5/quote",
+      "status": 404,
+      "evidence": "NOT_FOUND: The requested resource does not exist",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF648",
+      "label": "Managed package vlocity_cmt",
+      "method": "GET",
+      "path": "/services/apexrest/vlocity_cmt/tmforum/quoteManagement/v1/quote",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF648",
+      "label": "Managed package no-ns",
+      "method": "GET",
+      "path": "/services/apexrest/tmforum/quoteManagement/v1/quote",
+      "status": 404,
+      "evidence": "NOT_FOUND: Could not find a match for URL",
+      "verdict": "not exposed"
+    },
+    {
+      "api": "TMF651",
+      "label": "Direct Access v4 (guess)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/agreementManagement/v4/agreement",
+      "status": 200,
+      "evidence": "JSON array, 0 item(s)",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF651",
+      "label": "Direct Access v4 (guess, lower)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/agreementmanagement/v4/agreement",
+      "status": 200,
+      "evidence": "JSON array, 0 item(s)",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF667",
+      "label": "Direct Access v4",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/document/v4/document",
+      "status": 200,
+      "evidence": "JSON array, 33 item(s); first keys contentDocumentId, documentType, @type, lastUpdate, name, id",
+      "verdict": "exposed"
+    },
+    {
+      "api": "TMF671",
+      "label": "Direct Access v4",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/promotionManagement/v4/promotion",
+      "status": 500,
+      "evidence": "INTERNAL_ERROR: Cannot invoke \"java.util.Map.containsKey(Object)\" because \"rewardDetails\" is null",
+      "verdict": "unclear"
+    },
+    {
+      "api": "TMF679",
+      "label": "Direct Access v5 check (POST-only)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/productofferingqualification/v5/checkProductOfferingQualification",
+      "status": 405,
+      "evidence": "METHOD_NOT_ALLOWED: HTTP Method 'GET' not allowed. Allowed are POST",
+      "verdict": "exposed (POST-only)"
+    },
+    {
+      "api": "TMF679",
+      "label": "Direct Access v5 query (POST-only)",
+      "method": "GET",
+      "path": "/services/data/v68.0/connect/comms/productofferingqualification/v5/queryProductOfferingQualification",
+      "status": 405,
+      "evidence": "METHOD_NOT_ALLOWED: HTTP Method 'GET' not allowed. Allowed are POST",
+      "verdict": "exposed (POST-only)"
+    }
+  ],
+  "graphql": {
+    "api": "GraphQL",
+    "label": "UI API GraphQL read query (Account, first 3)",
+    "method": "POST (read query)",
+    "path": "/services/data/v68.0/graphql",
+    "status": 200,
+    "evidence": "3 Account edge(s) returned; errors=False",
+    "verdict": "exposed"
+  },
+  "sobjects": {
+    "Account": {
+      "status": 200,
+      "count": 21
+    },
+    "Contact": {
+      "status": 200,
+      "count": 9
+    },
+    "BillingAccount": {
+      "status": 200,
+      "count": 0
+    },
+    "Product2": {
+      "status": 200,
+      "count": 41
+    },
+    "ProductCatalog": {
+      "status": 200,
+      "count": 4
+    },
+    "ProductSellingModel": {
+      "status": 200,
+      "count": 3
+    },
+    "Order": {
+      "status": 200,
+      "count": 8
+    },
+    "OrderItem": {
+      "status": 200,
+      "count": 625
+    },
+    "Quote": {
+      "status": 200,
+      "count": 27
+    },
+    "Asset": {
+      "status": 200,
+      "count": 57
+    },
+    "Contract": {
+      "status": 200,
+      "count": 1
+    },
+    "Promotion": {
+      "status": 200,
+      "count": 2
+    },
+    "Case": {
+      "status": 200,
+      "count": 9
+    },
+    "ContentDocument": {
+      "status": 200,
+      "count": 29
+    }
+  },
+  "summary": {
+    "TMF620": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/pcm/catalogs",
+      "label": "Industries PCM catalogs",
+      "statuses": {
+        "Direct Access v5 (guess)": 404,
+        "Direct Access v4 (guess)": 404,
+        "Managed package vlocity_cmt v4": 404,
+        "Managed package no-ns v4": 404,
+        "Industries PCM catalogs": 400
+      }
+    },
+    "TMF621": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/troubleTicket/v4/troubleTicket",
+      "label": "Direct Access v4 (guess)",
+      "statuses": {
+        "Direct Access v4 (guess)": 400,
+        "Direct Access v5 (guess)": 404,
+        "Managed package vlocity_cmt": 404,
+        "Managed package no-ns": 404
+      }
+    },
+    "TMF622": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/productOrderingManagement/v5/productOrder?pageLimit=2",
+      "label": "Direct Access v5",
+      "statuses": {
+        "Direct Access v5": 400,
+        "Managed package vlocity_cmt v4": 404,
+        "Managed package no-ns v4": 404
+      }
+    },
+    "TMF629": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/customermanagement/v4/customer?limit=2",
+      "label": "Direct Access v4",
+      "statuses": {
+        "Direct Access v4": 200
+      }
+    },
+    "TMF632": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/partymanagement/v5/individual",
+      "label": "Direct Access v5 individual (guess)",
+      "statuses": {
+        "Direct Access v5 individual (guess)": 200,
+        "Direct Access v5 organization (guess)": 200,
+        "Direct Access v5 individual (guess, camel)": 200
+      }
+    },
+    "TMF637": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/productinventorymanagement/v5/productinventory?limit=2",
+      "label": "Direct Access v5",
+      "statuses": {
+        "Direct Access v5": 200,
+        "Managed package vlocity_cmt v4": 404,
+        "Managed package no-ns v4": 404
+      }
+    },
+    "TMF648": {
+      "live": false,
+      "path": null,
+      "label": null,
+      "statuses": {
+        "Direct Access v4 (guess)": 404,
+        "Direct Access v5 (guess)": 404,
+        "Managed package vlocity_cmt": 404,
+        "Managed package no-ns": 404
+      }
+    },
+    "TMF651": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/agreementManagement/v4/agreement",
+      "label": "Direct Access v4 (guess)",
+      "statuses": {
+        "Direct Access v4 (guess)": 200,
+        "Direct Access v4 (guess, lower)": 200
+      }
+    },
+    "TMF667": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/document/v4/document",
+      "label": "Direct Access v4",
+      "statuses": {
+        "Direct Access v4": 200
+      }
+    },
+    "TMF671": {
+      "live": false,
+      "path": null,
+      "label": null,
+      "statuses": {
+        "Direct Access v4": 500
+      }
+    },
+    "TMF679": {
+      "live": true,
+      "path": "/services/data/v68.0/connect/comms/productofferingqualification/v5/checkProductOfferingQualification",
+      "label": "Direct Access v5 check (POST-only)",
+      "statuses": {
+        "Direct Access v5 check (POST-only)": 405,
+        "Direct Access v5 query (POST-only)": 405
+      }
+    }
+  }
+}

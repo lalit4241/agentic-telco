@@ -1,0 +1,4 @@
+# LiteLLM proxy (MIT core) – installed into .venv-litellm by ./run.sh setup.
+# Pinned: 1.107.0 and 1.82.7/1.82.8 were compromised supply-chain releases – do not upgrade blindly.
+# The [proxy] extra pulls in litellm-enterprise; ./run.sh setup uninstalls it. We use no enterprise/ features (MIT core only).
+litellm[proxy]==1.106.2

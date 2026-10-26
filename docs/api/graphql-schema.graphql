@@ -1,0 +1,51 @@
+type ApiCall {
+  seq: Int!
+  caller: String!
+  callee: String!
+  method: String!
+  path: String!
+  status: Int
+  api: String
+  layer: String
+  odaBlock: String
+  owner: String
+  runtime: String
+}
+
+type Customer {
+  id: String!
+  name: String!
+  exchange: String
+  consentChannel: String
+  products: [Product!]!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+"""
+scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+type Product {
+  id: String!
+  name: String!
+  status: String!
+}
+
+type Query {
+  customer(id: String!): Customer
+  runs(limit: Int! = 20): [Run!]!
+  run(runId: String!): Run
+  policy: JSON!
+}
+
+type Run {
+  runId: String!
+  scenario: String
+  title: String
+  customerId: String
+  outcome: String
+  calls(owner: String = null): [ApiCall!]!
+  salesforceCalls: Int!
+  process: JSON
+  inference: JSON!
+}

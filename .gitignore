@@ -1,0 +1,13 @@
+node_modules/
+*.log
+.demo-password
+.env
+.venv/
+.tools/
+.data/
+__pycache__/
+*.pyc
+web/dist/
+dist/
+
+.venv-litellm/

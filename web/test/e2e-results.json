@@ -1,0 +1,175 @@
+{
+ "at": "2026-10-26T19:34:47.890Z",
+ "results": [
+  {
+   "name": "source holds no recording content in plaintext",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "source holds no Salesforce credential fields",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "gate shown first",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "footer on gate",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "wrong password refused",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "right password unlocks",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "replay label with run date",
+   "ok": true,
+   "detail": "Replay · recorded from the open-source stack run on 2026-10-26 (26 Oct 2026, 19:32 UK time"
+  },
+  {
+   "name": "replay bar states L5 engine and stub usage",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "replay bar names the real org",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "app footer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "8 layers + gateway as extension (not a ninth layer)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "no Salesforce / TM Forum logo images",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "9 journeys listed",
+   "ok": true,
+   "detail": "9"
+  },
+  {
+   "name": "journey 0 \"Work-from-home upgrade (happy path)\" BPMN ends at End_Completed",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "journey 2 \"Misbehaving agent → 'Policy blocked' path in L5\" BPMN ends at End_PolicyBlocked",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "journey 3 \"Activation fallout → BPMN compensation\" BPMN ends at End_Compensated",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "journey 7 \"Worker killed mid-order → resumes exactly once\" BPMN ends at End_Completed",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "bpmn.io watermark visible and not overlapped",
+   "ok": true,
+   "detail": "{\"w\":53,\"h\":21.796875,\"vis\":true,\"onTop\":true,\"top\":\"path.[object SVGAnimatedString]\",\"y\":653.578125,\"href\":\"http://bpmn.io/\"}"
+  },
+  {
+   "name": "compensation tasks highlighted",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "trace tags owner/runtime: OOTB + custom TMF API on Salesforce + our layer",
+   "ok": true,
+   "detail": "our layer | Salesforce · OOTB | custom TMF API on Salesforce | our layer (native TMF679 tried) | OSS (mocked)"
+  },
+  {
+   "name": "Salesforce-only filter",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "replay animates steps and trace",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "inference routing shown",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "crash-resume shows exactly 1 service order",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guardrail journey lists 403 probes",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "coverage = v2 ratings exactly",
+   "ok": true,
+   "detail": "Fit,Partial,Partial,Partial / Gap,Partial,Partial,Partial,Partial"
+  },
+  {
+   "name": "L4 and L7 are ours",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "ODA view: TMF620/622/648 custom TMF API on Salesforce, 629/632/637 OOTB",
+   "ok": true,
+   "detail": "ODA functional blocks and the APIs on themEvery traced call carries its ODA block, layer, owner and runtime. OOTB first: TMF629, TMF632 and TMF637 are the org’s native APIs. TMF620, TMF648 and TMF622 "
+  },
+  {
+   "name": "TMF921 not supported by Salesforce – our layer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "guardrails: US model denied for customer data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "BOM: Operaton, Kafka, Strawberry, LiteLLM MIT core",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "BOM: no Temporal, NATS, Apollo Router, Redpanda, Camunda 8",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "no console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "lock returns to the gate",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

@@ -1,0 +1,34 @@
+# Operaton (Apache-2.0, Camunda 7 compatible) – L5 Deterministic Execution engine for AgenticTelco.
+# Copied to .tools/operaton/configuration/production.yml by run.sh; secrets come from env (.data/secrets.env, git-ignored).
+operaton.bpm:
+  admin-user:
+    id: ${ZG_OPERATON_ADMIN_USER:zgadmin}
+    password: ${ZG_OPERATON_ADMIN_PASSWORD}
+  authorization:
+    enabled: true          # agents get start + read only; workers get update
+  database:
+    schema-update: true
+  generic-properties.properties:
+    history-time-to-live: P30D
+  run:
+    auth:
+      enabled: true        # HTTP Basic on /engine-rest
+    cors:
+      enabled: false
+    example:
+      enabled: false
+    deployment:
+      deploy-changed-only: true
+
+server:
+  port: 8180
+  address: 127.0.0.1
+
+spring.datasource:
+  url: jdbc:postgresql://127.0.0.1:55432/operaton
+  driver-class-name: org.postgresql.Driver
+  username: zg
+  password: ""
+
+spring.web.resources:
+  static-locations: NULL

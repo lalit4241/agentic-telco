@@ -1,0 +1,40 @@
+# AgenticTelco · container variant of the Procfile.
+# STATUS: NOT RUN. The recorded demo ran natively with ./run.sh up (Procfile/honcho) because the build box has no Docker.
+# Kept as a starting point; images/tags match the versions in the BOM. Application services reuse one Python image.
+x-app: &app
+  build: { context: ., dockerfile_inline: "FROM python:3.13-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . ." }
+  env_file: [.data/secrets.env]
+  environment:
+    ZG_PG_DSN: postgresql://zg@postgres:5432/agentictelco
+    ZG_KAFKA: kafka:9092
+    ZG_OPA_URL: http://opa:8181
+    ZG_INFERENCE_URL: http://inference:8110
+    ZG_OLLAMA_URL: http://ollama:11434
+    ZG_OPERATON_URL: http://operaton:8080/engine-rest
+    # per-service URLs: ZG_URL_<SERVICE>=http://<service>:<port> (see stack/zg_common/config.py)
+services:
+  postgres:   { image: pgvector/pgvector:pg17, environment: { POSTGRES_USER: zg, POSTGRES_HOST_AUTH_METHOD: trust, POSTGRES_DB: agentictelco }, volumes: [./stack/db:/docker-entrypoint-initdb.d:ro] }
+  kafka:      { image: apache/kafka:4.4.0 }
+  opa:        { image: openpolicyagent/opa:1.21.4, command: [run, --server, --addr, ":8181", /p], volumes: ["./stack/l4_context/policy:/p/l4:ro", "./stack/inference/policy:/p/inf:ro"] }
+  operaton:   { image: operaton/operaton:2.2.0, depends_on: [postgres] }
+  ollama:     { image: ollama/ollama }
+  litellm:    { build: { context: ., dockerfile_inline: "FROM python:3.13-slim\nCOPY requirements-litellm.txt .\nRUN pip install -r requirements-litellm.txt && pip uninstall -y litellm-enterprise || true" }, command: [litellm, --config, /app/stack/inference/litellm.yaml, --port, "4000"], volumes: [".:/app:ro"] }
+  l3-data:    { <<: *app, command: uvicorn stack.l3_data.app:app --host 0.0.0.0 --port 8103 }
+  l4-context: { <<: *app, command: uvicorn stack.l4_context.app:app --host 0.0.0.0 --port 8104 }
+  l6-sor:     { <<: *app, command: uvicorn stack.l6_sor_standin.app:app --host 0.0.0.0 --port 8106 }
+  oss-mock:   { <<: *app, command: uvicorn stack.oss_mock.app:app --host 0.0.0.0 --port 8107 }
+  net-agent:  { <<: *app, command: uvicorn stack.l2_mesh.network_agent:app --host 0.0.0.0 --port 8108 }
+  inference:  { <<: *app, command: uvicorn stack.inference.app:app --host 0.0.0.0 --port 8110 }
+  graphql:    { <<: *app, command: uvicorn stack.l1_web.graphql_api:app --host 0.0.0.0 --port 8111 }
+  l2-mesh:    { <<: *app, command: uvicorn stack.l2_mesh.app:app --host 0.0.0.0 --port 8102 }
+  l5-api:     { <<: *app, command: uvicorn stack.l5_orchestrator.app:app --host 0.0.0.0 --port 8105 }
+  l5-workers: { <<: *app, command: python -m stack.l5_orchestrator.workers }
+  l8-events:  { <<: *app, command: python -m stack.l8_observe.event_recorder }
+  # optional profiles (BOM: "compose file only, not run here")
+  vllm:           { image: vllm/vllm-openai, profiles: [sovereign], command: [--model, Qwen/Qwen2.5-0.5B-Instruct] }
+  otel-collector: { image: otel/opentelemetry-collector, profiles: [observability] }
+  jaeger:         { image: jaegertracing/all-in-one, profiles: [observability] }
+  prometheus:     { image: prom/prometheus, profiles: [observability] }
+  grafana:        { image: grafana/grafana-oss, profiles: [observability] }   # AGPL-3.0, unmodified
+  langfuse:       { image: langfuse/langfuse, profiles: [observability] }     # MIT core only; ee/ features not enabled
+# The real-org adapter (l6-sf, port 8116) needs an authenticated Salesforce CLI on the host, so it is not containerised here.

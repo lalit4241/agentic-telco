@@ -1,0 +1,11 @@
+{"zg": {"modelcatalog": {
+  "zg-local-small":     {"provider": "ollama", "servedModel": "qwen2.5:0.5b", "hosting": "local", "residency": "UK", "sovereign": true,
+                         "classes": ["classification", "extraction"], "costPer1kTokensGBP": 0.0, "notes": "Runs on the operator's own box (UK)"},
+  "zg-sovereign-large": {"provider": "ollama", "servedModel": "qwen2.5:0.5b", "hosting": "sovereign-cloud", "residency": "UK", "sovereign": true,
+                         "classes": ["reasoning", "summarisation"], "costPer1kTokensGBP": 0.0,
+                         "notes": "Placeholder for a larger UK-sovereign model (vLLM); on this box it is served by the same small local model"},
+  "us-frontier-saas":   {"provider": "openai-compatible", "servedModel": "frontier-model", "hosting": "saas", "residency": "US", "sovereign": false,
+                         "classes": ["reasoning"], "costPer1kTokensGBP": 0.008,
+                         "notes": "Listed to show the allow-list working – OPA denies it (UK residency); it is never called"}
+},
+"inference_policy": {"allowedResidency": ["UK"], "customerDataRequiresSovereign": true, "forbiddenCallerLayers": ["L4", "L5"]}}}

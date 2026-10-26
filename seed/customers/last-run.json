@@ -1,0 +1,33 @@
+{
+ "customers": {
+  "C-1001": {
+   "accountId": "001QH00002LK7uiYAD",
+   "contactId": "003QH00000TOKXxYAP",
+   "assetId": "02iQH000003EkndYAC",
+   "partyId": "P-1001",
+   "name": "Arthur Bennett"
+  },
+  "C-1002": {
+   "accountId": "001QH00002LK3lZYAT",
+   "contactId": "003QH00000TOKZZYA5",
+   "assetId": "02iQH000003EkpFYAS",
+   "partyId": "P-1002",
+   "name": "David Okafor"
+  },
+  "C-1003": {
+   "accountId": "001QH00002LKV91YAH",
+   "contactId": "003QH00000TOKbBYAX",
+   "assetId": "02iQH000003EkqrYAC",
+   "partyId": "P-1003",
+   "name": "Priya Shah"
+  },
+  "C-1004": {
+   "accountId": "001QH00002LKUAXYA5",
+   "contactId": "003QH00000TOK8AYAX",
+   "assetId": "02iQH000003EksTYAS",
+   "partyId": "P-1004",
+   "name": "Sarah Mitchell"
+  }
+ },
+ "created": 0
+}

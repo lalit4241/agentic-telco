@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  xmlns:operaton="http://operaton.org/schema/1.0/bpmn" id="Defs_ZG" targetNamespace="https://agentictelco.example/zg/l5"
+  exporter="AgenticTelco (hand-authored)" exporterVersion="1.0">
+  <bpmn:error id="Error_PolicyBlocked" name="Policy blocked (OPA deny)" errorCode="POLICY_BLOCKED" />
+  <bpmn:error id="Error_Activation" name="Service activation failed" errorCode="ACTIVATION_FAILED" />
+  <bpmn:process id="broadbandUpgradeSaga" name="L5 · Broadband upgrade saga (deterministic)" isExecutable="true" operaton:historyTimeToLive="P30D">
+    <bpmn:documentation>Zero Gravity L5 Deterministic Execution. Agents (L2) may only START this process and READ its state.
+Every service task that writes to the system of record calls OPA (L4) first; a deny raises POLICY_BLOCKED.
+No step in this process calls a model.</bpmn:documentation>
+    <bpmn:startEvent id="Start" name="Upgrade requested by L2 agent">
+      <bpmn:outgoing>F1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Task_CreateOrder" name="OPA gate → Create product order (TMF622)" operaton:type="external" operaton:topic="tmf622-create">
+      <bpmn:incoming>F1</bpmn:incoming><bpmn:outgoing>F2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Activate" name="Activate service + reserve port (TMF641)" operaton:type="external" operaton:topic="tmf641-activate">
+      <bpmn:incoming>F2</bpmn:incoming><bpmn:outgoing>F3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Complete" name="OPA gate → Complete product order (TMF622)" operaton:type="external" operaton:topic="tmf622-complete">
+      <bpmn:incoming>F3</bpmn:incoming><bpmn:outgoing>F4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Inventory" name="OPA gate → Update product inventory (TMF637)" operaton:type="external" operaton:topic="tmf637-update">
+      <bpmn:incoming>F4</bpmn:incoming><bpmn:outgoing>F5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Completed" name="Order completed">
+      <bpmn:incoming>F5</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- compensation handlers -->
+    <bpmn:boundaryEvent id="Comp_CreateOrder" attachedToRef="Task_CreateOrder"><bpmn:compensateEventDefinition /></bpmn:boundaryEvent>
+    <bpmn:serviceTask id="Task_CancelOrder" name="Cancel product order (TMF622 cancelProductOrder)" isForCompensation="true" operaton:type="external" operaton:topic="tmf622-cancel" />
+    <bpmn:boundaryEvent id="Comp_Activate" attachedToRef="Task_Activate"><bpmn:compensateEventDefinition /></bpmn:boundaryEvent>
+    <bpmn:serviceTask id="Task_Release" name="Cancel service order, release port (TMF641)" isForCompensation="true" operaton:type="external" operaton:topic="tmf641-cancel" />
+
+    <!-- activation failure path -->
+    <bpmn:boundaryEvent id="Err_Activation" name="Activation failed" attachedToRef="Task_Activate">
+      <bpmn:outgoing>F6</bpmn:outgoing><bpmn:errorEventDefinition errorRef="Error_Activation" />
+    </bpmn:boundaryEvent>
+    <bpmn:intermediateThrowEvent id="Throw_CompensateFailure" name="Compensate (roll back)">
+      <bpmn:incoming>F6</bpmn:incoming><bpmn:outgoing>F7</bpmn:outgoing><bpmn:compensateEventDefinition />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="End_Compensated" name="Order rolled back">
+      <bpmn:incoming>F7</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- policy-blocked path: every SoR write is gated by OPA -->
+    <bpmn:boundaryEvent id="Err_Policy_Create" name="Policy blocked" attachedToRef="Task_CreateOrder">
+      <bpmn:outgoing>F8</bpmn:outgoing><bpmn:errorEventDefinition errorRef="Error_PolicyBlocked" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Err_Policy_Complete" name="Policy blocked" attachedToRef="Task_Complete">
+      <bpmn:outgoing>F9</bpmn:outgoing><bpmn:errorEventDefinition errorRef="Error_PolicyBlocked" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Err_Policy_Inventory" name="Policy blocked" attachedToRef="Task_Inventory">
+      <bpmn:outgoing>F10</bpmn:outgoing><bpmn:errorEventDefinition errorRef="Error_PolicyBlocked" />
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="Gw_PolicyBlocked" name="Policy blocked">
+      <bpmn:incoming>F8</bpmn:incoming><bpmn:incoming>F9</bpmn:incoming><bpmn:incoming>F10</bpmn:incoming><bpmn:outgoing>F11</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateThrowEvent id="Throw_CompensatePolicy" name="Compensate any SoR writes">
+      <bpmn:incoming>F11</bpmn:incoming><bpmn:outgoing>F12</bpmn:outgoing><bpmn:compensateEventDefinition />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="End_PolicyBlocked" name="Policy blocked">
+      <bpmn:incoming>F12</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="F1" sourceRef="Start" targetRef="Task_CreateOrder" />
+    <bpmn:sequenceFlow id="F2" sourceRef="Task_CreateOrder" targetRef="Task_Activate" />
+    <bpmn:sequenceFlow id="F3" sourceRef="Task_Activate" targetRef="Task_Complete" />
+    <bpmn:sequenceFlow id="F4" sourceRef="Task_Complete" targetRef="Task_Inventory" />
+    <bpmn:sequenceFlow id="F5" sourceRef="Task_Inventory" targetRef="End_Completed" />
+    <bpmn:sequenceFlow id="F6" sourceRef="Err_Activation" targetRef="Throw_CompensateFailure" />
+    <bpmn:sequenceFlow id="F7" sourceRef="Throw_CompensateFailure" targetRef="End_Compensated" />
+    <bpmn:sequenceFlow id="F8" sourceRef="Err_Policy_Create" targetRef="Gw_PolicyBlocked" />
+    <bpmn:sequenceFlow id="F9" sourceRef="Err_Policy_Complete" targetRef="Gw_PolicyBlocked" />
+    <bpmn:sequenceFlow id="F10" sourceRef="Err_Policy_Inventory" targetRef="Gw_PolicyBlocked" />
+    <bpmn:sequenceFlow id="F11" sourceRef="Gw_PolicyBlocked" targetRef="Throw_CompensatePolicy" />
+    <bpmn:sequenceFlow id="F12" sourceRef="Throw_CompensatePolicy" targetRef="End_PolicyBlocked" />
+    <bpmn:association id="A1" associationDirection="One" sourceRef="Comp_CreateOrder" targetRef="Task_CancelOrder" />
+    <bpmn:association id="A2" associationDirection="One" sourceRef="Comp_Activate" targetRef="Task_Release" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram">
+    <bpmndi:BPMNPlane id="Plane" bpmnElement="broadbandUpgradeSaga">
+      <bpmndi:BPMNShape id="S_Start" bpmnElement="Start"><dc:Bounds x="100" y="222" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Create" bpmnElement="Task_CreateOrder"><dc:Bounds x="190" y="200" width="140" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Activate" bpmnElement="Task_Activate"><dc:Bounds x="400" y="200" width="140" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Complete" bpmnElement="Task_Complete"><dc:Bounds x="610" y="200" width="140" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Inventory" bpmnElement="Task_Inventory"><dc:Bounds x="820" y="200" width="140" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndDone" bpmnElement="End_Completed"><dc:Bounds x="1030" y="222" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_CompCreate" bpmnElement="Comp_CreateOrder"><dc:Bounds x="212" y="262" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_CancelOrder" bpmnElement="Task_CancelOrder"><dc:Bounds x="190" y="360" width="140" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_CompActivate" bpmnElement="Comp_Activate"><dc:Bounds x="422" y="262" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Release" bpmnElement="Task_Release"><dc:Bounds x="400" y="360" width="140" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ErrAct" bpmnElement="Err_Activation"><dc:Bounds x="492" y="262" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="530" y="300" width="70" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ThrowFail" bpmnElement="Throw_CompensateFailure"><dc:Bounds x="632" y="382" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="610" y="425" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndComp" bpmnElement="End_Compensated"><dc:Bounds x="742" y="382" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="720" y="425" width="80" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ErrPolCreate" bpmnElement="Err_Policy_Create"><dc:Bounds x="282" y="182" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="310" y="160" width="70" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ErrPolComplete" bpmnElement="Err_Policy_Complete"><dc:Bounds x="702" y="182" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="730" y="160" width="70" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ErrPolInv" bpmnElement="Err_Policy_Inventory"><dc:Bounds x="912" y="182" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="940" y="160" width="70" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_GwPol" bpmnElement="Gw_PolicyBlocked" isMarkerVisible="true"><dc:Bounds x="1023" y="55" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1013" y="30" width="70" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ThrowPol" bpmnElement="Throw_CompensatePolicy"><dc:Bounds x="1122" y="62" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1100" y="105" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndPol" bpmnElement="End_PolicyBlocked"><dc:Bounds x="1212" y="62" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1195" y="105" width="70" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="E_F1" bpmnElement="F1"><di:waypoint x="136" y="240" /><di:waypoint x="190" y="240" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F2" bpmnElement="F2"><di:waypoint x="330" y="240" /><di:waypoint x="400" y="240" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F3" bpmnElement="F3"><di:waypoint x="540" y="240" /><di:waypoint x="610" y="240" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F4" bpmnElement="F4"><di:waypoint x="750" y="240" /><di:waypoint x="820" y="240" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F5" bpmnElement="F5"><di:waypoint x="960" y="240" /><di:waypoint x="1030" y="240" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_A1" bpmnElement="A1"><di:waypoint x="230" y="298" /><di:waypoint x="230" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_A2" bpmnElement="A2"><di:waypoint x="440" y="298" /><di:waypoint x="440" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F6" bpmnElement="F6"><di:waypoint x="510" y="298" /><di:waypoint x="510" y="330" /><di:waypoint x="650" y="330" /><di:waypoint x="650" y="382" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F7" bpmnElement="F7"><di:waypoint x="668" y="400" /><di:waypoint x="742" y="400" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F8" bpmnElement="F8"><di:waypoint x="300" y="182" /><di:waypoint x="300" y="80" /><di:waypoint x="1023" y="80" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F9" bpmnElement="F9"><di:waypoint x="720" y="182" /><di:waypoint x="720" y="80" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F10" bpmnElement="F10"><di:waypoint x="930" y="182" /><di:waypoint x="930" y="80" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F11" bpmnElement="F11"><di:waypoint x="1073" y="80" /><di:waypoint x="1122" y="80" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F12" bpmnElement="F12"><di:waypoint x="1158" y="80" /><di:waypoint x="1212" y="80" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

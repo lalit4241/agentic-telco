@@ -1,0 +1,163 @@
+[
+[
+"L1",
+"Replay UI (vanilla JS, single file, AES-GCM gate)",
+"this repo",
+"MIT",
+"ran (Pages build)"
+],
+[
+"L1",
+"bpmn-js NavigatedViewer (bpmn.io watermark kept visible)",
+"18.31.1",
+"MIT + watermark condition",
+"ran"
+],
+[
+"L1",
+"Strawberry GraphQL (read-only, no Mutation type, ADR-008)",
+"0.287.4",
+"MIT",
+"ran"
+],
+[
+"L1/L2/L6",
+"FastAPI + Uvicorn (services, TMF stand-in)",
+"0.162.0 / 0.54.0",
+"MIT / BSD-3-Clause",
+"ran"
+],
+[
+"L2",
+"LangGraph (care agent)",
+"1.2.17",
+"MIT",
+"ran"
+],
+[
+"L2",
+"MCP Python SDK (agent tools)",
+"1.30.0",
+"MIT",
+"ran"
+],
+[
+"L2",
+"A2A protocol (JSON-RPC agent card + tasks, implemented in-repo; a2a-python SDK not used)",
+"protocol 0.3.0",
+"Apache-2.0 (spec)",
+"ran"
+],
+[
+"L3",
+"PostgreSQL",
+"17.11",
+"PostgreSQL Licence",
+"ran"
+],
+[
+"L3",
+"pgvector",
+"0.8.0",
+"PostgreSQL Licence",
+"ran"
+],
+[
+"L3",
+"Apache Kafka (KRaft, topic tmf688-events, ADR-002)",
+"4.4.0",
+"Apache-2.0",
+"ran"
+],
+[
+"L3",
+"aiokafka",
+"0.14.0",
+"Apache-2.0",
+"ran"
+],
+[
+"L4",
+"Open Policy Agent",
+"1.21.4",
+"Apache-2.0",
+"ran"
+],
+[
+"L5",
+"Operaton BPMN engine (ADR-007) on OpenJDK 21",
+"2.2.0",
+"Apache-2.0 (JDK: GPL-2.0 + Classpath Exception)",
+"ran"
+],
+[
+"L7",
+"LiteLLM proxy, MIT core only (enterprise/ not installed), separate venv",
+"1.106.2",
+"MIT",
+"ran"
+],
+[
+"L7",
+"Ollama (local model serving)",
+"0.40.11",
+"MIT",
+"ran"
+],
+[
+"L7",
+"Qwen2.5-0.5B-Instruct weights (qwen2.5:0.5b)",
+"—",
+"Apache-2.0",
+"ran"
+],
+[
+"L7",
+"vLLM (UK-sovereign serving option)",
+"—",
+"Apache-2.0",
+"compose file only, not run here"
+],
+[
+"L7",
+"Docker Compose (ADR-006 one command)",
+"—",
+"Apache-2.0",
+"compose file only; Docker not available on the build box, so ./run.sh up was used"
+],
+[
+"L8",
+"OpenTelemetry Python SDK + OTLP exporter",
+"1.45.1",
+"Apache-2.0",
+"ran (spans stored in the run ledger)"
+],
+[
+"L8",
+"OpenTelemetry Collector, Jaeger, Prometheus",
+"—",
+"Apache-2.0",
+"compose file only, not run here"
+],
+[
+"L8",
+"Grafana (unmodified)",
+"—",
+"AGPL-3.0",
+"compose file only, not run here"
+],
+[
+"L8",
+"Langfuse, MIT core only (no ee/)",
+"—",
+"MIT",
+"compose file only, not run here"
+],
+[
+"L6",
+"Salesforce Communications Cloud (the only commercial component)",
+"API 68.0 (org sfcomms)",
+"Salesforce commercial terms",
+"live: OOTB TMF629/632/637 + sObject REST; custom TMF620/622/648/671 Apex REST (AgenticTelco_, deploy 0AfQH00000Q1p370AB); TMF679 tried natively"
+]
+]

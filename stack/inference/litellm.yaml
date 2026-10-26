@@ -1,0 +1,23 @@
+# LiteLLM proxy (MIT) – OpenAI-compatible model gateway BEHIND our inference service. Agents never call it directly.
+# Pinned litellm==1.106.2 (1.107.0 and 1.82.7/1.82.8 were compromised supply-chain releases – do not upgrade blindly).
+model_list:
+  - model_name: zg-local-small          # classification / extraction – local, UK
+    litellm_params:
+      model: ollama_chat/qwen2.5:0.5b
+      api_base: http://127.0.0.1:11434
+      timeout: 20
+  - model_name: zg-sovereign-large      # reasoning – placeholder for a UK-sovereign vLLM endpoint; same local model on this box
+    litellm_params:
+      model: ollama_chat/qwen2.5:0.5b
+      api_base: http://127.0.0.1:11434   # swap for a UK-sovereign vLLM endpoint (OpenAI-compatible) in production
+      timeout: 30
+router_settings:
+  num_retries: 1
+  fallbacks: [{"zg-sovereign-large": ["zg-local-small"]}]
+litellm_settings:
+  drop_params: true
+  telemetry: false
+  # Langfuse (MIT core, L8): enabled when LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST are set
+  # success_callback: ["langfuse"]
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

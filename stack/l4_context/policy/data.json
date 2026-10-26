@@ -1,0 +1,2 @@
+{"zg": {"policy": {"version": 1, "creditMin": 620, "consentRule": "explicit-digital", "networkMaxUtilisation": 0.85,
+  "aiGuardrail": {"llmMayDecide": false}}}}

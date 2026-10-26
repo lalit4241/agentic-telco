@@ -1,0 +1,17 @@
+# All OSI-licensed (see README BOM). No Temporal (ADR-007: Operaton is the L5 engine). No litellm-enterprise.
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+httpx==0.28.1
+langgraph==1.2.17
+mcp==1.30.0
+aiokafka==0.14.0
+psycopg[binary]==3.3.6
+strawberry-graphql==0.287.4
+graphql-core==3.2.13
+# LiteLLM lives in its own venv (.venv-litellm, see requirements-litellm.txt): its proxy needs mcp 2.x, our MCP tools use mcp 1.x.
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp-proto-http==1.45.1
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-httpx
+honcho
+pytest==9.1.1

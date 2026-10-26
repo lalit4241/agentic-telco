@@ -1,0 +1,120 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AgenticTelco L4 context & policy",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/zg/context/v1/context": {
+      "post": {
+        "summary": "Context",
+        "operationId": "context_zg_context_v1_context_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/zg/context/v1/decision": {
+      "post": {
+        "summary": "Decision",
+        "operationId": "decision_zg_context_v1_decision_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/zg/context/v1/policy": {
+      "get": {
+        "summary": "Get Policy",
+        "operationId": "get_policy_zg_context_v1_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Put Policy",
+        "operationId": "put_policy_zg_context_v1_policy_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/zg/context/v1/policy/history": {
+      "get": {
+        "summary": "History",
+        "operationId": "history_zg_context_v1_policy_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/zg/context/v1/gate": {
+      "post": {
+        "summary": "Gate",
+        "description": "Pre-write gate called by every L5 BPMN service task that writes to the SoR.\nContext is re-assembled fresh from the SoR + L3 (the agent's earlier view is not trusted) and OPA decides.\nDeterministic: no model is ever consulted here.",
+        "operationId": "gate_zg_context_v1_gate_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

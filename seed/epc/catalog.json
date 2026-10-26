@@ -1,0 +1,48 @@
+{
+  "_comment": "AgenticTelco broadband-upgrade catalogue for Comms Cloud native EPC (Product Catalog Management on core). Loaded as data via OOTB REST (sobjects). Every record is prefixed AgenticTelco. No Apex, Flow or metadata.",
+  "picklists": [
+    {"name": "AgenticTelco Download Speed", "code": "AT_PKL_DL_SPEED", "dataType": "Text",
+     "values": [["150", "150 Mbps"], ["500", "500 Mbps"], ["900", "900 Mbps"], ["1600", "1.6 Gbps"]]},
+    {"name": "AgenticTelco Contract Term", "code": "AT_PKL_TERM", "dataType": "Text",
+     "values": [["0", "No contract (30-day rolling)"], ["12", "12 months"], ["24", "24 months"]]}
+  ],
+  "attributes": [
+    {"name": "AgenticTelco Download Speed", "dev": "AgenticTelco_Download_Speed", "code": "AT_ATT_DL_SPEED", "type": "Picklist", "picklist": "AT_PKL_DL_SPEED", "category": "AgenticTelco Broadband Speed"},
+    {"name": "AgenticTelco Contract Term", "dev": "AgenticTelco_Contract_Term", "code": "AT_ATT_TERM", "type": "Picklist", "picklist": "AT_PKL_TERM", "category": "AgenticTelco Contract", "default": "24"},
+    {"name": "AgenticTelco Static IP Count", "dev": "AgenticTelco_Static_IP_Count", "code": "AT_ATT_STATIC_IP", "type": "Number", "category": "AgenticTelco Add-on Options", "default": "1"}
+  ],
+  "attributeCategories": ["AgenticTelco Broadband Speed", "AgenticTelco Contract", "AgenticTelco Add-on Options"],
+  "classifications": [
+    {"name": "AgenticTelco Fibre Broadband", "code": "AT_CLS_FIBRE", "attributes": ["AT_ATT_DL_SPEED", "AT_ATT_TERM"]},
+    {"name": "AgenticTelco Static IP", "code": "AT_CLS_STATIC_IP", "attributes": ["AT_ATT_STATIC_IP"]}
+  ],
+  "catalog": {"name": "AgenticTelco Catalog", "code": "AT_CATALOG", "categories": [["AgenticTelco Broadband", "AT_CAT_BB"], ["AgenticTelco Add-ons", "AT_CAT_ADDON"]]},
+  "sellingModels": {
+    "AgenticTelco Term Monthly": {"type": "TermDefined", "term": 1, "unit": "Months", "create": true},
+    "Evergreen - Monthly": {"existing": true},
+    "One-Time": {"existing": true}
+  },
+  "pricebook": "AgenticTelco Price Book",
+  "products": [
+    {"code": "AT-FIBRE-150", "name": "AgenticTelco Fibre 150", "bundle": true, "class": "AgenticTelco Fibre Broadband", "family": "Service", "category": "AT_CAT_BB", "speed": "150",
+     "desc": "Full-fibre broadband, 150 Mbps download.", "prices": {"AgenticTelco Term Monthly": 27.0, "Evergreen - Monthly": 32.0}},
+    {"code": "AT-FIBRE-500", "name": "AgenticTelco Fibre 500", "bundle": true, "class": "AgenticTelco Fibre Broadband", "family": "Service", "category": "AT_CAT_BB", "speed": "500",
+     "desc": "Full-fibre broadband, 500 Mbps download.", "prices": {"AgenticTelco Term Monthly": 35.0, "Evergreen - Monthly": 40.0}},
+    {"code": "AT-FIBRE-900", "name": "AgenticTelco Fibre 900", "bundle": true, "class": "AgenticTelco Fibre Broadband", "family": "Service", "category": "AT_CAT_BB", "speed": "900",
+     "desc": "Full-fibre broadband, 900 Mbps download.", "prices": {"AgenticTelco Term Monthly": 45.0, "Evergreen - Monthly": 50.0}},
+    {"code": "AT-FIBRE-1600", "name": "AgenticTelco Fibre 1600", "bundle": true, "class": "AgenticTelco Fibre Broadband", "family": "Service", "category": "AT_CAT_BB", "speed": "1600",
+     "desc": "Multi-gig full fibre, 1.6 Gbps download (needs an XGS-PON capable exchange).", "prices": {"AgenticTelco Term Monthly": 60.0, "Evergreen - Monthly": 65.0}},
+    {"code": "AT-ACCESS-LINE", "name": "AgenticTelco Fibre Access Line", "family": "Service", "desc": "FTTP access line (product specification, included).", "prices": {"Evergreen - Monthly": 0.0, "AgenticTelco Term Monthly": 0.0}},
+    {"code": "AT-ROUTER-WIFI6", "name": "AgenticTelco Wi-Fi 6 Router", "family": "Hardware", "desc": "Wi-Fi 6 router (included, returnable).", "prices": {"One-Time": 0.0}},
+    {"code": "AT-INSTALL", "name": "AgenticTelco Standard Installation", "family": "Service", "desc": "Engineer installation.", "prices": {"One-Time": 49.0}},
+    {"code": "AT-ADDON-STATIC-IP", "name": "AgenticTelco Static IP", "class": "AgenticTelco Static IP", "family": "Service", "category": "AT_CAT_ADDON", "desc": "Add-on: static public IPv4 address.", "prices": {"Evergreen - Monthly": 5.0}},
+    {"code": "AT-ADDON-WIFI-EXT", "name": "AgenticTelco Wi-Fi Extender", "family": "Hardware", "category": "AT_CAT_ADDON", "desc": "Add-on: mesh Wi-Fi extender.", "prices": {"Evergreen - Monthly": 4.0}}
+  ],
+  "bundleComponents": [
+    {"group": "Core", "code": "AT-ACCESS-LINE", "required": true, "default": true, "min": 1, "max": 1},
+    {"group": "Core", "code": "AT-ROUTER-WIFI6", "required": true, "default": true, "min": 1, "max": 1},
+    {"group": "Core", "code": "AT-INSTALL", "required": false, "default": true, "min": 0, "max": 1},
+    {"group": "Add-ons", "code": "AT-ADDON-STATIC-IP", "required": false, "default": false, "min": 0, "max": 1},
+    {"group": "Add-ons", "code": "AT-ADDON-WIFI-EXT", "required": false, "default": false, "min": 1, "max": 3}
+  ]
+}
