@@ -98,9 +98,20 @@ The org has an active record-triggered flow, `Custom_Assetize_Order` v3. It runs
 
 **Known residue:** Orders activated before the fix cannot be repaired from our side. Salesforce rejects a SubscriptionManagement AppUsageAssignment on an Order that is already activated (`FIELD_INTEGRITY_EXCEPTION`), and we do not edit existing records. Salesforce may keep retrying those async interviews for a while, so some error emails may still arrive for them.
 
+- **What we saw:** `FlowInterview` errors kept arriving about once a minute, including at 20:00, 20:02 and 20:03 UK time, when nothing on our side was running. That fits retries of pre-fix interviews.
+- **What is still unverified:** FlowApplication emails stopped at 19:58 UK time. The interviews logged after that (20:07–20:11) therefore have no email to trace them to a record. All Orders our layer activated in that window have the assignment.
+
 ## Stack integration
 
-STACK_RESULTS_PLACEHOLDER
+| Suite | Command | Result |
+|---|---|---|
+| Live-stack integration (real org: L1 → L2 → L4 → L5 Operaton → L6 → sfcomms) | `ZG_SOR_MODE=commscloud .venv/bin/python -m pytest -q tests/test_stack.py` | **13 passed** in 297.9 s (20:06–20:11 UK time, after the flow fix) |
+
+- **Two earlier fixes:** a per-run cache nonce, so the cache test does not hit a warm entry, and a 180 s wait for the crash/resume saga on the CPU model.
+- **Flow check after the integration run:**
+  - The run activated 4 AgenticTelco Orders (`801QH00002LK8M9YAL`, `…LKWHzYAP`, `…LKWedYAH`, `…LJtAFYA1`). **Each has a SubscriptionManagement AppUsageAssignment.**
+  - The fallout Order `…LKUxkYAH` ended in `Exception`, which does not match the flow's entry criteria.
+- **Inventory:** reset afterwards with `seed/customers/seed_customers.py --reset-inventory`.
 
 ## Known limits
 

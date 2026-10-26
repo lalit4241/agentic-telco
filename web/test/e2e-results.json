@@ -1,5 +1,5 @@
 {
- "at": "2026-10-26T19:34:47.890Z",
+ "at": "2026-10-26T20:03:15.791Z",
  "results": [
   {
    "name": "source holds no recording content in plaintext",
@@ -34,7 +34,7 @@
   {
    "name": "replay label with run date",
    "ok": true,
-   "detail": "Replay · recorded from the open-source stack run on 2026-10-26 (26 Oct 2026, 19:32 UK time"
+   "detail": "Replay · recorded from the open-source stack run on 2026-10-26 (26 Oct 2026, 19:59 UK time"
   },
   {
    "name": "replay bar states L5 engine and stub usage",
