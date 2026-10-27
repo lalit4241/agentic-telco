@@ -171,7 +171,7 @@ sequenceDiagram
 | OSS and licence | React, MIT (CONFIRMED, 06-tech-stack) |
 | Input | Sam's free text; signed-in session (demo login, example) |
 | Output | An intent envelope to L2; rendered agent messages and cards |
-| TMF / SID | Intent is conceptually TMF921 Intent / TR292 TIO. **The MVP does not implement TMF921**; it sends a simple envelope. *Superseded 27 Oct 2026: the MVP now uses a TMF921-shaped Intent and IntentReport; exposed through a thin TMF921 Apex facade in Salesforce; see [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) decision 8.* SID: Party (via the session). |
+| TMF / SID | Intent is conceptually TMF921 Intent / TR292 TIO. **The MVP does not implement TMF921**; it sends a simple envelope. *Superseded 27 Oct 2026: the MVP now uses a TMF921-shaped Intent and IntentReport; proposed by the agent, then validated and created by L5 through a thin TMF921 Apex facade in Salesforce; see [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) decision 8.* SID: Party (via the session). |
 
 Example intent envelope (example values):
 
