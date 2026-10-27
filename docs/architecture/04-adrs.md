@@ -18,6 +18,8 @@ Date for all records: 26 Oct 2026.
 ---
 
 ## ADR-001 Salesforce Communications Cloud is only the L6 system of record
+> **Amended 2026-10-27 (confirmed by LalitC):** where the org has no working native TMF API, thin Apex REST facades in TMF shapes (`AgenticTelco_*`, `/services/apexrest/agentictelco/tmf<NNN>/`) are allowed in the org. They only map records to TMF shapes and hold no business rules, policy or orchestration, which stay in L4/L5. See [ADR amendment 001](../adr-amendments/001-custom-tmf-apis-on-salesforce.md). The "no custom Apex" bullet below is superseded to that extent.
+
 **Context.** The Zero Gravity Axiom says rules and policies have "zero residual" in systems of record (report PDF p.24). Salesforce Communications Cloud can also host agents (Agentforce), automation (Flow) and custom code (Apex). Using those would put rules back into the SoR and contradict the thesis the demo exists to show.
 
 **Decision.**

@@ -10,7 +10,7 @@ Everything here is the demo design (RECOMMENDED) unless labelled otherwise. This
 | S3 | Agents never write to a SoR and never complete or skip BPMN tasks. | Operaton authorisations (ADR-003); tests |
 | S4 | Every SoR write is preceded by an OPA decision recorded in the trace. | BPMN task template; OPA decision logs |
 | S5 | No customer personal data leaves our boundary to a non-allow-listed model. | Inference Gateway + OPA allow-list (ADR-009) |
-| S6 | No custom logic in the Salesforce org. | ADR-001; org change review |
+| S6 | No business logic in the Salesforce org; only mapping-only `AgenticTelco_` Apex TMF facades, test-covered at 85% or more. | ADR-001 + amendment 001; org change review |
 
 ## 2. Trust boundaries
 ```mermaid
