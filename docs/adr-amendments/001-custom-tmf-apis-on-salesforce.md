@@ -19,7 +19,7 @@
    - Tests must reach at least 85% coverage.
    - Deployment uses `sf project deploy`.
    - Calls are labelled **custom TMF API on Salesforce**.
-   - Current set: TMF620, TMF622, TMF648, TMF671; TMF921 added by the amendment below (not yet built).
+   - Current set: TMF620, TMF622, TMF648, TMF671 (TMF921 is not a facade; see the amendment below).
 3. **Nothing in the org is deleted or changed.**
    - Writes create AgenticTelco-prefixed records only.
    - PATCH accepts AgenticTelco records only.
@@ -49,10 +49,4 @@ A dry-run validation (`0AfQH00000Q1p1V0AR`) preceded the second deploy.
 
 ## Amendment: TMF921 Intent
 
-TMF921 as an Apex facade, with one AgenticTelco custom object (AgenticTelco_Intent__c); new metadata only; decided LalitC 27 Oct 2026.
-
-- **Facade:** `AgenticTelco_TMF921`, mapping only. The agent only proposes the Intent; the L5 BPMN process validates and creates it and decides state changes; Apex only stores and maps. Postgres (L3) keeps an audit copy only.
-- **Facade list:** now TMF620, TMF622, TMF648, TMF671, TMF921 (TMF921 not yet built; built after sign-off of MVP-KEY-DESIGN.md).
-- **Alternatives rejected:**
-  - stretching Opportunity or Case (confuses the story);
-  - hosting outside Salesforce (earlier option, superseded).
+TMF921 Intent is agent-layer state, not system-of-record data, so it is hosted outside Salesforce in a small intent service (L1, stored in L3). Confirmed LalitC 27 Oct 2026; an Apex facade with a custom object was considered and rejected, as was stretching Opportunity/Case.

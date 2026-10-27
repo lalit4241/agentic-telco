@@ -50,7 +50,7 @@ flowchart TD
 ## 4. What each layer does (and leaves out)
 | Layer | MVP job | Out of scope for now |
 |---|---|---|
-| L1 Intent | Simple portal chat; free-text need becomes a TMF921-shaped Intent via an Apex facade in Salesforce (see key doc) | Rich UI, full Intent Ontology expression, intent negotiation |
+| L1 Intent | Simple portal chat; free-text need becomes a TMF921-shaped Intent held by a small intent service in L1, stored in L3, not Salesforce (see key doc) | Rich UI, full Intent Ontology expression, intent negotiation |
 | L2 Agent | One agent: understand need, match to product, explain | Agent mesh, A2A, multiple models |
 | L3 Data | Postgres: conversation, decisions, audit | Kafka, pgvector, semantic cache |
 | L4 Policy | One OPA policy: authorised contact, no overdue balance (mocked), available at address key (mocked), upgrade-only mid-contract (rule present; downgrade not demoed) | Multiple policy packs |
