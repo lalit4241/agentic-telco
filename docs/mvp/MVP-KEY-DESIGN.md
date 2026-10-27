@@ -1,6 +1,6 @@
 # AgenticTelco MVP: key design
 
-**Status: DRAFT v0.1 for agreement — LalitC [ ] DevBot [ ] TMForumCTO [ ]**
+**Status: DRAFT v0.1 for agreement — LalitC [ ] (pending) DevBot [x] (agreed subject to the decision 6 edit, 27 Oct 2026) TMForumCTO [x] (agreed)**
 
 27 Oct 2026. This is the one document all three must agree before any development starts. It consolidates [MVP-design.md](MVP-design.md) and [layer-walkthrough.md](layer-walkthrough.md). The walkthrough stays as the detailed appendix. Where they differ, this document wins once agreed.
 
@@ -162,10 +162,15 @@ Each decision has a recommended default.
 3. **Model.** Small open model run locally via Ollama. In the first build test DevBot measures Qwen2.5 3B and 7B (Instruct, tool-calling) on the demo machine (16 GB RAM, no GPU). Acceptance target (RECOMMENDED, not measured): a full agent turn under ~5 s. If 7B misses it, use 3B, or run 7B on a GPU host — which requires re-checking the hosting/data-residency wording (decision 2). Scripted fallback for presenter mode either way. Real response times and token usage recorded from the trace.
 4. **L5 engine.** Default: a small coded workflow, not Operaton, in the MVP.
 5. **MVP mode.** Default: run as a separate "MVP mode" alongside the full AgenticTelco demo.
-6. **Installed-service end state.** Default:
-   - Fibre 150 is closed or inactive. The existing adapter sets the replaced Asset to "Obsolete" (CONFIRMED, code).
-   - One Fibre 900 Asset is active at the same Location and linked to the old one. The linking method still has to be chosen: a standard Asset relationship is a candidate, but its availability on this org is UNKNOWN.
-   - **Risk:** the "Custom Assetize Order" flow might create a duplicate Asset on activation. The read-only flow check ([org-capabilities](../api/org-capabilities.md#org-automation-custom-assetize-order-flow)) shows the flow ends without assetizing when the Subscription Management record exists (CONFIRMED). Whether that holds for an upgrade order is to be re-checked read-only now, from the flow metadata. The live test happens only after all three agree this document.
+6. **Installed-service end state.** CONFIRMED read-only (DevBot, 27 Oct 2026, flow metadata pulled, org unchanged):
+   - **How the flow behaves:** the active "Custom Assetize Order" flow fires on any Order update to Activated, whatever the order type. If the Subscription Management usage record is missing, it calls Salesforce's licensed create-or-update-asset action. If the record exists, it ends with no action.
+   - **No duplicate Asset on upgrade:** our workflow always creates the usage record first, so the flow ends without action.
+   - **The L5 workflow owns the Asset end state, because the flow won't touch Assets:**
+     - It sets the Fibre 150 Asset to Obsolete, with an end date.
+     - It creates the Fibre 900 Asset as Installed at the same Location.
+     - It links the two with the standard AssetRelationship object, type "Upgrade" (createable; no custom field).
+   - **No logic in the org:** all writes go through standard APIs or the mapping-only adapter.
+   - **Live test:** still waits until all three agree this document.
 7. **Jeopardy storage.** Default: L3 plus events, with no change to the Salesforce order (section 5).
 
 ## 10. Build items (not started until all three agree)
