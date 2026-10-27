@@ -12,21 +12,40 @@
 
 **Purpose:** prove that a telco can put AI agents in front of customers safely, on its existing Salesforce estate, without rewriting its business rules.
 
+**Setting: "UK Telco" (fictional, illustrative).** UK Telco is an invented Tier 1 UK operator used only to make the story realistic. It is **not** any real operator, and its estate below is an illustration, not data. Salesforce is only one of its systems:
+
+| UK Telco system (illustrative) | What it does | Legacy quirk |
+|---|---|---|
+| Salesforce | CRM and order system for the **SME segment only** | Customised over the years (see L4 for a real example from our demo org) |
+| Billing A and Billing B | Two billing systems inherited from a merger | Their own customer IDs; slow to answer |
+| Network inventory | Separate record of sites and exchange ports | Its own site IDs |
+| Legacy OSS | Fulfils network orders | Runs in overnight batches; no modern API |
+
+The same business customer exists under **three IDs** (Salesforce, billing, network inventory). Brightwell's journey is unchanged; it simply runs in this estate. In the MVP, every non-Salesforce system is a **legacy stand-in** (mocked, clearly labelled).
+
+**Legacy reality (INFERRED; general industry patterns, no statistics claimed).** Legacy is why a CIO can't simply "go agentic":
+- rules are buried in old CRM code, customised Salesforce flows and billing configuration, often undocumented;
+- mergers leave several stacks doing the same job;
+- data is messy: addresses in different formats, duplicate customers, thousands of legacy tariffs;
+- fulfilment runs through batch jobs, manual queues and vendor systems without APIs.
+
+Putting an agent straight on top of that is exactly what a CIO fears. The MVP shows the alternative on one journey: wrap the legacy, extract the rule, resolve the identities, and only then let the agent act.
+
 | For | Why it matters |
 |---|---|
-| **TechM** | Zero Gravity is today a framework on paper: eight layers and the rule of zero residual rules in systems of record, but no worked example, no named customer and no Salesforce role in the report (CONFIRMED). This MVP makes it real on one journey, for the MWC27 Autonomous Enterprise theme (TechM's sponsorship of the theme is REPORTED, not confirmed). |
-| **A telco CIO or CTO** | It answers three fears. Replacing the BSS: Salesforce stays. Losing control to AI: policy decides, not the model. Lock-in: open source plus industry standards. |
+| **TechM** | Zero Gravity is today a framework on paper: eight layers and the rule of zero residual rules in systems of record, but no worked example, no named customer and no Salesforce role in the report (CONFIRMED). This MVP makes it real on one journey in a realistic legacy estate, for the MWC27 Autonomous Enterprise theme (TechM's sponsorship of the theme is REPORTED, not confirmed). |
+| **A telco CIO or CTO** | It answers three fears. Replacing the BSS: Salesforce and the other systems stay. Losing control to AI: policy decides, not the model. Lock-in: open source plus industry standards. |
 | **TechM's Salesforce practice** | It positions Salesforce as the trusted system of record in an agentic telco. |
 
 **Rule:** anything in the demo that does not serve this purpose is cut.
 
-Every layer talks to Salesforce through industry-standard telco APIs (TM Forum Open APIs), so nothing is locked in. The API detail is in the appendix (section 11); the rest of the story uses plain business words.
+Every layer talks to Salesforce through industry-standard telco APIs (TM Forum Open APIs), so nothing is locked in. The API detail is in the appendix (section 12); the rest of the story uses plain business words.
 
 ---
 
 ## 2. How we present it (RECOMMENDED)
 
-Four acts, about 20 minutes. The business process is the same in every act; only the depth changes.
+Four acts, about 20 minutes. The business process is the same in every act; only the depth changes. Throughout, the estate is UK Telco's: Salesforce plus the legacy systems around it.
 
 **Act 1: The story (2 min, customer view only).** Show only Sam's chat. Sam describes the problem, is offered Fibre 900 with its price, accepts, is told proactively about the two-day delay at the exchange, and is told when the service is live. No architecture yet.
 
@@ -62,7 +81,7 @@ The line is a storytelling order, not the call order. The real call sequence is 
 
 **Act 3: The CIO/CTO view and the proof (5 min).** Run the live demo with the layer panel (section 8) lit up next to the chat. Then press **Not authorised**: a Business User asks for the same upgrade and the L4 policy, not the model, stops it, with the rule and reason on screen. Use the CIO/CTO questions in section 9 to frame it.
 
-**Act 4: Real vs mocked, and MVP to scale (3 min).** Show the summary table (section 7) with every mocked item named, then the path from MVP to pilot to scale (section 9, question 6).
+**Act 4: Real vs mocked, and MVP to scale (3 min).** Show the summary table (section 7) with every mocked item named, then the path from MVP to pilot to scale and the migration path (section 10).
 
 So the flow is: **customer story → layer walkthrough → CIO/CTO view → real vs mocked and MVP to scale.** Timings are approximate.
 
@@ -72,7 +91,7 @@ So the flow is: **customer story → layer walkthrough → CIO/CTO view → real
 
 ## 3. What changes for Sam
 
-**Today.** Brightwell Design Ltd is growing and its Fibre 150 line can't cope. Sam phones or emails the account manager, who checks the contract, asks someone else whether faster fibre is available at 1 Fibre Way, prepares a quote, waits for Sam to sign, and keys the order. If the exchange has no free port, Sam usually finds out when the engineer doesn't turn up, or by chasing. Several people and several systems are involved, each holding part of the rules.
+**Today.** Brightwell Design Ltd is growing and its Fibre 150 line can't cope. Sam phones or emails the account manager, who checks the contract, asks someone else whether faster fibre is available at 1 Fibre Way, prepares a quote, waits for Sam to sign, and keys the order. If the exchange has no free port, Sam usually finds out when the engineer doesn't turn up, or by chasing. Behind the scenes, Brightwell is a different customer ID in Salesforce, in billing and in network inventory, the eligibility rules sit in several systems, and the network order waits for an overnight batch. Several people and several systems are involved, each holding part of the rules.
 
 **In the agentic world.** Sam types the problem in plain words in the business portal: "We're hiring 15 people and moving to cloud video editing; the internet can't keep up." An agent already knows who Sam is, which site Brightwell is on and what it has today. It checks what is available at that address, recommends Fibre 900 with the price and what it means for the contract, and asks Sam to accept. A policy engine, not the agent, decides whether the upgrade is allowed. A deterministic workflow, not the agent, writes the quote and order into Salesforce. When the exchange port is late, the agent tells Sam the new date before Sam has to ask. When the order completes, Brightwell's product inventory shows Fibre 900 active. Every step is traceable.
 
@@ -94,15 +113,17 @@ sequenceDiagram
   participant L3 as L3 Data Foundation<br/>Postgres
   participant L5 as L5 Deterministic Execution<br/>coded workflow
   participant L6 as L6 Agent-Ready SoR<br/>Salesforce
-  participant OSS as Mocked OSS<br/>(stands in for Production SoR)
-  Note over L1,OSS: L7 Digital Core: all services run in one Docker Compose stack. L8: one OpenTelemetry trace across every step, viewed in Jaeger
+  participant LEG as Legacy stand-ins (mocked)<br/>billing, availability, OSS<br/>behind standard adapters
+  Note over L1,LEG: L7 Digital Core: all services run in one Docker Compose stack. L8: one OpenTelemetry trace across every step, viewed in Jaeger
   Sam->>L1: "We're hiring 15 people, the line can't keep up"
   L1->>L2: intent (free text + session: Sam, Brightwell)
   L2->>L3: save conversation turn
   L2->>L4: MCP get_context(requester, intent)
+  L4->>L3: resolve Brightwell's IDs (cross-reference)
+  L3-->>L4: Salesforce, billing and inventory IDs, with provenance
   L4->>L6: read customer record, Sam's role, site, current service
   L4->>L6: read products, speeds and prices from the catalogue
-  L4->>L4: availability check by address key (mocked), balance check (mocked)
+  L4->>LEG: balance by billing ID (slow), availability by address key (overnight data)
   L4-->>L2: context pack with provenance
   L2->>Sam: "Is this for 1 Fibre Way, IP5 3RE?"
   Sam->>L2: "Yes"
@@ -115,13 +136,13 @@ sequenceDiagram
   L5->>L6: create quote
   L5->>L6: place upgrade order, Fibre 150 to Fibre 900
   L5->>L6: set order in progress
-  L5->>OSS: start fulfilment
-  OSS-->>L5: milestone "port reservation requested"
-  OSS-->>L5: jeopardy "exchange port not yet available", +2 days
+  L5->>LEG: start fulfilment
+  LEG-->>L5: milestone "port reservation requested"
+  LEG-->>L5: overnight batch: jeopardy "exchange port not yet available", +2 days
   L5->>L3: store jeopardy, new expected date
   L5-->>L2: jeopardy event (order still inProgress)
   L2->>Sam: proactive message with new date
-  OSS-->>L5: milestone "port reserved", then "service activated"
+  LEG-->>L5: milestone "port reserved", then "service activated"
   L5->>L6: update installed service to Fibre 900, mark order completed
   L5->>L6: read back customer's services: Fibre 900 active
   L5-->>L2: order completed
@@ -177,7 +198,7 @@ Example intent envelope (example values):
 
 **Zero Gravity says (CONFIRMED, p.21–22):** "Goal-oriented AI agents reason over shared context, compose execution plans, and coordinate outcomes across domains without hard-coded integration logic." Protocols named: A2A, MCP and UCP (UCP is not defined in the report, UNKNOWN).
 
-**(a) Today vs agentic.** Today the account manager interprets the request and moves between systems. In the agentic world an agent interprets the goal, reasons over a prepared context and proposes a plan, but it has no write access and makes no business decision.
+**(a) Today vs agentic.** Today the account manager interprets the request and moves between systems. In the agentic world an agent interprets the goal, reasons over a prepared context and proposes a plan, but it has no write access and makes no business decision. It only calls clean business tools; it never sees a legacy system, a legacy ID or a batch job.
 
 **(b) Its job.** From Sam's first message to the recommendation; later, turning the workflow's jeopardy and completion events into plain messages for Sam.
 
@@ -231,9 +252,9 @@ The recommendation itself is reasoning ("15 more people and cloud video need mor
 
 **Zero Gravity says (CONFIRMED, p.21–22):** "Governed data products, Lakehouse architecture, semantic layers, AI/ML platforms, and real-time integration create a trustworthy substrate for agentic decisions."
 
-**(a) Today vs agentic.** Today conversation notes, decisions and order history sit in different tools, if they are kept at all. In the agentic world every turn, decision and workflow step is stored with the same trace ID, so an outcome can be reconstructed and learned from.
+**(a) Today vs agentic.** Today conversation notes, decisions and order history sit in different tools, if they are kept at all. UK Telco also knows Brightwell under three IDs, and people reconcile them by hand. In the agentic world every turn, decision and workflow step is stored with the same trace ID, and a maintained cross-reference links Brightwell's IDs across systems, so an outcome can be reconstructed and every system is talking about the same customer.
 
-**(b) Its job.** Throughout: storing Sam's conversation, the context pack used, the policy decision, the consent, the workflow state, and the jeopardy and milestone history.
+**(b) Its job.** At the start, resolving which Salesforce account, billing customer and inventory site are Brightwell's. Throughout: storing Sam's conversation, the context pack used, the policy decision, the consent, the workflow state, and the jeopardy and milestone history.
 
 **(c) Under the hood (RECOMMENDED).**
 
@@ -241,10 +262,21 @@ The recommendation itself is reasoning ("15 more people and cloud video need mor
 |---|---|
 | Component | One PostgreSQL database |
 | OSS and licence | PostgreSQL, PostgreSQL Licence (CONFIRMED, 06-tech-stack) |
-| Tables | `conversation_turn`, `context_pack`, `policy_decision`, `consent`, `workflow_instance`, `workflow_step` (with idempotency key), `order_event` (milestones, jeopardy), `audit_log` |
+| Tables | `identity_xref` (cross-reference, see below), `conversation_turn`, `context_pack`, `policy_decision`, `consent`, `workflow_instance`, `workflow_step` (with idempotency key), `order_event` (milestones, jeopardy), `audit_log` |
 | Input | Writes from L2, L4 and L5 |
 | Output | Reads for the layer view, audit and replay |
 | SID | Not a SID store; it holds our own operational records |
+
+**Identity cross-reference (RECOMMENDED; an MDM-style table, deliberately small).** Matching a customer or site across systems is **deterministic** and lives here in L3, as a maintained table with provenance for every link. It is **never** done by the agent and never by fuzzy matching. If a link is missing or not certain, the workflow stops and raises the case for human review (L5). L4 then builds the context from the resolved identity: **matching in L3, meaning in L4.**
+
+| Entity | System | ID (example) | Link source | Status |
+|---|---|---|---|---|
+| Brightwell Design Ltd | Salesforce Account | `001-example-brightwell` | Golden record | Verified |
+| Brightwell Design Ltd | Billing B (legacy stand-in) | `BIL-B-0077812` | Migration load after merger, checked by data steward | Verified |
+| 1 Fibre Way site | Network inventory (legacy stand-in) | site `4471` | Matched on address key `A00000001975` | Verified |
+| 1 Fibre Way site | Salesforce Location | External Reference `A00000001975` | Golden record | Verified |
+
+All IDs are illustrative. A link with status other than Verified is not used.
 
 Example audit row (example values):
 
@@ -253,7 +285,7 @@ Example audit row (example values):
  "policyVersion": "upgrade-v1", "inputHash": "sha256:...", "at": "2026-10-27T10:05:41Z"}
 ```
 
-**(d) On screen.** L3 lights at each save and shows the row written.
+**(d) On screen.** L3 lights at each save and shows the row written. It also shows the cross-reference used for this request: Brightwell's three IDs, each with where the link came from.
 
 **(e) Real vs mocked; out of scope.** Real: Postgres and everything stored in it. Honest gap: the report's L3 is a lakehouse with governed data products and MLOps. The MVP's L3 is one operational database, which is enough for the journey but is not a data foundation in the report's sense (INFERRED). Out of scope: Kafka, pgvector, semantic cache, data products, analytics.
 
@@ -265,9 +297,9 @@ Example audit row (example values):
 
 **Zero Gravity says (CONFIRMED, p.21–22):** "A shared enterprise vocabulary (ontology, knowledge graphs, policy engines, commitment models, and memory services) provides the gravity-free center of the architecture." Note that the report puts **policy engines** in L4, so OPA belongs here.
 
-**(a) Today vs agentic.** Today "authorised contact", "in contract" and "eligible" are defined differently in CRM, CPQ and order management, and the rules are buried inside them. In the agentic world each business term is defined once, the facts for one request are assembled into one context pack, and one policy engine decides on that same pack.
+**(a) Today vs agentic.** Today "authorised contact", "in contract" and "eligible" are defined differently in CRM, billing and order management, and the rules are buried inside them, often undocumented. **A real example from our own demo org (CONFIRMED, org-capabilities):** an existing org customisation, the record-triggered flow "Custom Assetize Order", silently required a Subscription Management usage record on every order before activation. Nothing documented it. It broke our orders, and we worked the hidden rule out from the error emails it sent. We handled it outside the flow, by creating that record before activation, without modifying the flow. This is an org customisation, not a Salesforce product flaw; the lesson applies to any customised system of record. In the agentic world each business term is defined once, the facts for one request are assembled into one context pack, and the rules are visible: for example, "upgrade only, not downgrade, mid-contract" is one versioned policy that anyone can read, test and change under review. That is the Zero Gravity "zero residual rules" idea on one rule.
 
-**(b) Its job.** Two moments: when the agent needs to understand Sam's situation (context pack), and when the workflow asks whether the upgrade is allowed (policy decision).
+**(b) Its job.** Two moments: when the agent needs to understand Sam's situation (context pack, built from the identity L3 has already resolved), and when the workflow asks whether the upgrade is allowed (policy decision).
 
 **(c) Under the hood (RECOMMENDED).**
 
@@ -288,8 +320,8 @@ Example audit row (example values):
 | CurrentBroadband | Product (inventory) | TMF637 | Asset at that Location | Real |
 | SpeedTier | ProductSpecCharacteristic, download speed | TMF620 | Catalogue, read at run time, not hard-coded. The existing code uses the characteristic name `downloadSpeedMbps` (CONFIRMED in `stack/`) | Real |
 | ContractMonthsLeft | Derived from Agreement / CustomerAgreement | TMF651 | Asset end date, **labelled as a stand-in** for the agreement | Real data, stand-in source |
-| AvailableAtSite | ProductOfferingQualification result | TMF679 | Our layer, by address key | **Mocked** (native TMF679 returns 400 on this org, CONFIRMED in org-capabilities) |
-| OverdueBalance | CustomerAccount balance / CustomerBill | TMF666 / TMF678 | Mocked billing feed | **Mocked** |
+| AvailableAtSite | ProductOfferingQualification result | TMF679 | Legacy stand-in: availability by address key, refreshed overnight | **Legacy stand-in (mocked)**; native TMF679 returns 400 on this org (CONFIRMED, org-capabilities) |
+| OverdueBalance | CustomerAccount balance / CustomerBill | TMF666 / TMF678 | Legacy stand-in: Billing B, by billing customer ID | **Legacy stand-in (mocked)** |
 
 Extract of the semantic YAML (RECOMMENDED shape):
 
@@ -309,7 +341,7 @@ terms:
     definition: Offerings that can be delivered at the site's address key.
     sid: ProductOfferingQualification
     tmf: TMF679
-    source: {mock: availability-by-address-key}
+    source: {legacyStandIn: availability, key: addressKey, refreshed: nightly}
 ```
 
 Example context pack (illustrative values; each fact carries provenance):
@@ -324,8 +356,11 @@ Example context pack (illustrative values; each fact carries provenance):
   "currentBroadband": {"product": "AgenticTelco Fibre 150", "downloadSpeedMbps": 150, "status": "active",
                        "src": "salesforce:Asset via TMF637"},
   "contractMonthsLeft": {"value": 10, "src": "salesforce:Asset end date (stand-in for TMF651 Agreement)"},
-  "availableAtSite": {"value": ["AgenticTelco Fibre 500", "AgenticTelco Fibre 900"], "src": "mock:TMF679"},
-  "overdueBalance": {"value": false, "src": "mock:billing"},
+  "identity": {"salesforceAccount": "001-example-brightwell", "billingCustomer": "BIL-B-0077812",
+               "inventorySite": "4471", "src": "L3 identity_xref (all links verified)"},
+  "availableAtSite": {"value": ["AgenticTelco Fibre 500", "AgenticTelco Fibre 900"],
+                      "asOf": "2026-10-27T02:00:00Z", "src": "legacy stand-in: availability (overnight refresh, mocked)"},
+  "overdueBalance": {"value": false, "src": "legacy stand-in: Billing B, customer BIL-B-0077812 (mocked)"},
   "offerings": [{"id": "AT-FIBRE-900", "downloadSpeedMbps": 900, "monthlyPrice": 45.00,
                  "src": "salesforce:catalogue via TMF620 Apex facade"}]
 }
@@ -375,9 +410,9 @@ target_speed := target.downloadSpeedMbps
 
 (The snippet assumes the offering carries a `name`; the final pack schema is DevBot's to fix. Policies will have `opa test` unit tests, as in 05-security.)
 
-**(d) On screen.** L4 lights twice: first with the context pack (provenance tags shown as "Salesforce" or "Mocked" chips), then with the policy check: what went in, the decision, and the rule that fired.
+**(d) On screen.** L4 lights twice: first with the context pack (provenance tags shown as "Salesforce" or "Legacy stand-in (mocked)" chips, with the "as of" time for overnight data), then with the policy check: what went in, the decision, the rule that fired and its version. A "Today" toggle shows the hidden-rule example above next to the visible policy.
 
-**(e) Real vs mocked; out of scope.** Real: semantic file, context service, OPA decisions, Salesforce-sourced facts. Mocked: availability and overdue balance. Out of scope: an ontology beyond this file, knowledge graph, vector search, memory services, commitment models. A graph extension such as Apache AGE (open source, on Postgres) is a possible later step (RECOMMENDED; licence to be checked before use).
+**(e) Real vs mocked; out of scope.** Real: semantic file, context service, OPA decisions, Salesforce-sourced facts. Legacy stand-ins (mocked): availability and overdue balance. Out of scope: an ontology beyond this file, knowledge graph, vector search, memory services, commitment models. A graph extension such as Apache AGE (open source, on Postgres) is a possible later step (RECOMMENDED; licence to be checked before use).
 
 ---
 
@@ -387,9 +422,9 @@ target_speed := target.downloadSpeedMbps
 
 **Zero Gravity says (CONFIRMED, p.21–22):** "Composable orchestration, API gateways, event-driven choreography, and compensating transaction patterns execute agent plans safely. 'Deterministic' here means auditable, predictable, and fully compensated."
 
-**(a) Today vs agentic.** Today orders are keyed by people and fallout is chased by people. In the agentic world the agent's accepted plan is executed by a workflow with fixed states, retries and compensation, and the agent never writes directly.
+**(a) Today vs agentic.** Today orders are keyed by people and fallout is chased by people. In the agentic world the agent's accepted plan is executed by a workflow with fixed states, retries and compensation, and the agent never writes directly. The workflow also absorbs the legacy: it waits for slow systems and overnight batches, retries failures, and turns a legacy delay into a jeopardy.
 
-**(b) Its job.** From Sam's "Accept" to "Fibre 900 is live": ask policy for a decision, record consent, create the quote, place the upgrade order, drive fulfilment, raise the jeopardy and revised date, and complete the order.
+**(b) Its job.** From Sam's "Accept" to "Fibre 900 is live": ask policy for a decision, record consent, create the quote, place the upgrade order, drive fulfilment, raise the jeopardy and revised date, and complete the order. The jeopardy starts in UK Telco's legacy OSS (a stand-in in the MVP); L5 turns it into an event the agent can tell Sam about.
 
 **(c) Under the hood (RECOMMENDED).**
 
@@ -397,19 +432,23 @@ target_speed := target.downloadSpeedMbps
 |---|---|
 | Component | Small coded workflow (Python) with a state machine persisted in Postgres. Operaton BPMN stays in the full demo only (open item 2 in MVP-design) |
 | Idempotency | One key per intent (for example `int-0001-upgrade`) is passed as `externalId` to TMF622. The Apex facade already rejects a POST without `externalId` and is idempotent on it (CONFIRMED, `AgenticTelco_TMF622.cls`) |
-| Input | Proposal and consent from L2; decision from OPA; events from the mocked OSS |
+| Legacy handling | Timeouts and retries with back-off for the slow billing stand-in; waits for the overnight OSS batch; raises a jeopardy on delay; stops for human review if identity is not verified |
+| Input | Proposal and consent from L2; decision from OPA; events from the legacy OSS stand-in |
 | Output | TMF648 and TMF622 calls to L6; events to L2; rows in L3 |
 
 Workflow states:
 
 ```mermaid
 stateDiagram-v2
-  [*] --> PolicyCheck
+  [*] --> IdentityCheck
+  IdentityCheck --> HumanReview: link not verified
+  IdentityCheck --> PolicyCheck: all links verified
+  HumanReview --> [*]
   PolicyCheck --> Denied: OPA deny
   PolicyCheck --> ConsentRecorded: OPA allow
   ConsentRecorded --> QuoteCreated: TMF648 POST
   QuoteCreated --> OrderPlaced: TMF622 POST action modify
-  OrderPlaced --> InFulfilment: TMF622 PATCH inProgress, start mocked OSS
+  OrderPlaced --> InFulfilment: TMF622 PATCH inProgress, send to legacy OSS stand-in
   InFulfilment --> InJeopardy: jeopardy event
   InJeopardy --> InFulfilment: recovered (milestone)
   InFulfilment --> InventoryUpdated: service activated
@@ -418,9 +457,9 @@ stateDiagram-v2
   Completed --> [*]
 ```
 
-**Jeopardy field names** were checked against the TM Forum spec files; the version detail is in the appendix (section 11.3). In short: the order stays `inProgress`, and the jeopardy and milestone fields and events used below are those of TMF622 v5.
+**Jeopardy field names** were checked against the TM Forum spec files; the version detail is in the appendix (section 12.3). In short: the order stays `inProgress`, and the jeopardy and milestone fields and events used below are those of TMF622 v5.
 
-So in the MVP the jeopardy is modelled as: the mocked OSS raises a TMF641-shaped jeopardy on the service order; L5 reflects it at product-order level using the TMF622 **v5** field and event names. The order stays `inProgress` throughout (it does not move to `held` or `failed`).
+So in the MVP the jeopardy is modelled as: the legacy OSS stand-in raises a TMF641-shaped jeopardy on the service order; L5 reflects it at product-order level using the TMF622 **v5** field and event names. The order stays `inProgress` throughout (it does not move to `held` or `failed`).
 
 Our Apex TMF622 facade does **not** store jeopardy or milestones today: it maps only `state` (Draft = acknowledged, Submitted = inProgress, Activated = completed) and writes order items with `action: add` (CONFIRMED, `AgenticTelco_TMF622.cls`). Adding `action: modify` is already build item 1. **Open item for DevBot (RECOMMENDED):** keep jeopardy and milestone history in L3 and emit it as TMF622 v5-shaped events from L5, rather than adding fields to the Salesforce Order, so no new Salesforce metadata is needed. If LalitC wants them visible in Salesforce, that is a separate decision.
 
@@ -446,7 +485,7 @@ Example jeopardy event from L5 (example values; field names CONFIRMED in TMF622 
 
 **(d) On screen.** L5 lights at each state change. The panel shows the state machine with the current state highlighted, the idempotency key, and the jeopardy event.
 
-**(e) Real vs mocked; out of scope.** Real: the workflow, its states, idempotency and its calls to Salesforce. Mocked: the OSS that produces milestones and the jeopardy. Out of scope: Operaton BPMN, an API gateway, an event bus, full compensation of every step (the MVP journey has no rollback path to demonstrate).
+**(e) Real vs mocked; out of scope.** Real: the workflow, its states, idempotency and its calls to Salesforce. Legacy stand-in (mocked): the OSS that produces milestones and the jeopardy, in overnight batches. Out of scope: Operaton BPMN, an API gateway, an event bus, full compensation of every step (the MVP journey has no rollback path to demonstrate).
 
 ---
 
@@ -456,9 +495,9 @@ Example jeopardy event from L5 (example values; field names CONFIRMED in TMF622 
 
 **Zero Gravity says (CONFIRMED, p.21–22):** "Featherweight, domain-aligned systems store canonical facts, state, events, and lineage while exposing semantically aligned APIs and event streams." "Agent-ready" is "not a mandatory forklift upgrade": legacy BSS/OSS are "thinned". The report names **no** specific APIs and **no** Salesforce role (CONFIRMED).
 
-**(a) Today vs agentic.** Today CRM, CPQ and order management hold data *and* rules. In the agentic world Salesforce Communications Cloud keeps the canonical records (customer, site, product, quote, order) and nothing else; it is reached only through APIs.
+**(a) Today vs agentic.** Today UK Telco's CRM, two billing systems, network inventory and OSS each hold data *and* rules, and some have no modern API. In the agentic world every system of record sits behind an adapter that speaks a standard API. If a system can't, it is wrapped, as we did with the small Apex add-ons on Salesforce. Systems are then replaced one at a time, never in a big bang. Salesforce keeps the SME customer records, quotes, orders and installed services and nothing else. The agent never touches any of these systems directly.
 
-**(b) Its job.** Supplying facts to L4 at the start, receiving the quote and order from L5, and finally showing Fibre 900 active.
+**(b) Its job.** Supplying facts to L4 at the start (from Salesforce and the billing and availability stand-ins), receiving the quote and order from L5, and finally showing Fibre 900 active.
 
 **(c) Under the hood.** Per ADR-001 and ADR amendment 001 (CONFIRMED, approved by LalitC):
 
@@ -471,6 +510,15 @@ Example jeopardy event from L5 (example values; field names CONFIRMED in TMF622 
 | Quote | TMF648 | `AgenticTelco_TMF648` Apex REST | custom Apex TMF facade on Salesforce |
 | Order | TMF622 | `AgenticTelco_TMF622` Apex REST (mapping only) | custom Apex TMF facade on Salesforce |
 | Asset becomes Fibre 900 | TMF637 result | Asset written by our adapter through standard sObject REST, read back via TMF637 (the full demo does this today, CONFIRMED in `stack/l6_salesforce_adapter`) | native Salesforce API |
+
+Legacy stand-ins (RECOMMENDED design of the mocks, so the demo behaves like a real estate; all values illustrative):
+
+| Stand-in | Standard API shape | Quirk it shows |
+|---|---|---|
+| Billing B | TMF666 / TMF678 shape | Different customer ID from Salesforce (`BIL-B-0077812`); slow response (deliberate delay) |
+| Availability | TMF679 shape | Data refreshed only overnight; answers carry an "as of" time |
+| Network inventory | Site lookup | Its own site ID (`4471`) |
+| Legacy OSS | TMF641-shaped adapter in front of it | Fulfils in overnight batches; raises the exchange-port jeopardy. The agent never touches it |
 
 The facades hold no business rules, only TMF ↔ sObject mapping and state transitions, with test coverage of at least 85% (CONFIRMED, amendment 001: 97.3% at the last deploy). Nothing existing in the org is changed; only AgenticTelco records are created.
 
@@ -494,7 +542,7 @@ Salesforce records at the end (example IDs): Order `Status = Activated` (TMF622 
 
 **(d) On screen.** L6 shows each call to Salesforce (customer record, catalogue, quote, order, installed service) with its request and response, labelled **native Salesforce API** or **custom Apex TMF facade on Salesforce**, with links to the Salesforce records.
 
-**(e) Real vs mocked; out of scope.** Real: all Salesforce reads and writes. Mocked: the availability check and network fulfilment. Out of scope: real billing and balance, network service orders from Salesforce, Salesforce's own availability check.
+**(e) Real vs mocked; out of scope.** Real: all Salesforce reads and writes. Legacy stand-ins (mocked): billing, availability, network inventory and OSS fulfilment. Out of scope: real billing and balance, network service orders from Salesforce, Salesforce's own availability check.
 
 ---
 
@@ -512,7 +560,7 @@ Salesforce records at the end (example IDs): Order `Status = Activated` (TMF622 
 
 | Concern | MVP | Gap against the report's L7 |
 |---|---|---|
-| Runtime | One Docker Compose stack on one small host: portal, agent, context service, OPA, workflow, Postgres, OSS mock, L6 adapter, OTel collector, Jaeger | No Kubernetes, multi-cloud, edge or ODA Canvas |
+| Runtime | One Docker Compose stack on one small host: portal, agent, context service, OPA, workflow, Postgres, legacy stand-ins, L6 adapter, OTel collector, Jaeger | No Kubernetes, multi-cloud, edge or ODA Canvas |
 | Licence | Docker Compose, Apache-2.0; use Docker Engine on Linux (Docker Desktop has separate commercial terms, INFERRED) | — |
 | Secrets | From the environment on the host; Salesforce access only server-side via the Salesforce CLI session (CONFIRMED, amendment 001); never in the browser, repo, logs or traces | No secret manager |
 | Network | One internal Compose network; only the portal is exposed | No zero-trust service mesh |
@@ -549,7 +597,9 @@ Expected spans (names are RECOMMENDED):
 | `l3.db.write` | L3 | table |
 | `l5.workflow.step` (one per state) | L5 | state, idempotency key |
 | `l6.tmf648.post`, `l6.tmf622.post`, `l6.tmf622.patch`, `l6.tmf637.get` | L6 | HTTP status, runtime label (native or Apex facade) |
-| `oss.mock.jeopardy`, `oss.mock.milestone` | mocked OSS | jeopardy name, new date |
+| `l3.identity.resolve` | L3 | IDs resolved, all links verified (yes/no) |
+| `legacy.billing.balance`, `legacy.availability.check` | legacy stand-ins | latency, as-of time |
+| `legacy.oss.jeopardy`, `legacy.oss.milestone` | legacy OSS stand-in | batch run, jeopardy name, new date |
 
 **(d) On screen.** An L8 strip under the layer panel showing the trace ID and a link to open it in Jaeger.
 
@@ -559,11 +609,13 @@ Expected spans (names are RECOMMENDED):
 
 ## 6. Exception paths: who decides
 
+A further safety rule, not a demo button: if Brightwell's identity links are not all verified (L3), the workflow stops and raises the case for human review before any policy check or write.
+
 | Scenario | What happens | Which layer makes the call |
 |---|---|---|
 | Not authorised (a Business User asks) | Agent explains and offers to route to the account admin; no quote or order | **L4 OPA** denies (`not_authorised`); L2 explains |
 | Overdue balance | Agent explains and offers a payment link (mocked) | **L4 OPA** denies (`overdue_balance`) |
-| Order jeopardy that recovers | Order stays `inProgress`, Sam is told the new date, order completes | **L5** raises it from the mocked OSS; **L2** tells Sam |
+| Order jeopardy that recovers | Order stays `inProgress`, Sam is told the new date, order completes | Starts in the **legacy OSS** stand-in; **L5** raises it; **L2** tells Sam |
 
 ## 7. Summary table
 
@@ -571,10 +623,10 @@ Expected spans (names are RECOMMENDED):
 |---|---|---|
 | L1 Intent & Experience | Intent envelope, chat | Real (demo login) |
 | L2 Agent Mesh | Plan, MCP tool calls, recommendation | Real |
-| L3 Data Foundation | Conversation, decision, consent, workflow and audit rows | Real |
-| L4 Enterprise Context | Semantic terms, context pack with provenance, OPA input, decision and Rego | Real; availability and balance mocked |
-| L5 Deterministic Execution | State machine, idempotency key, jeopardy event | Real workflow; OSS events mocked |
-| L6 Agent-Ready SoR | Salesforce calls (request and response), record links | Real Salesforce; availability check and fulfilment mocked |
+| L3 Data Foundation | Identity cross-reference; conversation, decision, consent, workflow and audit rows | Real (cross-reference IDs illustrative) |
+| L4 Enterprise Context | Semantic terms, context pack with provenance, OPA input, decision and Rego | Real; availability and balance are legacy stand-ins |
+| L5 Deterministic Execution | State machine, idempotency key, legacy waits and retries, jeopardy event | Real workflow; OSS is a legacy stand-in |
+| L6 Agent-Ready SoR | Salesforce calls (request and response), record links | Real Salesforce; billing, availability and OSS are legacy stand-ins |
 | L7 Digital Core | Running containers, network boundary, secrets note | Real (single host) |
 | L8 Observability & Governance | Trace ID, span list, Jaeger link | Real |
 
@@ -590,8 +642,8 @@ This adopts DevBot's proposal. It is a design for DevBot to build only after Lal
 |---|---|
 | L1 | The intent envelope |
 | L2 | Plan, tool calls and results, final wording |
-| L3 | Rows written in Postgres (conversation, decisions, audit) |
-| L4 | Semantic definitions used, the context pack with "Salesforce" or "Mocked" provenance chips, the OPA input, decision and rule |
+| L3 | Identity cross-reference for this request (three IDs with link source); rows written (conversation, decisions, audit) |
+| L4 | Semantic definitions used, the context pack with "Salesforce" or "Mocked" provenance chips ("Salesforce" or "Legacy stand-in (mocked)"), the policy input, decision, rule and version |
 | L5 | State machine with current state, idempotency key, milestones and jeopardy |
 | L6 | Each Salesforce call's request and response, labelled **native Salesforce API** or **custom Apex TMF facade on Salesforce**, with links to the Salesforce records |
 | L7 | Containers and health, network boundary, "credentials stay server-side" |
@@ -609,7 +661,7 @@ This adopts DevBot's proposal. It is a design for DevBot to build only after Lal
 | Not authorised | Business User asks; no order | L4 OPA denies |
 | Overdue balance | Mocked arrears; no order | L4 OPA denies |
 
-Mocked values are always shown with a "Mocked" label on screen.
+Legacy stand-in values are always shown with a "Legacy stand-in (mocked)" label on screen.
 
 ---
 
@@ -619,7 +671,7 @@ The questions a CIO or CTO is likely to ask, with our answer and where the demo 
 
 | # | Question | Answer | Where the demo shows it |
 |---|---|---|---|
-| 1 | Do we have to replace Salesforce or our BSS? | No. Salesforce stays the system of record. It keeps the customer records, quotes, orders and installed services, and is reached only through standard APIs | L6 panel: each call labelled native Salesforce API or custom Apex facade, with record links |
+| 1 | Do we have to replace Salesforce or our BSS? | No. Salesforce and the rest of the estate stay. Salesforce stays the system of record for the SME segment. It keeps the customer records, quotes, orders and installed services, and is reached only through standard APIs | L6 panel: each call labelled native Salesforce API or custom Apex facade, with record links |
 | 2 | Who is in control, the AI or us? | The agent proposes, policy decides, the workflow writes. The agent has no write tools and cannot bypass authorisation, consent or financial checks | **Not authorised** and **Overdue balance** buttons: L4 OPA denies, nothing is written |
 | 3 | Are we locking ourselves in? | No. Every layer talks to Salesforce through industry-standard telco APIs (TM Forum Open APIs), so nothing is locked in. Everything outside Salesforce is open source, and the small Salesforce add-ons only translate data, so they can be swapped for Salesforce's own versions later. We say **aligned with industry standards, not certified** | Architecture tab (open source and licence per layer); L6 labels |
 | 4 | Is it safe and compliant? | Every decision is traced and audited: context used, policy version, decision, consent and every API call (L3, L8). Data residency: **designed for UK residency; MVP hosting not yet verified UK-only**. The GitHub Pages replay, the Salesforce org region and the model hosting location are all unverified (UNKNOWN) | L8 trace and Jaeger link; L4 decision; L3 audit rows |
@@ -628,12 +680,27 @@ The questions a CIO or CTO is likely to ask, with our answer and where the demo 
 | 7 | How does it fit the industry reference architecture? | It adds to what the operator already has and rips nothing out; the detailed mapping is in the appendix | Architecture tab |
 | 8 | What is the business case for a pilot? | Measure, against the operator's own baseline: order cycle time, right-first-time orders, cost per upgrade, and inbound "where's my order?" calls avoided by proactive jeopardy messages. **No figures until a pilot has measured them** | Happy path: proactive jeopardy message; timestamps in the trace |
 | 9 | Who owns the rules? | The business owns the policies, as versioned rules (Rego in Git) with change control and tests. IT owns the platform. The agent owns neither | L4 panel: policy version and the rule that fired |
+| 10 | What about my legacy? | It stays, wrapped. Each legacy system sits behind an adapter speaking a standard API, its rules are extracted into visible policy one at a time, IDs are matched in a maintained cross-reference, and the workflow absorbs slow and batch systems. Systems are retired incrementally (section 10) | L3 cross-reference; L4 "Today" toggle (hidden rule vs visible policy); legacy stand-in labels; jeopardy from the legacy OSS |
 
 **Link to the MWC27 Autonomous Enterprise theme.** The repo records the team's report that TechM sponsors this theme; the sponsor name is not confirmed (REPORTED, open item O11 in 07-risks). The Zero Gravity report quotes TM Forum's CEO: operators that want to become autonomous enterprises "must first build trusted foundations, shared understanding and governance that allow AI to operate safely and at scale" (CONFIRMED, report p.6, Nik Willetts). This MVP is that first, governed step on one journey: one SME upgrade, end to end, with every rule outside the agent and outside Salesforce.
 
 ---
 
-## 10. Open points and unverified items
+## 10. Migration path (RECOMMENDED, draft)
+
+No big bang. The same steps the MVP takes on one journey, repeated journey by journey:
+
+1. **Wrap legacy behind standard APIs.** Put an adapter speaking a standard API in front of each system. Where a system can't be adapted from outside, add a thin wrapper, as we did with the mapping-only Apex add-ons on Salesforce.
+2. **Resolve identities.** Build the cross-reference of customer and site IDs in L3, with provenance per link and human review for uncertain matches.
+3. **Extract rules into policy.** Move each eligibility, credit or contract rule out of flows, code and configuration into versioned, tested policy in L4, one rule at a time, and switch the old copy off once the new one is proven.
+4. **Let the agent act on that journey only.** The agent proposes; policy decides; the workflow writes.
+5. **Retire systems incrementally** (the strangler pattern). Once a legacy system is only reached through its adapter and holds no unique rules, it can be replaced behind the same API without changing the agent or the workflow.
+
+The Zero Gravity report describes the same idea for legacy-heavy operators: "strangler-fig" domain wrapping, parallel running during transition, and moving from agent-assist to agent-autonomous (CONFIRMED, `zero-gravity-analysis.md` §5, report PDF p.37–39, 45). Path to production for the MVP itself: MVP → pilot → scale (section 9, question 6).
+
+---
+
+## 11. Open points and unverified items
 
 1. **TMF622 jeopardy fields (CONFIRMED correction):** jeopardy and milestone fields are in TMF622 **v5** (`productOrderJeopardyAlert`, `productOrderMilestone`), not v4.0.0. TMF641 v4.2.0 has `jeopardyAlert` and `milestone`. The earlier note in chat was wrong on this point.
 2. **Where jeopardy history lives:** RECOMMENDED in L3 with TMF622 v5-shaped events from L5; Salesforce Order unchanged. Needs DevBot's and LalitC's agreement.
@@ -641,15 +708,19 @@ The questions a CIO or CTO is likely to ask, with our answer and where the demo 
 4. **Model used by the agent in the MVP:** UNKNOWN.
 5. **SID mapping:** INFERRED alignment, not checked ABE by ABE against GB922. TMF669 and TMF651 are listed for alignment only; they are not called in the MVP.
 6. **Apache AGE:** a later option only; licence and fit to be checked before use.
-7. The MVP is aligned to ODA functional blocks and uses TMF Open API contracts; it is **not** ODA- or TMF-certified.
+7. **UK Telco is fictional.** Its estate, IDs (`BIL-B-0077812`, site `4471`) and quirks are illustrative design choices for the legacy stand-ins, not data from any operator.
+8. **MWC27 theme sponsorship by TechM** is REPORTED, not confirmed (07-risks, O11).
+9. The MVP is aligned to ODA functional blocks and uses TMF Open API contracts; it is **not** ODA- or TMF-certified.
+
+**Later / out of scope:** Zero Gravity Index positioning — later.
 
 ---
 
-## 11. Appendix: standards mapping (for architects)
+## 12. Appendix: standards mapping (for architects)
 
 The main story uses business words. This appendix holds the standards detail behind it. All mappings are conceptual alignment (INFERRED) unless marked; nothing here is TM Forum certified.
 
-### 11.1 Journey step to TM Forum Open API
+### 12.1 Journey step to TM Forum Open API
 
 | Step in the story | TM Forum Open API | Served by | Label |
 |---|---|---|---|
@@ -657,18 +728,18 @@ The main story uses business words. This appendix holds the standards detail beh
 | Site and address key | TMF674 Geographic Site, TMF673 Geographic Address (shape) | Our layer reading standard Location / Address | RECOMMENDED |
 | Current service, service live | TMF637 Product Inventory | Salesforce, native read; Asset write by standard sObject REST | CONFIRMED |
 | Products, speeds, prices | TMF620 Product Catalog | Apex facade `AgenticTelco_TMF620` | CONFIRMED |
-| Availability check | TMF679 Product Offering Qualification | Mocked in our layer (native returns 400 on this org) | CONFIRMED |
-| Overdue balance | TMF666 Account / TMF678 Customer Bill (alignment only) | Mocked | RECOMMENDED |
+| Availability check | TMF679 Product Offering Qualification | Legacy stand-in in our layer (native returns 400 on this org) | CONFIRMED |
+| Overdue balance | TMF666 Account / TMF678 Customer Bill (alignment only) | Legacy stand-in (Billing B) | RECOMMENDED |
 | Contract months left | TMF651 Agreement (alignment only; Asset end date is the stand-in) | Salesforce data | RECOMMENDED |
 | Quote | TMF648 Quote | Apex facade `AgenticTelco_TMF648` | CONFIRMED |
 | Upgrade order, in progress, completed | TMF622 Product Ordering, item `action: modify` | Apex facade `AgenticTelco_TMF622` (modify is build item 1) | CONFIRMED |
-| Fulfilment, milestones, jeopardy | TMF641 Service Ordering (shape) | Mocked OSS | RECOMMENDED |
+| Fulfilment, milestones, jeopardy | TMF641 Service Ordering (shape) | Adapter in front of legacy OSS stand-in | RECOMMENDED |
 | Intent | TMF921 Intent / TR292 TIO (conceptual only; not implemented in the MVP) | — | RECOMMENDED |
 | Events | TMF688-style envelope (pattern, not conformance) | Our layer | RECOMMENDED |
 
 The SID mapping for each business term is in the L4 section ("Semantic definitions"). It has not been checked ABE by ABE against GB922 (INFERRED).
 
-### 11.2 ODA and the Zero Gravity layers
+### 12.2 ODA and the Zero Gravity layers
 
 | Zero Gravity layer | What the report says about ODA / TM Forum (CONFIRMED, report p.21–22, 52) | MVP mapping (INFERRED) |
 |---|---|---|
@@ -677,13 +748,13 @@ The SID mapping for each business term is in the L4 section ("Semantic definitio
 | L3 Data Foundation | "Builds on ODA Intelligence Management" | Postgres records |
 | L4 Enterprise Context | SID (GB922) and TR292 TIO | Semantic YAML, context service, OPA |
 | L5 Deterministic Execution | ODA "decoupling and integration fabric" | Coded workflow |
-| L6 Agent-Ready SoRs | ODA Party Management, Core Commerce Management and Production; no TMF API numbers named | Salesforce: Party Management and Core Commerce Management; mocked OSS stands in for Production |
+| L6 Agent-Ready SoRs | ODA Party Management, Core Commerce Management and Production; no TMF API numbers named | Salesforce: Party Management and Core Commerce Management; legacy OSS stand-in for Production |
 | L7 Digital Core | ODA Canvas runtime | Docker Compose (no Canvas) |
 | L8 Observability & Governance | — | OpenTelemetry, Jaeger, audit rows |
 
 The approach is additive: nothing in the operator's estate is replaced. Wording to use: "aligned to ODA functional blocks, using TMF Open API contracts", never "ODA-compliant" or "certified".
 
-### 11.3 Order jeopardy: spec versions
+### 12.3 Order jeopardy: spec versions
 
 **Jeopardy: what the TMF specs actually contain (CONFIRMED, read from the tmforum-apis GitHub spec files on 27 Oct 2026).** This corrects the earlier REPORTED note that TMF622 "v4 onwards" has a `jeopardyAlert` field:
 

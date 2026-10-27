@@ -87,7 +87,7 @@ Mocked and labelled in the demo: overdue-balance check, availability by address 
 1. Extend the TMF622 Apex facade to accept `action: modify` with a reference to the existing Fibre 150 product, mapping it to an order line that replaces Fibre 150 with Fibre 900 on the same service. Mapping only, no business rules in Salesforce (DevBot).
 
 ## 9. Layer walkthrough
-A detailed, layer-by-layer explanation of this design (how we present it, the end-to-end sequence across all eight Zero Gravity layers, what each layer does in Brightwell's journey, example artefacts, real vs mocked, the proposed demo layer view and a CIO/CTO view) is in [layer-walkthrough.md](layer-walkthrough.md). It explains this page and does not change the business process.
+A detailed, layer-by-layer explanation of this design (how we present it, the end-to-end sequence across all eight Zero Gravity layers, what each layer does in Brightwell's journey, example artefacts, real vs mocked, the proposed demo layer view and a CIO/CTO view) is in [layer-walkthrough.md](layer-walkthrough.md). It explains this page and does not change the business process. The walkthrough sets the journey in a fictional Tier 1 operator, "UK Telco" (illustrative), where Salesforce is one system among several legacy systems; the non-Salesforce systems are labelled legacy stand-ins.
 
 Note on order jeopardy (checked 27 Oct 2026 against the tmforum-apis spec files, CONFIRMED): `productOrderJeopardyAlert`, `productOrderMilestone` and their events are in **TMF622 v5**, not v4.0.0; TMF641 v4.2.0 has `jeopardyAlert` and `milestone`. The order stays `inProgress` during the jeopardy. Details in the walkthrough, L5.
 
@@ -97,6 +97,7 @@ Note on order jeopardy (checked 27 Oct 2026 against the tmforum-apis spec files,
 - **Semantic YAML** (in the repo) defines each business term once, mapped to its SID concept, its TMF API and its Salesforce source.
 - **Context service** builds one **context pack** per request. **Both** the agent (through one MCP tool, `get_context`) and OPA receive the same pack, so the policy decides on exactly the facts the agent saw.
 - **Provenance:** every fact in the pack names its source (Salesforce object, or mocked).
+- **Identity matching** (which Salesforce account, billing customer and inventory site are the same customer) is deterministic and lives in **L3** as a maintained cross-reference with provenance per link, never in the agent and never fuzzy. An unverified link stops the workflow for human review. L4 builds the pack from the resolved identity: matching in L3, meaning in L4.
 
 | Business term | SID concept | TMF API | Source |
 |---|---|---|---|
@@ -106,8 +107,8 @@ Note on order jeopardy (checked 27 Oct 2026 against the tmforum-apis spec files,
 | CurrentBroadband | Product (inventory) | TMF637 | Asset at the Location |
 | SpeedTier | ProductSpecCharacteristic (download speed) | TMF620 | Catalogue, read at run time, not hard-coded |
 | ContractMonthsLeft | Derived from Agreement / CustomerAgreement | TMF651 | Asset end date, labelled as a stand-in |
-| AvailableAtSite | ProductOfferingQualification result | TMF679 | Mocked |
-| OverdueBalance | CustomerAccount balance / CustomerBill | TMF666 / TMF678 | Mocked |
+| AvailableAtSite | ProductOfferingQualification result | TMF679 | Legacy stand-in (mocked), refreshed overnight |
+| OverdueBalance | CustomerAccount balance / CustomerBill | TMF666 / TMF678 | Legacy stand-in (mocked billing, own customer ID) |
 
 SID and TMF mappings are conceptual alignment (INFERRED), not certified.
 
