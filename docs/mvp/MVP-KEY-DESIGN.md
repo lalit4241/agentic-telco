@@ -203,6 +203,7 @@ Each decision has a recommended default.
 8. **Where TMF921 lives.** Outside Salesforce, confirmed by LalitC on 27 Oct 2026.
    - **Where:** a small intent service in L1, stored in L3 Postgres, which is the system of record for the Intent and IntentReports. An Intent is agent-layer state, not system-of-record data.
    - **Who writes:** the agent proposes the structured Intent. The intent service validates it (schema plus the OPA authorised-contact check) and records it. L5 posts the IntentReports. The agent has no write tools to any system of record.
+   - **Rule (LalitC, 27 Oct 2026: "TMF921 stays out of Salesforce - Salesforce only has the APIs for SoR"):** Salesforce hosts only APIs for data it is the system of record for (native APIs, or thin mapping-only Apex facades where the org lacks them). Agent-layer state such as TMF921 Intent lives outside Salesforce.
    - **Apex facades:** remain for TMF620/622/648/671 only.
    - **Rejected:** an Apex facade with a custom object, and stretching Opportunity or Case.
    - **Record:** an ADR-001 amendment.

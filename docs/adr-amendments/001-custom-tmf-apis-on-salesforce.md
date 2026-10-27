@@ -49,4 +49,6 @@ A dry-run validation (`0AfQH00000Q1p1V0AR`) preceded the second deploy.
 
 ## Amendment: TMF921 Intent
 
+**Rule:** Salesforce hosts only APIs for data it is the system of record for (native APIs, or thin mapping-only Apex facades where the org lacks them). Agent-layer state such as TMF921 Intent lives outside Salesforce. (LalitC, 27 Oct 2026: "TMF921 stays out of Salesforce - Salesforce only has the APIs for SoR.")
+
 TMF921 Intent is agent-layer state, not system-of-record data, so it is hosted outside Salesforce in a small intent service (L1, stored in L3). Confirmed LalitC 27 Oct 2026; an Apex facade with a custom object was considered and rejected, as was stretching Opportunity/Case.
