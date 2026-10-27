@@ -36,10 +36,15 @@ flowchart TD
   G -- Passed --> H[Sam accepts; consent recorded]
   H --> I[Workflow creates quote]
   I --> J[Workflow places modify order 150 to 900]
-  J -- Order fails --> X3[Cancel quote; tell Sam honestly]
-  J -- Success --> K[Confirmation and order reference; full trace]
+  J --> L[Fulfilment in progress - mocked network/OSS]
+  L -- On track --> K[Order completed]
+  L -- Jeopardy: delay e.g. engineer slot or exchange capacity --> M[Workflow raises jeopardy, agent tells Sam the new date proactively]
+  M --> K
+  K --> N[Fibre 900 active in product inventory; Sam notified; full trace]
 ```
-**Failure paths in the MVP:** (1) not authorised, (2) overdue balance, (3) mid-contract downgrade refused, (4) Salesforce order fails and the quote is undone.
+**Exception paths in the MVP:** (1) not authorised, (2) overdue balance, (3) mid-contract downgrade refused, (4) **order jeopardy**: fulfilment is delayed, Sam is told the revised date proactively, and the order still completes.
+
+**End state (must be demonstrated):** the order is `completed` in Salesforce and the customer's product inventory shows **Fibre 900 active** at the Martlesham site, replacing Fibre 150. A working service, not just an accepted order.
 
 ## 4. What each layer does (and leaves out)
 | Layer | MVP job | Out of scope for now |
@@ -48,7 +53,7 @@ flowchart TD
 | L2 Agent | One agent: understand need, match to product, explain | Agent mesh, A2A, multiple models |
 | L3 Data | Postgres: conversation, decisions, audit | Kafka, pgvector, semantic cache |
 | L4 Policy | One OPA policy: authorised contact, no overdue balance (mocked), available at address key (mocked), upgrade-only mid-contract | Multiple policy packs |
-| L5 Execution | Small coded workflow: quote, order, confirm, with idempotency and undo | Operaton BPMN engine (full demo only) |
+| L5 Execution | Small coded workflow: quote, order, track fulfilment to completion, raise jeopardy and revised date, update inventory; idempotent | Operaton BPMN engine (full demo only) |
 | L6 Salesforce SoR | Reads party, site, asset, catalogue; writes quote and order | OSS service order, qualification (org returns error) |
 | L8 Observability | One OpenTelemetry trace per request in Jaeger | Grafana, Langfuse, inference gateway |
 
@@ -63,15 +68,18 @@ Rule unchanged: **the agent proposes, policy decides, the workflow writes.** No 
 | Availability at address key | TMF679 Product Offering Qualification | Mocked in our layer |
 | Product and price | TMF620 Product Catalog | Salesforce, Apex TMF facade |
 | Quote | TMF648 Quote | Salesforce, Apex TMF facade |
-| Modify order | TMF622 Product Order (action `modify`) | Salesforce, Apex TMF facade |
+| Modify order and order state (acknowledged, inProgress, completed) | TMF622 Product Order (action `modify`) | Salesforce, Apex TMF facade |
+| Fulfilment progress, jeopardy and revised date | TMF641 Service Order (milestones and jeopardy alerts; field support to be verified against the spec version) | Mocked OSS in our layer |
+| Order status notification to Sam | TMF622 / TMF641 events via TMF688 Event pattern | Our layer |
+| Service live | TMF637 Product Inventory: Fibre 900 active | Salesforce, native |
 
 eTOM: Customer Order Handling (Fulfillment), preceded by a pre-order availability check. ODA: Core Commerce and Party Management only. This is conceptual alignment, not certified conformance.
 
 ## 6. Real vs mocked
 Real: Salesforce reads and writes, catalogue and prices, policy decisions, workflow and undo, tracing.
-Mocked and labelled in the demo: overdue-balance check, availability by address key, payment link.
+Mocked and labelled in the demo: overdue-balance check, availability by address key, payment link, network fulfilment (OSS) and the jeopardy event that delays it.
 
 ## 7. Open items for sign-off
-1. Approve the scenario, test data and four failure paths.
+1. Approve the scenario, test data, the four exception paths and the end state (Fibre 900 active).
 2. Confirm L5 in the MVP is a small coded workflow (not Operaton) to keep it light.
 3. Confirm the MVP runs as a separate "MVP mode" alongside the full AgenticTelco demo.
