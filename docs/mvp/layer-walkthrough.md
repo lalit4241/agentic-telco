@@ -568,7 +568,7 @@ Salesforce records at the end (example IDs): Order `Status = Activated` (TMF622 
 
 Example artefact: the `docker compose ps` service list and the internal network map.
 
-**(d) On screen.** An L7 card listing the running containers and their health, the network boundary, and a note that credentials stay on the server.
+**(d) On screen.** *Superseded 27 Oct 2026 (LalitC): L7 is mocked. The card shows a target-state diagram labelled "mocked, target state" plus the line "MVP runs on a single Docker Compose host"; see [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) decision 9.* Earlier proposal: an L7 card listing the running containers and their health, the network boundary, and a note that credentials stay on the server.
 
 **(e) Real vs mocked; out of scope.** Real: the containers and network. Simplified: identity and secrets. Out of scope: Kubernetes (k3s), inference gateway, agent identity, zero-trust controls.
 
@@ -627,7 +627,7 @@ A further safety rule, not a demo button: if Brightwell's identity links are not
 | L4 Enterprise Context | Semantic terms, context pack with provenance, OPA input, decision and Rego | Real; availability and balance are legacy stand-ins |
 | L5 Deterministic Execution | State machine, idempotency key, legacy waits and retries, jeopardy event | Real workflow; OSS is a legacy stand-in |
 | L6 Agent-Ready SoR | Salesforce calls (request and response), record links | Real Salesforce; billing, availability and OSS are legacy stand-ins |
-| L7 Digital Core | Running containers, network boundary, secrets note | Real (single host) |
+| L7 Digital Core | Target-state diagram, "MVP runs on a single Docker Compose host" | Target state mocked, labelled; plumbing real |
 | L8 Observability & Governance | Trace ID, span list, Jaeger link | Real |
 
 ---
@@ -646,7 +646,7 @@ This adopts DevBot's proposal. It is a design for DevBot to build only after Lal
 | L4 | Semantic definitions used, the context pack with "Salesforce" or "Mocked" provenance chips ("Salesforce" or "Legacy stand-in (mocked)"), the policy input, decision, rule and version |
 | L5 | State machine with current state, idempotency key, milestones and jeopardy |
 | L6 | Each Salesforce call's request and response, labelled **native Salesforce API** or **custom Apex TMF facade on Salesforce**, with links to the Salesforce records |
-| L7 | Containers and health, network boundary, "credentials stay server-side" |
+| L7 | Target-state diagram labelled "mocked, target state"; "MVP runs on a single Docker Compose host" |
 | L8 | Trace ID, span list, link to Jaeger |
 
 **Presenter mode.** A "Step" button that pauses after each layer, so a presenter can explain it before moving on.

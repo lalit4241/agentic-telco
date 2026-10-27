@@ -72,7 +72,7 @@ The same business customer exists under three IDs. All IDs are examples.
 | L4 Enterprise Context | What do we know, and is it allowed? | Semantic definitions, context pack with sources, policy decision | Context service (ours), OPA (Apache-2.0) | Context pack, policy decision and rule | Real; balance and availability are stand-ins |
 | L5 Deterministic Execution | Who actually does the work? | One BPMN process: binding check, quote, order, fulfilment wait, jeopardy, asset change; idempotent; absorbs slow and batch legacy | Operaton (Apache-2.0), Python workers (ours) | BPMN diagram, current step highlighted | Real; OSS is a stand-in |
 | L6 Agent-Ready SoR | Where is the truth recorded? | Salesforce, plus legacy stand-ins, each behind a standard API | Salesforce (commercial), Apex add-ons (ours) | Each call, labelled native or Apex add-on, with record links | Salesforce real |
-| L7 Digital Core | What does it run on? | One small stack; secrets server-side; one internal network | Docker Compose (Apache-2.0) | Running containers, boundary | Real; single host |
+| L7 Digital Core | What does it run on? | Target platform shown as a mocked picture; the MVP itself runs on one host | Mock panel; Docker Compose as plumbing (Apache-2.0) | Target-state diagram, "MVP runs on a single Docker Compose host" | Target state mocked, labelled; plumbing real |
 | L8 Observability & Governance | How do we prove what happened? | Step timeline per request across all layers (pending LalitC yes) | Built from the L3 audit log | Step timeline | Real data from each run |
 
 **L1.** Sam types "We're hiring 15 people and moving to cloud video editing; the line can't keep up." Sam never has to name a product. The agent fills a structured **Intent** [TMF921] and submits it as a proposal. The Intent states an outcome, not a product. For example: "support 15 more staff and cloud video at the Martlesham site, no extra visits, within contract, by 30 Nov 2026" (example date). Fibre 900 is the agent's recommendation in answer to the Intent; the Intent never names it. Progress comes back as **IntentReports**: a delay means "intent at risk, revised date", and Fibre 900 going live closes the Intent as fulfilled.
@@ -89,7 +89,7 @@ TMF921 is designed mainly for intent handover between autonomous-network layers 
 
 **L6.** Salesforce keeps the records and nothing else. Calls use native Salesforce APIs where the org has them: customer and contacts [TMF629/632] and installed services [TMF637]. Otherwise they use thin, mapping-only Apex add-ons: catalogue [TMF620], quote [TMF648] and order [TMF622] (ADR amendment 001, approved by LalitC). The Intent [TMF921] is not in Salesforce (decision 8). Every legacy system sits behind an adapter speaking a standard API. A system that can't be adapted is wrapped, and systems are replaced one at a time.
 
-**L7.** It runs as one Docker Compose stack on one host. Salesforce access stays server-side and never reaches the browser. There is no Kubernetes, zero-trust mesh or agent identity yet; we say so plainly.
+**L7.** Mocked in the MVP (decision 9). The L7 card shows a target-state diagram labelled "mocked, target state": Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus, UK hosting, all "provided by the operator's digital core, mocked in the MVP". It adds one plain line: "MVP runs on a single Docker Compose host". That plumbing is real but not presented as a feature: one Compose stack, one private network, and Salesforce credentials kept server-side.
 
 **L8.** A step timeline per request, built from the L3 audit log (pending LalitC yes). It shows each layer's step and its timing, both policy decisions and the model token counts. OpenTelemetry is on the roadmap.
 
@@ -103,7 +103,7 @@ TMF921 is designed mainly for intent handover between autonomous-network layers 
 | L4 Enterprise Context and Policy | Business terms defined once with their source; one context pack per request, each fact tagged with its source; one policy run twice (advisory before the offer, binding before any write): authorised contact, no overdue balance, available at the site, upgrade-only mid-contract | YAML semantic model, context service, OPA (Rego) | Real | Multiple policy packs, graph |
 | L5 Execution | One business process: binding policy check, quote, upgrade order, wait for fulfilment, timer raises the delay and revised date, then Fibre 150 set to Obsolete, Fibre 900 created as Installed, the two linked as an Upgrade. Order ID as business key, so reruns can't double-write | Operaton BPMN with Python workers; no DMN, rules stay in OPA | Real | Multiple processes, human task queues |
 | L6 Systems of record (Salesforce and legacy) | Salesforce: reads customer, contacts and roles, site, current product; writes quote, order and asset changes. Legacy: billing (own ID, slow), availability (refreshed overnight), inventory, OSS fulfilment (overnight batch, +2 day delay), each behind an adapter | Native Salesforce APIs (TMF629/632/637); thin mapping-only Apex for catalogue, quote, order with the upgrade action, (TMF620/648/622); legacy stand-ins (TMF666/679/641) | Salesforce real; legacy mocked and labelled | Real BSS/OSS, the org's own availability check (returns an error) |
-| L7 Digital Core | Runs everything on one host; Salesforce credentials server-side only; one private network | Docker Compose, about 7 containers plus Ollama, memory limits per container (about 5 GB total with 3B) | Real, single host | Kubernetes, zero-trust mesh, agent identity |
+| L7 Digital Core | Shown as a labelled mocked panel: the operator's platform services (Kubernetes, secrets vault, network zones, API gateway, agent/workload identity, event bus, UK hosting), "provided by the operator's digital core, mocked in the MVP", labelled "mocked, target state"; the card adds one plain line: "MVP runs on a single Docker Compose host" | Mock panel; the demo itself is started by a plain Docker Compose file (plumbing, not presented as a layer): about 7 containers plus Ollama, about 5 GB with 3B, one private network; Salesforce credentials server-side in environment secrets (security baseline) | Target state mocked, labelled; plumbing real | Kubernetes, gateway, vault, agent identity, event bus, multi-region |
 | L8 Observability (pending LalitC yes) | Step timeline per request: each layer's step, its timing, both policy decisions, model token counts | Built from the L3 audit log | Real data from each run | OpenTelemetry and Jaeger (roadmap), Grafana, Langfuse |
 
 The public GitHub Pages site is static and cannot reach the agent, OPA, Operaton or Salesforce. It replays recorded runs (real record IDs and timelines), labelled "recorded run". The live version runs from the Docker Compose host.
@@ -162,6 +162,7 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 - The agent and the local model.
 - Context service and both policy decisions.
 - BPMN process, idempotency, Postgres records, cross-reference, step timeline.
+- Plumbing (not presented as a feature): one Docker Compose stack, one private network, Salesforce credentials server-side.
 
 **Legacy stand-ins (mocked, always labelled on screen):**
 - Billing balance.
@@ -169,6 +170,8 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 - Network inventory site ID.
 - Legacy OSS fulfilment, including the jeopardy.
 - Payment link.
+
+**Mocked platform (labelled "mocked, target state"):** the L7 target-state picture: Kubernetes, secrets vault, network zones, API gateway, agent/workload identity, event bus, UK hosting.
 
 **Examples, not real data:** UK Telco, Brightwell, Sam, street name, address key, legacy IDs.
 
@@ -207,6 +210,7 @@ Each decision has a recommended default.
    - **Apex facades:** remain for TMF620/622/648/671 only.
    - **Rejected:** an Apex facade with a custom object, and stretching Opportunity or Case.
    - **Record:** an ADR-001 amendment.
+9. **L7 mocked** (LalitC, 27 Oct 2026). Interpretation: platform services are mocked as a labelled target-state picture, and Compose is kept as plumbing. Credentials stay server-side regardless.
 
 ## 11. Build items (not started until all three agree)
 
@@ -226,7 +230,7 @@ Each decision has a recommended default.
 - Multiple BPMN processes, DMN, human task queues.
 - Graph database, vector search, semantic cache, data products.
 - OpenTelemetry and Jaeger (roadmap), Grafana, Langfuse.
-- Kubernetes, zero-trust mesh, agent identity.
+- Kubernetes, gateway, vault, agent identity, event bus, multi-region (L7 target state is mocked only).
 - Voice and other channels.
 - Full TM Forum Intent Ontology expression, intent negotiation, multi-layer intent handlers.
 - Real billing, real availability, real OSS.

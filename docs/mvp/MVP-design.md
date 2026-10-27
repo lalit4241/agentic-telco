@@ -78,7 +78,7 @@ eTOM: Customer Order Handling (Fulfillment), preceded by a pre-order availabilit
 
 ## 6. Real vs mocked
 Real: Salesforce reads and writes, catalogue and prices, policy decisions, workflow and undo, tracing.
-Mocked and labelled in the demo: overdue-balance check, availability by address key, payment link, network fulfilment (OSS) and the jeopardy event that delays it.
+Mocked and labelled in the demo: L7 Digital Core platform services, shown as a "mocked, target state" picture (decided by LalitC, 27 Oct 2026; Docker Compose stays as plumbing, credentials server-side; see [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) decision 9), overdue-balance check, availability by address key, payment link, network fulfilment (OSS) and the jeopardy event that delays it.
 
 ## 7. Open items for sign-off
 1. Approve the scenario, test data, the three exception paths and the end state (Fibre 900 active).
