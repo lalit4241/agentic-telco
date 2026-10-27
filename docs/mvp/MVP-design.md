@@ -32,7 +32,6 @@ flowchart TD
   F --> G{Policy decision}
   G -- Not authorised --> X1[Explain; offer to route to account admin]
   G -- Overdue balance --> X2[Explain; offer payment link - mocked]
-  G -- Downgrade or not available --> X4[Explain contract or availability terms]
   G -- Passed --> H[Sam accepts; consent recorded]
   H --> I[Workflow creates quote]
   I --> J[Workflow places modify order 150 to 900]
@@ -42,7 +41,7 @@ flowchart TD
   M --> K
   K --> N[Fibre 900 active in product inventory; Sam notified; full trace]
 ```
-**Exception paths in the MVP:** (1) not authorised, (2) overdue balance, (3) mid-contract downgrade refused, (4) **order jeopardy**: fulfilment is delayed, Sam is told the revised date proactively, and the order still completes.
+**Exception paths in the MVP:** (1) not authorised, (2) overdue balance, (3) **order jeopardy**: fulfilment is delayed, Sam is told the revised date proactively, and the order still completes.
 
 **End state (must be demonstrated):** the order is `completed` in Salesforce and the customer's product inventory shows **Fibre 900 active** at the Martlesham site, replacing Fibre 150. A working service, not just an accepted order.
 
@@ -52,7 +51,7 @@ flowchart TD
 | L1 Intent | Simple portal chat; free-text need | Rich UI, full TMF921 intent model |
 | L2 Agent | One agent: understand need, match to product, explain | Agent mesh, A2A, multiple models |
 | L3 Data | Postgres: conversation, decisions, audit | Kafka, pgvector, semantic cache |
-| L4 Policy | One OPA policy: authorised contact, no overdue balance (mocked), available at address key (mocked), upgrade-only mid-contract | Multiple policy packs |
+| L4 Policy | One OPA policy: authorised contact, no overdue balance (mocked), available at address key (mocked), upgrade-only mid-contract (rule present; downgrade not demoed) | Multiple policy packs |
 | L5 Execution | Small coded workflow: quote, order, track fulfilment to completion, raise jeopardy and revised date, update inventory; idempotent | Operaton BPMN engine (full demo only) |
 | L6 Salesforce SoR | Reads party, site, asset, catalogue; writes quote and order | OSS service order, qualification (org returns error) |
 | L8 Observability | One OpenTelemetry trace per request in Jaeger | Grafana, Langfuse, inference gateway |
@@ -80,6 +79,9 @@ Real: Salesforce reads and writes, catalogue and prices, policy decisions, workf
 Mocked and labelled in the demo: overdue-balance check, availability by address key, payment link, network fulfilment (OSS) and the jeopardy event that delays it.
 
 ## 7. Open items for sign-off
-1. Approve the scenario, test data, the four exception paths and the end state (Fibre 900 active).
+1. Approve the scenario, test data, the three exception paths and the end state (Fibre 900 active).
 2. Confirm L5 in the MVP is a small coded workflow (not Operaton) to keep it light.
 3. Confirm the MVP runs as a separate "MVP mode" alongside the full AgenticTelco demo.
+
+## 8. Build items identified
+1. Extend the TMF622 Apex facade to accept `action: modify` with a reference to the existing Fibre 150 product, mapping it to an order line that replaces Fibre 150 with Fibre 900 on the same service. Mapping only, no business rules in Salesforce (DevBot).
