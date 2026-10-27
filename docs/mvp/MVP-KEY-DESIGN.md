@@ -157,11 +157,9 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 
 Each decision has a recommended default.
 
-1. **Contract effect of a mid-contract upgrade.** Default: keep the current end date (10 months left), no re-contract, new price from the upgrade date. The seeded term price is £45.00 a month for Fibre 900, against £27.00 for Fibre 150 (CONFIRMED in the seed catalogue; read from Salesforce at run time).
-2. **Hosting wording.** Default: "The agent and model run locally in our stack. Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed)." Make no UK-only claim yet. The GitHub Pages replay, the org region and model hosting are unverified.
-3. **Model.** Default: a small open model running locally via Ollama (the repo currently uses Qwen2.5 0.5B, CONFIRMED). The size is settled in the first build test. Real token usage is shown from the trace. The two views:
-   - **TMForumCTO:** test a 7B-class tool-calling model (for example Qwen2.5-7B-Instruct), with a scripted presenter fallback.
-   - **DevBot:** stay small.
+1. **Contract effect of a mid-contract upgrade.** Default: keep the current end date (10 months left), no re-contract, new price from the upgrade date. The seeded term price is £45.00 a month for Fibre 900, against £27.00 for Fibre 150 (CONFIRMED in the seed catalogue; read from Salesforce at run time). DevBot agrees with this default (still awaiting LalitC).
+2. **Hosting wording.** Default: "The agent and model run locally in our stack. Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed)." Make no UK-only claim yet. The GitHub Pages replay, the org region and model hosting are unverified. DevBot agrees with this default (still awaiting LalitC).
+3. **Model.** Small open model run locally via Ollama. In the first build test DevBot measures Qwen2.5 3B and 7B (Instruct, tool-calling) on the demo machine (16 GB RAM, no GPU). Acceptance target (RECOMMENDED, not measured): a full agent turn under ~5 s. If 7B misses it, use 3B, or run 7B on a GPU host — which requires re-checking the hosting/data-residency wording (decision 2). Scripted fallback for presenter mode either way. Real response times and token usage recorded from the trace.
 4. **L5 engine.** Default: a small coded workflow, not Operaton, in the MVP.
 5. **MVP mode.** Default: run as a separate "MVP mode" alongside the full AgenticTelco demo.
 6. **Installed-service end state.** Default:
