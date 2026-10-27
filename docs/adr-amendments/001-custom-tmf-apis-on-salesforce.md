@@ -19,7 +19,7 @@
    - Tests must reach at least 85% coverage.
    - Deployment uses `sf project deploy`.
    - Calls are labelled **custom TMF API on Salesforce**.
-   - Current set: TMF620, TMF622, TMF648, TMF671.
+   - Current set: TMF620, TMF622, TMF648, TMF671; TMF921 added by the amendment below (not yet built).
 3. **Nothing in the org is deleted or changed.**
    - Writes create AgenticTelco-prefixed records only.
    - PATCH accepts AgenticTelco records only.
@@ -49,4 +49,6 @@ A dry-run validation (`0AfQH00000Q1p1V0AR`) preceded the second deploy.
 
 ## Amendment: TMF921 Intent
 
-Apex facades apply to system-of-record resources the org lacks (TMF620/622/648/671); TMF921 Intent is agent-layer state, not SoR data, so it is hosted outside Salesforce in the intent service (L1, stored in L3). Decided 27 Oct 2026, pending LalitC sign-off with the key doc.
+TMF921 Intent is also exposed as a thin, mapping-only Apex facade (decided LalitC 27 Oct 2026), consistent with the rule that TMF APIs the org lacks are Apex facades. Intent and IntentReport are stored in two small custom objects linked to the Account; no intent logic in Apex. Postgres (L3) keeps an audit copy only.
+
+Facade list is now: TMF620, TMF622, TMF648, TMF671, TMF921 (TMF921 not yet built).

@@ -171,7 +171,7 @@ sequenceDiagram
 | OSS and licence | React, MIT (CONFIRMED, 06-tech-stack) |
 | Input | Sam's free text; signed-in session (demo login, example) |
 | Output | An intent envelope to L2; rendered agent messages and cards |
-| TMF / SID | Intent is conceptually TMF921 Intent / TR292 TIO. **The MVP does not implement TMF921**; it sends a simple envelope. *Superseded 27 Oct 2026: the MVP now uses a TMF921-shaped Intent and IntentReport; see [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) decision 8.* SID: Party (via the session). |
+| TMF / SID | Intent is conceptually TMF921 Intent / TR292 TIO. **The MVP does not implement TMF921**; it sends a simple envelope. *Superseded 27 Oct 2026: the MVP now uses a TMF921-shaped Intent and IntentReport; exposed through a thin TMF921 Apex facade in Salesforce; see [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) decision 8.* SID: Party (via the session). |
 
 Example intent envelope (example values):
 
@@ -734,7 +734,7 @@ The main story uses business words. This appendix holds the standards detail beh
 | Quote | TMF648 Quote | Apex facade `AgenticTelco_TMF648` | CONFIRMED |
 | Upgrade order, in progress, completed | TMF622 Product Ordering, item `action: modify` | Apex facade `AgenticTelco_TMF622` (modify is build item 1) | CONFIRMED |
 | Fulfilment, milestones, jeopardy | TMF641 Service Ordering (shape) | Adapter in front of legacy OSS stand-in | RECOMMENDED |
-| Intent | TMF921 Intent / TR292 TIO (conceptual only; not implemented in the MVP) | — | RECOMMENDED |
+| Intent | TMF921 Intent / TR292 TIO (superseded: TMF921-shaped Apex facade in the MVP, see key doc decision 8) | — | RECOMMENDED |
 | Events | TMF688-style envelope (pattern, not conformance) | Our layer | RECOMMENDED |
 
 The SID mapping for each business term is in the L4 section ("Semantic definitions"). It has not been checked ABE by ABE against GB922 (INFERRED).
