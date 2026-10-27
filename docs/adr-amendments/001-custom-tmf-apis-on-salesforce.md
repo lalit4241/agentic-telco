@@ -42,3 +42,7 @@ A dry-run validation (`0AfQH00000Q1p1V0AR`) preceded the second deploy.
 - Every L6 call shows its runtime in the UI and in the L8 ledger (`x-zg-runtime`). Each ledger entry also lists the Salesforce REST calls behind it.
 - If the org later enables a native TMF620, TMF648 or TMF622 path, the adapter swaps that API back to OOTB without changing any agent or BPMN contract.
 - The custom Apex APIs are demo code. Before production use they would need review, permission sets, and Salesforce's own TMF certification path.
+
+## Reconfirmation
+
+27 Oct 2026: Lalit Chauhan reconfirmed this decision. The thin Apex TMF facades (TMF620, TMF622, TMF648, TMF671) stay in Salesforce and only map records to TMF shapes. Policy, orchestration and agent logic stay outside Salesforce. See ADR-001 (commit 1e98af9).
