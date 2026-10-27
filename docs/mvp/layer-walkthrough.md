@@ -4,11 +4,27 @@
 
 **Labels.** **CONFIRMED**: a primary source states it (TM Forum spec file, the Zero Gravity report, our org capability check or our code). **REPORTED**: stated by someone else and not checked by us. **INFERRED**: our analysis. **RECOMMENDED**: our design choice. **UNKNOWN**: not known yet. All customer names, IDs, dates and prices below are **examples** unless marked otherwise.
 
-**Layer names** follow TechM's Zero Gravity report, Figure 3 and its layer table (report p.21–22; see `/workspace/zero-gravity-analysis.md`). The report is a framework: it names no products, no TMF Open API numbers and no Salesforce role (CONFIRMED). Every technology choice, API mapping and screen below is **our design** (RECOMMENDED) unless it is quoted from the report.
+**Layer names** follow TechM's Zero Gravity report, Figure 3 and its layer table (report p.21–22; see `/workspace/zero-gravity-analysis.md`). The report is a framework: it names no products, no specific APIs and no Salesforce role (CONFIRMED). Every technology choice, API mapping and screen below is **our design** (RECOMMENDED) unless it is quoted from the report.
 
 ---
 
-## 1. How we present it (RECOMMENDED)
+## 1. Why we are doing this (DRAFT, pending LalitC agreement)
+
+**Purpose:** prove that a telco can put AI agents in front of customers safely, on its existing Salesforce estate, without rewriting its business rules.
+
+| For | Why it matters |
+|---|---|
+| **TechM** | Zero Gravity is today a framework on paper: eight layers and the rule of zero residual rules in systems of record, but no worked example, no named customer and no Salesforce role in the report (CONFIRMED). This MVP makes it real on one journey, for the MWC27 Autonomous Enterprise theme (TechM's sponsorship of the theme is REPORTED, not confirmed). |
+| **A telco CIO or CTO** | It answers three fears. Replacing the BSS: Salesforce stays. Losing control to AI: policy decides, not the model. Lock-in: open source plus industry standards. |
+| **TechM's Salesforce practice** | It positions Salesforce as the trusted system of record in an agentic telco. |
+
+**Rule:** anything in the demo that does not serve this purpose is cut.
+
+Every layer talks to Salesforce through industry-standard telco APIs (TM Forum Open APIs), so nothing is locked in. The API detail is in the appendix (section 11); the rest of the story uses plain business words.
+
+---
+
+## 2. How we present it (RECOMMENDED)
 
 Four acts, about 20 minutes. The business process is the same in every act; only the depth changes.
 
@@ -31,7 +47,7 @@ flowchart TB
   S ==> L1 ==> L2 ==> L3 ==> L4 ==> L5 ==> L6 ==> L7 ==> L8 ==> E
 ```
 
-The line is a storytelling order, not the call order. The real call sequence is in section 3, and L7 and L8 sit under and across every step rather than at the end.
+The line is a storytelling order, not the call order. The real call sequence is in section 4, and L7 and L8 sit under and across every step rather than at the end.
 
 | Layer | Question on its screen |
 |---|---|
@@ -44,9 +60,9 @@ The line is a storytelling order, not the call order. The real call sequence is 
 | L7 | What does it run on? |
 | L8 | How do we prove what happened? |
 
-**Act 3: The CIO/CTO view and the proof (5 min).** Run the live demo with the layer panel (section 7) lit up next to the chat. Then press **Not authorised**: a Business User asks for the same upgrade and the L4 policy, not the model, stops it, with the rule and reason on screen. Use the CIO/CTO questions in section 8 to frame it.
+**Act 3: The CIO/CTO view and the proof (5 min).** Run the live demo with the layer panel (section 8) lit up next to the chat. Then press **Not authorised**: a Business User asks for the same upgrade and the L4 policy, not the model, stops it, with the rule and reason on screen. Use the CIO/CTO questions in section 9 to frame it.
 
-**Act 4: Real vs mocked, and MVP to scale (3 min).** Show the summary table (section 6) with every mocked item named, then the path from MVP to pilot to scale (section 8, question 6).
+**Act 4: Real vs mocked, and MVP to scale (3 min).** Show the summary table (section 7) with every mocked item named, then the path from MVP to pilot to scale (section 9, question 6).
 
 So the flow is: **customer story → layer walkthrough → CIO/CTO view → real vs mocked and MVP to scale.** Timings are approximate.
 
@@ -54,7 +70,7 @@ So the flow is: **customer story → layer walkthrough → CIO/CTO view → real
 
 ---
 
-## 2. What changes for Sam
+## 3. What changes for Sam
 
 **Today.** Brightwell Design Ltd is growing and its Fibre 150 line can't cope. Sam phones or emails the account manager, who checks the contract, asks someone else whether faster fibre is available at 1 Fibre Way, prepares a quote, waits for Sam to sign, and keys the order. If the exchange has no free port, Sam usually finds out when the engineer doesn't turn up, or by chasing. Several people and several systems are involved, each holding part of the rules.
 
@@ -64,9 +80,9 @@ So the flow is: **customer story → layer walkthrough → CIO/CTO view → real
 
 ---
 
-## 3. End-to-end sequence (happy path with jeopardy)
+## 4. End-to-end sequence (happy path with jeopardy)
 
-L7 Digital Core is the runtime every box below runs on, and L8 records a span for every arrow. Both are shown as notes rather than participants.
+L7 Digital Core is the runtime every box below runs on, and L8 records a span for every arrow. Both are shown as notes rather than participants. The industry API behind each Salesforce step is listed in the appendix (section 11).
 
 ```mermaid
 sequenceDiagram
@@ -84,9 +100,9 @@ sequenceDiagram
   L1->>L2: intent (free text + session: Sam, Brightwell)
   L2->>L3: save conversation turn
   L2->>L4: MCP get_context(requester, intent)
-  L4->>L6: read Account, Contact role, Location, Asset (TMF632/629, TMF637, sObject)
-  L4->>L6: read offerings and downloadSpeed (TMF620 Apex facade)
-  L4->>L4: availability by address key (TMF679 shape, mocked), balance (mocked)
+  L4->>L6: read customer record, Sam's role, site, current service
+  L4->>L6: read products, speeds and prices from the catalogue
+  L4->>L4: availability check by address key (mocked), balance check (mocked)
   L4-->>L2: context pack with provenance
   L2->>Sam: "Is this for 1 Fibre Way, IP5 3RE?"
   Sam->>L2: "Yes"
@@ -96,31 +112,31 @@ sequenceDiagram
   L5->>L4: OPA decide(context pack, proposal)
   L4-->>L5: allow, reasons, policy version
   L5->>L3: record consent and decision
-  L5->>L6: POST quote (TMF648 Apex facade)
-  L5->>L6: POST productOrder action modify 150 to 900 (TMF622 Apex facade)
-  L5->>L6: PATCH state inProgress
-  L5->>OSS: start fulfilment (TMF641 shape)
+  L5->>L6: create quote
+  L5->>L6: place upgrade order, Fibre 150 to Fibre 900
+  L5->>L6: set order in progress
+  L5->>OSS: start fulfilment
   OSS-->>L5: milestone "port reservation requested"
   OSS-->>L5: jeopardy "exchange port not yet available", +2 days
   L5->>L3: store jeopardy, new expected date
   L5-->>L2: jeopardy event (order still inProgress)
   L2->>Sam: proactive message with new date
   OSS-->>L5: milestone "port reserved", then "service activated"
-  L5->>L6: update Asset Fibre 150 to Fibre 900 (sObject REST), PATCH order completed
-  L5->>L6: read back product inventory (TMF637): Fibre 900 active
+  L5->>L6: update installed service to Fibre 900, mark order completed
+  L5->>L6: read back customer's services: Fibre 900 active
   L5-->>L2: order completed
   L2->>Sam: "Fibre 900 is live at 1 Fibre Way"
 ```
 
 ---
 
-## 4. Layer by layer
+## 5. Layer by layer
 
 ### L1 Intent & Experience
 
 > **The question this layer answers: What does Sam want?**
 
-**Zero Gravity says (CONFIRMED, p.21–22):** "multimodal, omnichannel capture of customer and operator intent as goal expressions across digital, voice, retail, and partner channels". It "extends ODA's Engagement Management".
+**Zero Gravity says (CONFIRMED, p.21–22):** "multimodal, omnichannel capture of customer and operator intent as goal expressions across digital, voice, retail, and partner channels".
 
 **(a) Today vs agentic.** Today the customer picks from forms and product menus, or calls someone. In the agentic world the customer states a goal ("the line can't keep up with our growth") and never has to name a product.
 
@@ -130,7 +146,7 @@ sequenceDiagram
 
 | Item | MVP choice |
 |---|---|
-| Component | React single-page portal with a chat panel and the proposed layer view (section 7) |
+| Component | React single-page portal with a chat panel and the proposed layer view (section 8) |
 | OSS and licence | React, MIT (CONFIRMED, 06-tech-stack) |
 | Input | Sam's free text; signed-in session (demo login, example) |
 | Output | An intent envelope to L2; rendered agent messages and cards |
@@ -151,7 +167,7 @@ Example intent envelope (example values):
 
 **(d) On screen.** The chat on the left. In the layer panel, L1 lights first and shows this envelope.
 
-**(e) Real vs mocked; out of scope.** Real: the portal and chat. Simplified: sign-in is a demo login. Out of scope: voice, retail and partner channels, rich UI, a full TMF921 intent model.
+**(e) Real vs mocked; out of scope.** Real: the portal and chat. Simplified: sign-in is a demo login. Out of scope: voice, retail and partner channels, rich UI, a formal intent model (see appendix).
 
 ---
 
@@ -213,11 +229,11 @@ The recommendation itself is reasoning ("15 more people and cloud video need mor
 
 > **The question this layer answers: What do we remember?**
 
-**Zero Gravity says (CONFIRMED, p.21–22):** "Governed data products, Lakehouse architecture, semantic layers, AI/ML platforms, and real-time integration create a trustworthy substrate for agentic decisions." It "builds on ODA Intelligence Management".
+**Zero Gravity says (CONFIRMED, p.21–22):** "Governed data products, Lakehouse architecture, semantic layers, AI/ML platforms, and real-time integration create a trustworthy substrate for agentic decisions."
 
 **(a) Today vs agentic.** Today conversation notes, decisions and order history sit in different tools, if they are kept at all. In the agentic world every turn, decision and workflow step is stored with the same trace ID, so an outcome can be reconstructed and learned from.
 
-**(b) Its job.** Throughout: storing Sam's conversation, the context pack used, the OPA decision, the consent, the workflow state, and the jeopardy and milestone history.
+**(b) Its job.** Throughout: storing Sam's conversation, the context pack used, the policy decision, the consent, the workflow state, and the jeopardy and milestone history.
 
 **(c) Under the hood (RECOMMENDED).**
 
@@ -247,11 +263,11 @@ Example audit row (example values):
 
 > **The question this layer answers: What do we know, and is it allowed?**
 
-**Zero Gravity says (CONFIRMED, p.21–22):** "A shared enterprise vocabulary (ontology, knowledge graphs, policy engines, commitment models, and memory services) provides the gravity-free center of the architecture." It references SID (GB922) and TR292 TIO. Note that the report puts **policy engines** in L4, so OPA belongs here.
+**Zero Gravity says (CONFIRMED, p.21–22):** "A shared enterprise vocabulary (ontology, knowledge graphs, policy engines, commitment models, and memory services) provides the gravity-free center of the architecture." Note that the report puts **policy engines** in L4, so OPA belongs here.
 
 **(a) Today vs agentic.** Today "authorised contact", "in contract" and "eligible" are defined differently in CRM, CPQ and order management, and the rules are buried inside them. In the agentic world each business term is defined once, the facts for one request are assembled into one context pack, and one policy engine decides on that same pack.
 
-**(b) Its job.** Two moments: when the agent needs to understand Sam's situation (context pack), and when the workflow asks whether the upgrade is allowed (OPA decision).
+**(b) Its job.** Two moments: when the agent needs to understand Sam's situation (context pack), and when the workflow asks whether the upgrade is allowed (policy decision).
 
 **(c) Under the hood (RECOMMENDED).**
 
@@ -359,7 +375,7 @@ target_speed := target.downloadSpeedMbps
 
 (The snippet assumes the offering carries a `name`; the final pack schema is DevBot's to fix. Policies will have `opa test` unit tests, as in 05-security.)
 
-**(d) On screen.** L4 lights twice: first with the context pack (provenance tags shown as "Salesforce" or "Mocked" chips), then with the OPA input, decision and the Rego rule that fired.
+**(d) On screen.** L4 lights twice: first with the context pack (provenance tags shown as "Salesforce" or "Mocked" chips), then with the policy check: what went in, the decision, and the rule that fired.
 
 **(e) Real vs mocked; out of scope.** Real: semantic file, context service, OPA decisions, Salesforce-sourced facts. Mocked: availability and overdue balance. Out of scope: an ontology beyond this file, knowledge graph, vector search, memory services, commitment models. A graph extension such as Apache AGE (open source, on Postgres) is a possible later step (RECOMMENDED; licence to be checked before use).
 
@@ -373,7 +389,7 @@ target_speed := target.downloadSpeedMbps
 
 **(a) Today vs agentic.** Today orders are keyed by people and fallout is chased by people. In the agentic world the agent's accepted plan is executed by a workflow with fixed states, retries and compensation, and the agent never writes directly.
 
-**(b) Its job.** From Sam's "Accept" to "Fibre 900 is live": call OPA, record consent, create the quote, place the modify order, drive fulfilment, raise the jeopardy and revised date, and complete the order.
+**(b) Its job.** From Sam's "Accept" to "Fibre 900 is live": ask policy for a decision, record consent, create the quote, place the upgrade order, drive fulfilment, raise the jeopardy and revised date, and complete the order.
 
 **(c) Under the hood (RECOMMENDED).**
 
@@ -402,13 +418,7 @@ stateDiagram-v2
   Completed --> [*]
 ```
 
-**Jeopardy: what the TMF specs actually contain (CONFIRMED, read from the tmforum-apis GitHub spec files on 27 Oct 2026).** This corrects the earlier REPORTED note that TMF622 "v4 onwards" has a `jeopardyAlert` field:
-
-| Spec | Order state | Jeopardy and milestones | Events |
-|---|---|---|---|
-| TMF622 v4.0.0 (`TMF622-ProductOrder-v4.0.0.swagger.json`) | `inProgress` exists | **No** jeopardy or milestone field on ProductOrder; `expectedCompletionDate` exists | No jeopardy or milestone event |
-| TMF622 v5.0.0 (`TMF622-ProductOrdering-v5.0.0.oas.yaml`) | `inProgress` exists | `productOrderJeopardyAlert[]` (name, jeopardyType, message, alertDate, exception), `productOrderMilestone[]` (name, status, milestoneDate, message), `expectedCompletionDate` | `ProductOrderJeopardyAlertEvent`, `ProductOrderMilestoneEvent` |
-| TMF641 v4.2.0 (`TMF641-ServiceOrdering-v4.2.0.swagger.json`) | `inProgress` exists | `jeopardyAlert[]`, `milestone[]`, `expectedCompletionDate` | `ServiceOrderJeopardyEvent`, `ServiceOrderMilestoneEvent` |
+**Jeopardy field names** were checked against the TM Forum spec files; the version detail is in the appendix (section 11.3). In short: the order stays `inProgress`, and the jeopardy and milestone fields and events used below are those of TMF622 v5.
 
 So in the MVP the jeopardy is modelled as: the mocked OSS raises a TMF641-shaped jeopardy on the service order; L5 reflects it at product-order level using the TMF622 **v5** field and event names. The order stays `inProgress` throughout (it does not move to `held` or `failed`).
 
@@ -444,7 +454,7 @@ Example jeopardy event from L5 (example values; field names CONFIRMED in TMF622 
 
 > **The question this layer answers: Where is the truth recorded?**
 
-**Zero Gravity says (CONFIRMED, p.21–22):** "Featherweight, domain-aligned systems store canonical facts, state, events, and lineage while exposing semantically aligned APIs and event streams." "Agent-ready" is "not a mandatory forklift upgrade": legacy BSS/OSS are "thinned". The report maps L6 to ODA Party Management, Core Commerce Management and Production, and names **no** TMF API numbers and **no** Salesforce role.
+**Zero Gravity says (CONFIRMED, p.21–22):** "Featherweight, domain-aligned systems store canonical facts, state, events, and lineage while exposing semantically aligned APIs and event streams." "Agent-ready" is "not a mandatory forklift upgrade": legacy BSS/OSS are "thinned". The report names **no** specific APIs and **no** Salesforce role (CONFIRMED).
 
 **(a) Today vs agentic.** Today CRM, CPQ and order management hold data *and* rules. In the agentic world Salesforce Communications Cloud keeps the canonical records (customer, site, product, quote, order) and nothing else; it is reached only through APIs.
 
@@ -482,9 +492,9 @@ POST /services/apexrest/agentictelco/tmf622/productOrder
 
 Salesforce records at the end (example IDs): Order `Status = Activated` (TMF622 `completed`); Asset "AgenticTelco Fibre 900" at the Brightwell Location with `Status = Installed`, returned by TMF637 as `status: active`. Before activation the adapter creates the Subscription Management `AppUsageAssignment` that stops the org's assetize flow from failing (CONFIRMED, org-capabilities).
 
-**(d) On screen.** L6 shows each TMF request and response, labelled **native Salesforce API** or **custom Apex TMF facade on Salesforce**, with links to the Salesforce records.
+**(d) On screen.** L6 shows each call to Salesforce (customer record, catalogue, quote, order, installed service) with its request and response, labelled **native Salesforce API** or **custom Apex TMF facade on Salesforce**, with links to the Salesforce records.
 
-**(e) Real vs mocked; out of scope.** Real: all Salesforce reads and writes. Mocked: availability (TMF679) and the OSS (TMF641). Out of scope: billing and balance from a real SoR, Salesforce OSS service orders, native TMF679 qualification.
+**(e) Real vs mocked; out of scope.** Real: all Salesforce reads and writes. Mocked: the availability check and network fulfilment. Out of scope: real billing and balance, network service orders from Salesforce, Salesforce's own availability check.
 
 ---
 
@@ -547,7 +557,7 @@ Expected spans (names are RECOMMENDED):
 
 ---
 
-## 5. Exception paths: who decides
+## 6. Exception paths: who decides
 
 | Scenario | What happens | Which layer makes the call |
 |---|---|---|
@@ -555,7 +565,7 @@ Expected spans (names are RECOMMENDED):
 | Overdue balance | Agent explains and offers a payment link (mocked) | **L4 OPA** denies (`overdue_balance`) |
 | Order jeopardy that recovers | Order stays `inProgress`, Sam is told the new date, order completes | **L5** raises it from the mocked OSS; **L2** tells Sam |
 
-## 6. Summary table
+## 7. Summary table
 
 | Layer | Artefact shown | Real or mocked |
 |---|---|---|
@@ -564,13 +574,13 @@ Expected spans (names are RECOMMENDED):
 | L3 Data Foundation | Conversation, decision, consent, workflow and audit rows | Real |
 | L4 Enterprise Context | Semantic terms, context pack with provenance, OPA input, decision and Rego | Real; availability and balance mocked |
 | L5 Deterministic Execution | State machine, idempotency key, jeopardy event | Real workflow; OSS events mocked |
-| L6 Agent-Ready SoR | TMF requests and responses, Salesforce record links | Real Salesforce; TMF679 and TMF641 mocked |
+| L6 Agent-Ready SoR | Salesforce calls (request and response), record links | Real Salesforce; availability check and fulfilment mocked |
 | L7 Digital Core | Running containers, network boundary, secrets note | Real (single host) |
 | L8 Observability & Governance | Trace ID, span list, Jaeger link | Real |
 
 ---
 
-## 7. Proposed demo layer view (PROPOSAL, pending LalitC sign-off)
+## 8. Proposed demo layer view (PROPOSAL, pending LalitC sign-off)
 
 This adopts DevBot's proposal. It is a design for DevBot to build only after LalitC approves it.
 
@@ -583,7 +593,7 @@ This adopts DevBot's proposal. It is a design for DevBot to build only after Lal
 | L3 | Rows written in Postgres (conversation, decisions, audit) |
 | L4 | Semantic definitions used, the context pack with "Salesforce" or "Mocked" provenance chips, the OPA input, decision and rule |
 | L5 | State machine with current state, idempotency key, milestones and jeopardy |
-| L6 | Each TMF call's request and response, labelled **native Salesforce API** or **custom Apex TMF facade on Salesforce**, with links to the Salesforce records |
+| L6 | Each Salesforce call's request and response, labelled **native Salesforce API** or **custom Apex TMF facade on Salesforce**, with links to the Salesforce records |
 | L7 | Containers and health, network boundary, "credentials stay server-side" |
 | L8 | Trace ID, span list, link to Jaeger |
 
@@ -603,19 +613,19 @@ Mocked values are always shown with a "Mocked" label on screen.
 
 ---
 
-## 8. CIO/CTO view (DRAFT, pending LalitC sign-off)
+## 9. CIO/CTO view (DRAFT, pending LalitC sign-off)
 
 The questions a CIO or CTO is likely to ask, with our answer and where the demo shows it. Answers are our position (RECOMMENDED) unless labelled otherwise.
 
 | # | Question | Answer | Where the demo shows it |
 |---|---|---|---|
-| 1 | Do we have to replace Salesforce or our BSS? | No. Salesforce Communications Cloud stays the system of record (L6) and is reached through standard Salesforce APIs and TMF Open APIs (native TMF629, TMF632, TMF637; mapping-only Apex facades for TMF620, TMF622, TMF648, TMF671). CONFIRMED (ADR-001, amendment 001) | L6 panel: each call labelled native or Apex facade, with record links |
+| 1 | Do we have to replace Salesforce or our BSS? | No. Salesforce stays the system of record. It keeps the customer records, quotes, orders and installed services, and is reached only through standard APIs | L6 panel: each call labelled native Salesforce API or custom Apex facade, with record links |
 | 2 | Who is in control, the AI or us? | The agent proposes, policy decides, the workflow writes. The agent has no write tools and cannot bypass authorisation, consent or financial checks | **Not authorised** and **Overdue balance** buttons: L4 OPA denies, nothing is written |
-| 3 | Are we locking ourselves in? | Layers talk to each other through TMF Open API contracts; everything outside Salesforce is open source (licences in 06-tech-stack). The Apex facades are mapping-only, so they can be swapped for native APIs without changing the agent or workflow. Wording: **aligned with ODA, not certified** | Architecture tab (OSS and licence per layer); L6 labels |
+| 3 | Are we locking ourselves in? | No. Every layer talks to Salesforce through industry-standard telco APIs (TM Forum Open APIs), so nothing is locked in. Everything outside Salesforce is open source, and the small Salesforce add-ons only translate data, so they can be swapped for Salesforce's own versions later. We say **aligned with industry standards, not certified** | Architecture tab (open source and licence per layer); L6 labels |
 | 4 | Is it safe and compliant? | Every decision is traced and audited: context used, policy version, decision, consent and every API call (L3, L8). Data residency: **designed for UK residency; MVP hosting not yet verified UK-only**. The GitHub Pages replay, the Salesforce org region and the model hosting location are all unverified (UNKNOWN) | L8 trace and Jaeger link; L4 decision; L3 audit rows |
 | 5 | What will it cost to run? | We show the actual model calls and tokens for each request from the trace. An agent makes several model calls per request, so cost is per request, not per conversation. We give no cost figures until we have measured ones | L2 panel and L8 spans: model calls and token counts |
-| 6 | What is the path to production? | **MVP** (this demo, one journey, one small stack) → **pilot** (one operator journey with real data) → **scale** (more journeys and agents). What changes: the runtime platform (L7: Kubernetes, secret management, agent identity), real availability (TMF679 against real qualification), real billing and balance, real OSS fulfilment (TMF641), and a BPMN engine (Operaton) where process visibility is needed. The layer contracts stay the same (INFERRED) | Summary table (section 6) and Architecture tab |
-| 7 | How does it fit ODA? | Additive: nothing is ripped out. The portal and agent sit conceptually with ODA Engagement Management and Intelligence Management; Salesforce sits with Core Commerce Management and Party Management. INFERRED conceptual mapping; block names to be verified against TM Forum ODA documents. The report itself says L1 extends Engagement Management, L3 builds on Intelligence Management, and L6 corresponds to Party, Core Commerce and Production (CONFIRMED, p.21) | Architecture tab |
+| 6 | What is the path to production? | **MVP** (this demo, one journey, one small stack) → **pilot** (one operator journey with real data) → **scale** (more journeys and agents). What changes: the runtime platform (L7: Kubernetes, secret management, agent identity), a real availability check, real billing and balance, real network fulfilment, and a BPMN engine (Operaton) where process visibility is needed. The layer contracts stay the same (INFERRED) | Summary table (section 7) and Architecture tab |
+| 7 | How does it fit the industry reference architecture? | It adds to what the operator already has and rips nothing out; the detailed mapping is in the appendix | Architecture tab |
 | 8 | What is the business case for a pilot? | Measure, against the operator's own baseline: order cycle time, right-first-time orders, cost per upgrade, and inbound "where's my order?" calls avoided by proactive jeopardy messages. **No figures until a pilot has measured them** | Happy path: proactive jeopardy message; timestamps in the trace |
 | 9 | Who owns the rules? | The business owns the policies, as versioned rules (Rego in Git) with change control and tests. IT owns the platform. The agent owns neither | L4 panel: policy version and the rule that fired |
 
@@ -623,7 +633,7 @@ The questions a CIO or CTO is likely to ask, with our answer and where the demo 
 
 ---
 
-## 9. Open points and unverified items
+## 10. Open points and unverified items
 
 1. **TMF622 jeopardy fields (CONFIRMED correction):** jeopardy and milestone fields are in TMF622 **v5** (`productOrderJeopardyAlert`, `productOrderMilestone`), not v4.0.0. TMF641 v4.2.0 has `jeopardyAlert` and `milestone`. The earlier note in chat was wrong on this point.
 2. **Where jeopardy history lives:** RECOMMENDED in L3 with TMF622 v5-shaped events from L5; Salesforce Order unchanged. Needs DevBot's and LalitC's agreement.
@@ -632,3 +642,54 @@ The questions a CIO or CTO is likely to ask, with our answer and where the demo 
 5. **SID mapping:** INFERRED alignment, not checked ABE by ABE against GB922. TMF669 and TMF651 are listed for alignment only; they are not called in the MVP.
 6. **Apache AGE:** a later option only; licence and fit to be checked before use.
 7. The MVP is aligned to ODA functional blocks and uses TMF Open API contracts; it is **not** ODA- or TMF-certified.
+
+---
+
+## 11. Appendix: standards mapping (for architects)
+
+The main story uses business words. This appendix holds the standards detail behind it. All mappings are conceptual alignment (INFERRED) unless marked; nothing here is TM Forum certified.
+
+### 11.1 Journey step to TM Forum Open API
+
+| Step in the story | TM Forum Open API | Served by | Label |
+|---|---|---|---|
+| Customer record, Sam's role | TMF629 Customer, TMF632 Party (TMF669 Party Role for alignment) | Salesforce, native | CONFIRMED (amendment 001) |
+| Site and address key | TMF674 Geographic Site, TMF673 Geographic Address (shape) | Our layer reading standard Location / Address | RECOMMENDED |
+| Current service, service live | TMF637 Product Inventory | Salesforce, native read; Asset write by standard sObject REST | CONFIRMED |
+| Products, speeds, prices | TMF620 Product Catalog | Apex facade `AgenticTelco_TMF620` | CONFIRMED |
+| Availability check | TMF679 Product Offering Qualification | Mocked in our layer (native returns 400 on this org) | CONFIRMED |
+| Overdue balance | TMF666 Account / TMF678 Customer Bill (alignment only) | Mocked | RECOMMENDED |
+| Contract months left | TMF651 Agreement (alignment only; Asset end date is the stand-in) | Salesforce data | RECOMMENDED |
+| Quote | TMF648 Quote | Apex facade `AgenticTelco_TMF648` | CONFIRMED |
+| Upgrade order, in progress, completed | TMF622 Product Ordering, item `action: modify` | Apex facade `AgenticTelco_TMF622` (modify is build item 1) | CONFIRMED |
+| Fulfilment, milestones, jeopardy | TMF641 Service Ordering (shape) | Mocked OSS | RECOMMENDED |
+| Intent | TMF921 Intent / TR292 TIO (conceptual only; not implemented in the MVP) | — | RECOMMENDED |
+| Events | TMF688-style envelope (pattern, not conformance) | Our layer | RECOMMENDED |
+
+The SID mapping for each business term is in the L4 section ("Semantic definitions"). It has not been checked ABE by ABE against GB922 (INFERRED).
+
+### 11.2 ODA and the Zero Gravity layers
+
+| Zero Gravity layer | What the report says about ODA / TM Forum (CONFIRMED, report p.21–22, 52) | MVP mapping (INFERRED) |
+|---|---|---|
+| L1 Intent & Experience | "Extends ODA's Engagement Management"; TR292 in endnotes | Portal and chat: Engagement Management |
+| L2 Agent Mesh | TMF448 AI-native ODA principles | Agent: Engagement / Intelligence Management (block names to be verified against TM Forum ODA documents) |
+| L3 Data Foundation | "Builds on ODA Intelligence Management" | Postgres records |
+| L4 Enterprise Context | SID (GB922) and TR292 TIO | Semantic YAML, context service, OPA |
+| L5 Deterministic Execution | ODA "decoupling and integration fabric" | Coded workflow |
+| L6 Agent-Ready SoRs | ODA Party Management, Core Commerce Management and Production; no TMF API numbers named | Salesforce: Party Management and Core Commerce Management; mocked OSS stands in for Production |
+| L7 Digital Core | ODA Canvas runtime | Docker Compose (no Canvas) |
+| L8 Observability & Governance | — | OpenTelemetry, Jaeger, audit rows |
+
+The approach is additive: nothing in the operator's estate is replaced. Wording to use: "aligned to ODA functional blocks, using TMF Open API contracts", never "ODA-compliant" or "certified".
+
+### 11.3 Order jeopardy: spec versions
+
+**Jeopardy: what the TMF specs actually contain (CONFIRMED, read from the tmforum-apis GitHub spec files on 27 Oct 2026).** This corrects the earlier REPORTED note that TMF622 "v4 onwards" has a `jeopardyAlert` field:
+
+| Spec | Order state | Jeopardy and milestones | Events |
+|---|---|---|---|
+| TMF622 v4.0.0 (`TMF622-ProductOrder-v4.0.0.swagger.json`) | `inProgress` exists | **No** jeopardy or milestone field on ProductOrder; `expectedCompletionDate` exists | No jeopardy or milestone event |
+| TMF622 v5.0.0 (`TMF622-ProductOrdering-v5.0.0.oas.yaml`) | `inProgress` exists | `productOrderJeopardyAlert[]` (name, jeopardyType, message, alertDate, exception), `productOrderMilestone[]` (name, status, milestoneDate, message), `expectedCompletionDate` | `ProductOrderJeopardyAlertEvent`, `ProductOrderMilestoneEvent` |
+| TMF641 v4.2.0 (`TMF641-ServiceOrdering-v4.2.0.swagger.json`) | `inProgress` exists | `jeopardyAlert[]`, `milestone[]`, `expectedCompletionDate` | `ServiceOrderJeopardyEvent`, `ServiceOrderMilestoneEvent` |
+
