@@ -211,6 +211,7 @@ Each decision has a recommended default.
    - **Rejected:** an Apex facade with a custom object, and stretching Opportunity or Case.
    - **Record:** an ADR-001 amendment.
 9. **L7 mocked** (LalitC, 27 Oct 2026). Interpretation: L7 is the operator's digital core, the network and the platform. The card leads with a mocked network view of Brightwell's site (site 4471, access port 150 to 900 when the OSS step completes), labelled as our illustration, with platform services as one line underneath. Network records stay in L6. Compose is kept as plumbing, and credentials stay server-side regardless.
+10. **No Salesforce MCP in the MVP** (LalitC, 27 Oct 2026). MCP is used only between the agent and our own three tools, named in our business terms. The L4 context service reads Salesforce through its native APIs and our facades, read-only, per request; only the L5 workflow writes. To avoid vendor lock-in, no vendor's tools define the agent's vocabulary: a vendor MCP server, if used later, sits behind the context layer as one more source, called by code (roadmap).
 
 ## 11. Build items (not started until all three agree)
 
@@ -232,6 +233,7 @@ Each decision has a recommended default.
 - Graph database, vector search, semantic cache, data products.
 - OpenTelemetry and Jaeger (roadmap), Grafana, Langfuse.
 - Kubernetes, gateway, vault, agent identity, event bus, multi-region (L7 target state is mocked only).
+- Salesforce or other vendor MCP servers (roadmap: behind the context layer only).
 - Voice and other channels.
 - Full TM Forum Intent Ontology expression, intent negotiation, multi-layer intent handlers.
 - Real billing, real availability, real OSS.
