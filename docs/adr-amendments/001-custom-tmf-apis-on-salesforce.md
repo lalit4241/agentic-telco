@@ -49,6 +49,10 @@ A dry-run validation (`0AfQH00000Q1p1V0AR`) preceded the second deploy.
 
 ## Amendment: TMF921 Intent
 
-TMF921 Intent is also exposed as a thin, mapping-only Apex facade (decided LalitC 27 Oct 2026), consistent with the rule that TMF APIs the org lacks are Apex facades. Intent and IntentReport are stored in two small custom objects linked to the Account; no intent logic in Apex. Postgres (L3) keeps an audit copy only.
+TMF921 as an Apex facade, with one AgenticTelco custom object (AgenticTelco_Intent__c); new metadata only; decided LalitC 27 Oct 2026.
 
-Facade list is now: TMF620, TMF622, TMF648, TMF671, TMF921 (TMF921 not yet built).
+- **Facade:** `AgenticTelco_TMF921`, mapping only. The L5 BPMN process decides state changes; Apex only stores and maps. Postgres (L3) keeps an audit copy only.
+- **Facade list:** now TMF620, TMF622, TMF648, TMF671, TMF921 (TMF921 not yet built; built after sign-off of MVP-KEY-DESIGN.md).
+- **Alternatives rejected:**
+  - stretching Opportunity or Case (confuses the story);
+  - hosting outside Salesforce (earlier option, superseded).
