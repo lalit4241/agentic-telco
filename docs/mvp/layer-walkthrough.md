@@ -208,7 +208,7 @@ Example intent envelope (example values):
 |---|---|
 | Component | One LangGraph agent (not a mesh) |
 | OSS and licence | LangGraph, MIT; MCP Python SDK, MIT (CONFIRMED, 06-tech-stack) |
-| Tools (MCP) | `get_context` (L4, read), `start_upgrade` (L5, start only), `get_order_status` (L5, read). **No tool writes to Salesforce.** |
+| Tools (MCP) | `get_context` (L4, read), `request_upgrade` (L5, request only; L4 policy decides), `get_order_status` (L5, read). **No tool writes to Salesforce.** |
 | Input | Intent envelope; context pack; workflow events |
 | Output | Messages to Sam; a proposal handed to L5 |
 | TMF / SID | None directly. The agent sees only business terms from the context pack, never Salesforce object names |
