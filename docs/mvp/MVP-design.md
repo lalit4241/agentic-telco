@@ -1,5 +1,7 @@
 # AgenticTelco MVP: one-page design (DRAFT for LalitC sign-off)
 
+> **Superseded for agreement by [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md)**, the one key document LalitC, DevBot and TMForumCTO agree before any development starts. This page stays as supporting detail.
+
 **Status:** Draft, 27 Oct 2026. Nothing is built until LalitC approves this page.
 
 ## 1. Business scenario
