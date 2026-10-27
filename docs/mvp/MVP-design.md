@@ -85,3 +85,43 @@ Mocked and labelled in the demo: overdue-balance check, availability by address 
 
 ## 8. Build items identified
 1. Extend the TMF622 Apex facade to accept `action: modify` with a reference to the existing Fibre 150 product, mapping it to an order line that replaces Fibre 150 with Fibre 900 on the same service. Mapping only, no business rules in Salesforce (DevBot).
+
+## 9. Layer walkthrough
+A detailed, layer-by-layer explanation of this design (how we present it, the end-to-end sequence across all eight Zero Gravity layers, what each layer does in Brightwell's journey, example artefacts, real vs mocked, the proposed demo layer view and a CIO/CTO view) is in [layer-walkthrough.md](layer-walkthrough.md). It explains this page and does not change the business process.
+
+Note on order jeopardy (checked 27 Oct 2026 against the tmforum-apis spec files, CONFIRMED): `productOrderJeopardyAlert`, `productOrderMilestone` and their events are in **TMF622 v5**, not v4.0.0; TMF641 v4.2.0 has `jeopardyAlert` and `milestone`. The order stays `inProgress` during the jeopardy. Details in the walkthrough, L5.
+
+## 10. Enterprise Context (semantic layer)
+**Agreed design (RECOMMENDED, our design, not specified by the Zero Gravity report).** The report places ontology, knowledge graphs and policy engines in L4 (p.22); this is our MVP form of it.
+
+- **Semantic YAML** (in the repo) defines each business term once, mapped to its SID concept, its TMF API and its Salesforce source.
+- **Context service** builds one **context pack** per request. **Both** the agent (through one MCP tool, `get_context`) and OPA receive the same pack, so the policy decides on exactly the facts the agent saw.
+- **Provenance:** every fact in the pack names its source (Salesforce object, or mocked).
+
+| Business term | SID concept | TMF API | Source |
+|---|---|---|---|
+| Customer | Customer role played by an Organization (Party) | TMF629 + TMF632 | Account |
+| AuthorisedContact | Individual playing PartyRole "Authorised Buyer" | TMF632 / TMF669 | Account Contact Role = Decision Maker (regular employee = Business User) |
+| Site | GeographicSite + GeographicAddress | TMF674 / TMF673 | Location (External Reference = address key), Address |
+| CurrentBroadband | Product (inventory) | TMF637 | Asset at the Location |
+| SpeedTier | ProductSpecCharacteristic (download speed) | TMF620 | Catalogue, read at run time, not hard-coded |
+| ContractMonthsLeft | Derived from Agreement / CustomerAgreement | TMF651 | Asset end date, labelled as a stand-in |
+| AvailableAtSite | ProductOfferingQualification result | TMF679 | Mocked |
+| OverdueBalance | CustomerAccount balance / CustomerBill | TMF666 / TMF678 | Mocked |
+
+SID and TMF mappings are conceptual alignment (INFERRED), not certified.
+
+Example context pack (illustrative values):
+```json
+{
+  "customer": {"name": "Brightwell Design Ltd", "src": "salesforce:Account"},
+  "requester": {"name": "Sam", "authorisedContact": true, "role": "Decision Maker", "src": "salesforce:AccountContactRole"},
+  "site": {"addressKey": "A00000001975", "postcode": "IP5 3RE", "src": "salesforce:Location+Address"},
+  "currentBroadband": {"product": "AgenticTelco Fibre 150", "downloadSpeedMbps": 150, "status": "active", "src": "salesforce:Asset via TMF637"},
+  "contractMonthsLeft": {"value": 10, "src": "salesforce:Asset end date (stand-in for TMF651)"},
+  "availableAtSite": {"value": ["AgenticTelco Fibre 500", "AgenticTelco Fibre 900"], "src": "mock:TMF679"},
+  "overdueBalance": {"value": false, "src": "mock:billing"}
+}
+```
+
+**Not in the MVP:** graph database, vector search. A graph extension on Postgres (for example Apache AGE) is a possible later step.
