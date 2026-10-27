@@ -66,7 +66,7 @@ The same business customer exists under three IDs. All IDs are examples.
 
 | Layer | Question it answers | What it does | Tech (licence) | Artefact shown | Real / mocked |
 |---|---|---|---|---|---|
-| L1 Intent & Experience | What does Sam want? | Portal chat; captures the need in plain words | React (MIT) | Intent message | Real; demo sign-in |
+| L1 Intent & Experience | What does Sam want? | Portal chat; the need becomes an Intent [TMF921] | React (MIT), small intent service (ours) | Intent and its reports | Real; demo sign-in |
 | L2 Agent Mesh | What should we offer and why? | One agent: understands, gets context, recommends, explains, tells Sam about delays | LangGraph (MIT), MCP SDK (MIT), small local model via Ollama (MIT) | Plan, tool calls, model calls and tokens | Real |
 | L3 Data Foundation | What do we remember? | Conversation, decisions, consent, workflow and jeopardy history, audit; identity cross-reference | PostgreSQL (PostgreSQL Licence) | Cross-reference rows, audit rows | Real; IDs are examples |
 | L4 Enterprise Context | What do we know, and is it allowed? | Semantic definitions, context pack with sources, policy decision | Context service (ours), OPA (Apache-2.0) | Context pack, policy decision and rule | Real; balance and availability are stand-ins |
@@ -75,15 +75,17 @@ The same business customer exists under three IDs. All IDs are examples.
 | L7 Digital Core | What does it run on? | One small stack; secrets server-side; one internal network | Docker Compose (Apache-2.0) | Running containers, boundary | Real; single host |
 | L8 Observability & Governance | How do we prove what happened? | Step timeline per request across all layers (pending LalitC yes) | Built from the L3 audit log | Step timeline | Real data from each run |
 
-**L1.** Sam types "We're hiring 15 people and moving to cloud video editing; the line can't keep up." Sam never has to name a product. No voice or other channels in the MVP.
+**L1.** Sam types "We're hiring 15 people and moving to cloud video editing; the line can't keep up." Sam never has to name a product. The agent records an **Intent** [TMF921], which states an outcome, not a product. For example: "support 15 more staff and cloud video at the Martlesham site, no extra visits, within contract, by 30 Nov 2026" (example date). Fibre 900 is the agent's recommendation in answer to the Intent; the Intent never names it. Progress comes back as **IntentReports**: a delay means "intent at risk, revised date", and Fibre 900 going live closes the Intent as fulfilled.
+
+TMF921 is designed mainly for intent handover between autonomous-network layers (INFERRED from the spec). Using it at the customer edge is our design choice (RECOMMENDED), and we say so. It is TMF921-shaped and not conformance-tested; the expression is simplified. The Intent lives in a small intent service in the agent layer, stored in L3, not in Salesforce (decision 8). No voice or other channels in the MVP.
 
 **L2.** One agent with three tools: get context, start the upgrade, read order status. It has no write tools and never sees a legacy system, a legacy ID or a batch job. Its recommendation is reasoning ("15 more people and cloud video need more than 150 Mbps"). Whether an offer is allowed comes from the advisory policy check, never from the model.
 
-**L3.** One Postgres database. It holds the conversation, the context pack used, both policy decisions, consent, workflow state, jeopardy and milestone history, and audit. It also holds the identity cross-reference (section 6). This is an operational database, not the lakehouse and data products the report describes for L3 (INFERRED).
+**L3.** One Postgres database. It holds the conversation, the context pack used, both policy decisions, consent, workflow state, Intents and IntentReports, jeopardy and milestone history, and audit. It also holds the identity cross-reference (section 6). This is an operational database, not the lakehouse and data products the report describes for L3 (INFERRED).
 
-**L4.** The semantic file defines each business term once ("authorised contact", "in contract", "available at site") and says where it comes from. The context service builds one context pack per request from the identity L3 has resolved. Each fact is tagged with its source: Salesforce, or legacy stand-in. The **same OPA rule runs twice**: advisory before the recommendation, binding in the workflow before any write. The rule checks four things: authorised contact, no overdue balance, available at the site, and upgrade-only mid-contract.
+**L4.** The semantic file defines each business term once ("authorised contact", "in contract", "available at site") and says where it comes from. It also holds a plain-English glossary, which is the source the model explains from. The context service builds one context pack per request from the identity L3 has resolved. Each fact is tagged with its source: Salesforce, or legacy stand-in. The **same OPA rule runs twice**: advisory before the recommendation, binding in the workflow before any write. The rule checks four things: authorised contact, no overdue balance, available at the site, and upgrade-only mid-contract.
 
-**L5.** One BPMN process on Operaton (decision 4). It runs the binding policy check, quote, upgrade order and the fulfilment wait. A timer raises the delay and the revised date. It then makes the asset change. The order external ID is the business key, so reruns can't double-write. Python workers absorb slow and batch legacy systems.
+**L5.** One BPMN process on Operaton (decision 4). It runs the binding policy check, quote, upgrade order and the fulfilment wait. A timer raises the delay and the revised date. The process emits IntentReport updates, which are stored in L3. It then makes the asset change. The order external ID is the business key, so reruns can't double-write. Python workers absorb slow and batch legacy systems.
 
 **L6.** Salesforce keeps the records and nothing else. Calls use native Salesforce APIs where the org has them: customer and contacts [TMF629/632] and installed services [TMF637]. Otherwise they use thin, mapping-only Apex add-ons: catalogue [TMF620], quote [TMF648] and order [TMF622] (ADR amendment 001, approved by LalitC). Every legacy system sits behind an adapter speaking a standard API. A system that can't be adapted is wrapped, and systems are replaced one at a time.
 
@@ -95,8 +97,8 @@ The same business customer exists under three IDs. All IDs are examples.
 
 | Layer | MVP job | Technology | Real or mocked | Out of scope for now |
 |---|---|---|---|---|
-| L1 Intent | Simple portal chat; Sam's free-text need becomes a structured intent | Web chat in a separate MVP mode of the demo | Real when run live; the public site replays recorded runs, labelled "recorded run" | Rich UI, full TMF921 intent model |
-| L2 Agent | One agent: understands the need, gets context, recommends Fibre 900 and explains why, tells Sam about delays. Proposes only, never writes | LangGraph agent with 3 tools (get context, request upgrade, order status) over MCP; small local model via Ollama (3B, or 7B only if under 5 seconds a turn) | Real | Agent mesh, A2A, multiple models |
+| L1 Intent | Sam's free-text need becomes a TMF921 Intent (created by the agent); progress and delay come back as IntentReports | Web chat in a separate MVP mode of the demo; TMF921-shaped Intent and IntentReport (simplified expression; v5.0.0 verified), in a small intent service in the agent layer, stored in L3 (not Salesforce) | Real when run live; the public site replays recorded runs, labelled "recorded run" | Rich UI, full TM Forum Intent Ontology expression, intent negotiation, multi-layer intent handlers |
+| L2 Agent | One agent: understands the need, gets context, recommends Fibre 900 and explains why, tells Sam about delays. Proposes only, never writes | LangGraph agent with 3 tools (get context, request upgrade, order status) over MCP; small local model via Ollama (3B, scripted fallback) | Real | Agent mesh, A2A, multiple models |
 | L3 Data | Conversation, decisions, audit, the customer ID cross-reference (Salesforce Account, billing ID BIL-B-0077812, inventory site 4471, address key A00000001975), order milestones and delay history | Postgres | Real | Kafka, pgvector, semantic cache |
 | L4 Enterprise Context and Policy | Business terms defined once with their source; one context pack per request, each fact tagged with its source; one policy run twice (advisory before the offer, binding before any write): authorised contact, no overdue balance, available at the site, upgrade-only mid-contract | YAML semantic model, context service, OPA (Rego) | Real | Multiple policy packs, graph |
 | L5 Execution | One business process: binding policy check, quote, upgrade order, wait for fulfilment, timer raises the delay and revised date, then Fibre 150 set to Obsolete, Fibre 900 created as Installed, the two linked as an Upgrade. Order ID as business key, so reruns can't double-write | Operaton BPMN with Python workers; no DMN, rules stay in OPA | Real | Multiple processes, human task queues |
@@ -129,7 +131,7 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 
 **Layer view (proposal, DevBot to build after agreement).**
 - **Split screen:** Sam's chat on the left. On the right, all eight layers light up as the request passes through them. Clicking a layer shows what it did for this request, with real data. The L3 card shows the cross-reference. The L4 card shows the context pack with source chips, the decision and the rule. The L5 card shows the BPMN diagram with the current step highlighted. The L6 card shows each call labelled "native Salesforce API" or "custom Apex facade on Salesforce", with record links.
-- **Presenter mode:** a Step button pauses after each layer.
+- **Presenter mode:** a Step button pauses after each layer. The layer text is written by us, not generated.
 - **Architecture tab:** one card per layer: purpose, open-source tech and licence, contract with its neighbours, real or mocked.
 - **Scenario buttons:**
   - happy path with jeopardy: L5 and the agent handle it;
@@ -176,12 +178,16 @@ Each decision has a recommended default.
 
 1. **Contract effect of a mid-contract upgrade.** Default: keep the current end date (10 months left), no re-contract, new price from the upgrade date. The seeded term price is £45.00 a month for Fibre 900, against £27.00 for Fibre 150 (CONFIRMED in the seed catalogue; read from Salesforce at run time). DevBot agrees with this default (still awaiting LalitC).
 2. **Hosting wording.** Default: "The agent and model run locally in our stack. Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed)." Make no UK-only claim yet. The GitHub Pages replay, the org region and model hosting are unverified. DevBot agrees with this default (still awaiting LalitC).
-3. **Model.** Small open model run locally via Ollama. In the first build test DevBot measures Qwen2.5 3B and 7B (Instruct, tool-calling) on the demo machine (15 GB RAM, no GPU). Acceptance target (RECOMMENDED, not measured): a full agent turn under ~5 s. If 7B misses it, use 3B, or run 7B on a GPU host — which requires re-checking the hosting/data-residency wording (decision 2). Scripted fallback for presenter mode either way. Real response times and token usage recorded from the audit timeline. Host memory (CONFIRMED by DevBot): 15 GB, no swap. The stack needs about 5 GB with 3B and about 8 GB with 7B (tight). Use 7B only if it meets the 5-second target.
+3. **Model.** Qwen2.5 3B Instruct via Ollama, decided by LalitC on 27 Oct 2026. 7B is not used in the MVP. The stack needs about 5 GB on the 15 GB host (no swap; CONFIRMED by DevBot).
+   - **Narrow tasks only:** the model understands the need, fills the Intent, chooses from the allowed offers in the context pack and phrases the reply.
+   - **Explanations:** concept explanations come from the layer panels, the context pack and the glossary, not from the model, so they are always correct.
+   - **Fallback:** the scripted presenter fallback stays.
+   - **Measured:** real response times and token usage are recorded in the audit timeline.
 4. **L5 engine.** L5 uses BPMN (Operaton), decided by LalitC on 27 Oct 2026.
    - **Process:** one process, adapted from the repo's `stack/l5_orchestrator/bpmn/broadband-upgrade-saga.bpmn`. Its steps are: binding OPA check, quote, upgrade order, then a fulfilment wait whose timer raises the jeopardy and the revised date. It ends with the asset change: Fibre 150 Obsolete with an end date, Fibre 900 Installed at the same Location, and an AssetRelationship of type "Upgrade".
    - **Workers:** Python external-task workers. The order external ID is the business key, for idempotency.
    - **Rules:** policy stays in OPA. There is no DMN, so rules are not duplicated.
-   - **Cost:** one more Java container, about 1 GB RAM (to be checked against the 15 GB host with Ollama 3B or 7B).
+   - **Cost:** one more Java container, about 1 GB RAM (to be checked against the 15 GB host with Ollama 3B).
    - **Demo:** the L5 card shows the BPMN diagram with the current step highlighted.
 5. **MVP mode.** Default: run as a separate "MVP mode" alongside the full AgenticTelco demo.
 6. **Installed-service end state.** CONFIRMED read-only (DevBot, 27 Oct 2026, flow metadata pulled, org unchanged):
@@ -194,6 +200,7 @@ Each decision has a recommended default.
    - **No logic in the org:** all writes go through standard APIs or the mapping-only adapter.
    - **Live test:** still waits until all three agree this document.
 7. **Jeopardy storage.** Default: L3 plus events, with no change to the Salesforce order (section 6).
+8. **Where TMF921 lives.** Outside Salesforce, in a small intent service in the agent layer (L1), stored in L3 Postgres. An Intent is agent-layer state, not system-of-record data. Recorded as an amendment to ADR-001 (27 Oct 2026, pending LalitC sign-off with this document).
 
 ## 11. Build items (not started until all three agree)
 
@@ -215,7 +222,7 @@ Each decision has a recommended default.
 - OpenTelemetry and Jaeger (roadmap), Grafana, Langfuse.
 - Kubernetes, zero-trust mesh, agent identity.
 - Voice and other channels.
-- A full intent model.
+- Full TM Forum Intent Ontology expression, intent negotiation, multi-layer intent handlers.
 - Real billing, real availability, real OSS.
 - Downgrade journey.
 - Any change to existing Salesforce records, settings or flows.
@@ -271,6 +278,14 @@ Full table: [layer-walkthrough.md, section 12](layer-walkthrough.md#12-appendix-
 | Quote | TMF648 | Apex add-on |
 | Order (`action: modify`) | TMF622 | Apex add-on (build item 1) |
 | Fulfilment, jeopardy | TMF641 shape | Adapter over the legacy OSS stand-in |
+| Customer need, progress | TMF921 Intent Management v5.0.0 (Intent, IntentReport), TMF921-shaped | Intent service in the agent layer, stored in L3 (decision 8) |
+
+**TMF921 (CONFIRMED, 27 Oct 2026):**
+- **Version:** v5.0.0 is the current stable release (02 Oct 2024) on the [TM Forum directory](https://www.tmforum.org/oda/open-apis/directory/intent-management-api-TMF921), which also lists v4. Spec files: [tmforum-apis/TMF921_Intent](https://github.com/tmforum-apis/TMF921_Intent) (`TMF921_Intent_Management_v5.0.0.oas.yaml`; the v4 swagger reports 4.0.2).
+- **Resources:** `Intent`, `IntentReport` (under `/intent/{intentId}/intentReport`) and `IntentSpecification`, plus events.
+- **Expression:** `Intent.expression` holds the expectations in an ontology language, validated by the TM Forum Intent Ontology (TIO). The spec offers JSON-LD and Turtle expression types.
+- **Lifecycle:** `lifecycleStatus` is a free string in v5.0.0, with no enumerated values; spec examples use "Created" and "Active". Our labels acknowledged, in progress and fulfilled are therefore MVP labels, not spec values.
+- **Report states:** the spec's examples use the TIO terms `icm:StateComplies` and `icm:StateDegrades`. We map "at risk" to `StateDegrades` and "fulfilled" to `StateComplies` (INFERRED mapping).
 
 **Jeopardy field correction (CONFIRMED, tmforum-apis spec files, 27 Oct 2026):**
 - TMF622 v4.0.0 has no jeopardy or milestone fields on the product order, only `expectedCompletionDate`.

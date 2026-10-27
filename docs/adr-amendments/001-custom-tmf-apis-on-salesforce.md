@@ -46,3 +46,7 @@ A dry-run validation (`0AfQH00000Q1p1V0AR`) preceded the second deploy.
 ## Reconfirmation
 
 27 Oct 2026: Lalit Chauhan reconfirmed this decision. The thin Apex TMF facades (TMF620, TMF622, TMF648, TMF671) stay in Salesforce and only map records to TMF shapes. Policy, orchestration and agent logic stay outside Salesforce. See ADR-001 (commit 1e98af9).
+
+## Amendment: TMF921 Intent
+
+Apex facades apply to system-of-record resources the org lacks (TMF620/622/648/671); TMF921 Intent is agent-layer state, not SoR data, so it is hosted outside Salesforce in the intent service (L1, stored in L3). Decided 27 Oct 2026, pending LalitC sign-off with the key doc.
