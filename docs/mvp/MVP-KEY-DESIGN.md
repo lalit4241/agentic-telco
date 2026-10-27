@@ -219,9 +219,10 @@ Each decision has a recommended default.
 2. Test data in standard objects only: Account, Contact with Account Contact Role, Location with External Reference, Address, Asset at Location. AgenticTelco records only; nothing existing is changed.
 3. L5 BPMN process on Operaton with Python workers: binding policy check, quote, order, fulfilment timer and jeopardy, asset change; business-key idempotency.
 4. L4 semantic file, context service and one OPA policy (advisory and binding), with tests.
-5. Legacy stand-ins with their quirks, and the L3 cross-reference.
-6. MVP mode.
-7. Layer view UI: split screen, presenter mode, architecture tab, scenario buttons.
+5. TMF921-shaped intent service (L1), after sign-off: Intent and IntentReport resources stored in L3 Postgres; validates schema and calls the same OPA policy for the authorised-contact check (no copy of rules); receives IntentReports from the L5 BPMN process.
+6. Legacy stand-ins with their quirks, and the L3 cross-reference.
+7. MVP mode.
+8. Layer view UI: split screen, presenter mode, architecture tab, scenario buttons.
 
 ## 12. Out of scope
 
