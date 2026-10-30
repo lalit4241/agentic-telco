@@ -39,7 +39,7 @@ Qwen3-4B-Instruct-2507 is the only model that called the tools correctly, so it 
 
 - Each case resets the seed first, so the org now holds the happy-path end state (recorded last); the delayed run's Fibre 900 is Obsolete again, and the verifier allows for that by comparing recording times.
 - The happy-path recording is the run after the account was renamed to Brightwell Design Ltd (order 00000173, recorded 21:12 UK, regenerated from its stored conversation and audit trail); it is the last write case, so the org holds its end state.
-- Salesforce evidence screenshots (`web/src/mvp/evidence/`, 01–07): account and contact, the quote, then Fibre 150 Obsolete, Fibre 900 Installed (order 00000173), the Upgrade relationship and the Apex facade classes. No 'before' shot of Fibre 150: the org now holds the after state.
+- Salesforce evidence screenshots (`web/src/mvp/evidence/`, 01–07), for the order 00000173 run: account and contact, order 00000173 (Activated, one Fibre 900 line at £45.00), Fibre 150 Obsolete, Fibre 900 Installed, the Upgrade relationship (From Date 30/10/2026 21:12) and the Apex facade classes. No 'before' shot of Fibre 150 (the org now holds the after state); the quote shot is held back pending a decision.
 
 ## What is real and what is mocked in the MVP
 
