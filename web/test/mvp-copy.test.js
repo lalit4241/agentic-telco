@@ -14,8 +14,9 @@ test('27 glossary terms, each with a definition', () => {
 });
 test('L6 wording: full label and chip', () => {
   const l6 = c.layers[5];
-  assert.strictEqual(l6.label, 'Salesforce native APIs plus a thin TMF facade layer within Salesforce');
-  assert.strictEqual(l6.chip, 'Salesforce APIs + TMF facade (in Salesforce)');
+  assert.strictEqual(l6.label, 'TM Forum Open APIs, exposed by Salesforce through a thin TMF facade layer within Salesforce');
+  assert.strictEqual(l6.chip, 'TMF Open APIs (Salesforce)');
+  assert.ok(!/native Salesforce API/.test(JSON.stringify(c)));
 });
 test('story and four-case sections are not parsed into layers or glossary', () => {
   assert.ok(!c.glossary.some((g) => /Banner|Setting|Customer/.test(g.term)));

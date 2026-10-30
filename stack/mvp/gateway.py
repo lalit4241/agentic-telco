@@ -1,11 +1,11 @@
 """AgenticTelco MVP · gateway: serves the two-view UI (live mode) and the small read API it polls.
 L1 web chat enters here; everything after that is the real layer services. Local only (127.0.0.1)."""
-import os, subprocess, sys, uuid
+import os, uuid
 from pathlib import Path
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
-from stack.mvp.common import (ROOT, q, q1, J, Span, url, new_trace, traceparent, brightwell, copy_json, init_schema, OPERATON_URL, MODEL)
+from stack.mvp.common import (ROOT, q, q1, J, Span, url, APEX, sf_unaudited, redact, new_trace, traceparent, brightwell, copy_json, init_schema, OPERATON_URL, MODEL)
 from stack.l5_orchestrator.engine import creds
 
 app = FastAPI(title="AgenticTelco MVP gateway")
@@ -45,10 +45,19 @@ def copy():
 def bpmn():
     return Response(BPMN.read_text(), media_type="application/xml")
 
-def asset_installed():
-    from stack.zg_common import sf_session
-    r = sf_session.request("GET", f"/services/data/v62.0/sobjects/Asset/{B['assetId']}?fields=Status")
-    return r.json().get("Status") == "Installed"
+CONTRACT_END = "2027-08-28"   # seeded Fibre 150 contract end (seed/customers/seed_brightwell.py)
+
+
+def demo_reset():
+    """Every case starts from Fibre 150 active (Installed) with its contract end date. Uses TMF637 (TMF facade within Salesforce) only:
+    the seeded product back to active, products from earlier MVP runs on this customer to terminated. Nothing is deleted."""
+    P = f"{APEX}/tmf637/product"
+    cur = sf_unaudited("GET", f"{P}/{B['assetId']}").json()
+    if cur.get("status") != "active" or cur.get("terminationDate") != CONTRACT_END:
+        sf_unaudited("PATCH", f"{P}/{B['assetId']}", {"status": "active", "terminationDate": CONTRACT_END})
+    for p in sf_unaudited("GET", f"{P}?relatedParty.id={B['accountId']}&status=active&limit=100").json():
+        if p["id"] != B["assetId"]:
+            sf_unaudited("PATCH", f"{P}/{p['id']}", {"status": "terminated"})
 
 @app.post("/api/demo/start")
 async def start(request: Request):
@@ -59,8 +68,7 @@ async def start(request: Request):
         raise HTTPException(400, "unknown case")
     httpx.post(f"{url('standins')}/standin/reset", timeout=10)
     httpx.put(f"{url('standins')}/standin/scenario", json=case["scenario"], timeout=10)
-    if not asset_installed():   # every case starts from Fibre 150 Installed
-        subprocess.run([sys.executable, "seed/customers/seed_brightwell.py", "--reset"], cwd=ROOT, check=True, capture_output=True, timeout=600)
+    demo_reset()   # every case starts from Fibre 150 active (Installed)
     who = B["contacts"][case["contact"]]
     cid, trace = "C-" + uuid.uuid4().hex[:10], new_trace()
     q("insert into mvp.conversation(id, trace_id, contact_id, case_name, state) values (%s,%s,%s,%s,%s)", cid, trace, who["contactId"], b["case"],
@@ -95,13 +103,14 @@ def state(conversationId: str, since: int = 0):
               "duration_ms, attributes, request, response from mvp.audit where trace_id=%s and seq > %s order by seq", c["trace_id"], since)
     decisions = q("select mode, policy_version, input, result, at from mvp.decision where trace_id=%s order by id", c["trace_id"])
     out = {"conversation": {k: c[k] for k in ("id", "trace_id", "contact_id", "case_name", "started_at")}, "state": {k: v for k, v in st.items() if k != "agentSpan"},
-           "messages": msgs, "spans": spans, "decisions": decisions, "model": MODEL,
+           "messages": msgs, "spans": [redact(sp) for sp in spans], "decisions": decisions, "model": MODEL,
            "xref": q("select system, external_id, source, verified from mvp.identity_xref where subject='brightwell' order by id"),
            "consent": q("select id, text, at from mvp.consent where conversation_id=%s", conversationId)}
     try:
         out["network"] = httpx.get(f"{url('standins')}/standin/network/4471", timeout=5).json()
     except Exception:
         out["network"] = None
+    out["links"] = {"order": None, "account": sf_link("Account", B["accountId"]), "oldAsset": sf_link("Asset", B["assetId"])}
     if st.get("intentId"):
         it = q1("select id, lifecycle_status, body from mvp.intent where id=%s", st["intentId"])
         out["intent"] = it
@@ -114,7 +123,7 @@ def state(conversationId: str, since: int = 0):
                          auth=creds("agent"), timeout=20).json()
         out["bpmn"] = [{"id": a["activityId"], "name": a.get("activityName"), "type": a["activityType"], "start": a["startTime"], "end": a.get("endTime")}
                        for a in acts] if isinstance(acts, list) else []
-        links = {"order": None}
+        links = out["links"]
         for m in out["milestones"]:
             bd = m["body"] or {}
             if m["name"] == "OrderInProgress":
@@ -125,7 +134,4 @@ def state(conversationId: str, since: int = 0):
             if m["name"] == "AssetChanged":
                 links["newAsset"] = sf_link("Asset", bd.get("new"))
                 links["relationship"] = sf_link("AssetRelationship", bd.get("relationship"))
-        links["oldAsset"] = sf_link("Asset", B["assetId"])
-        links["account"] = sf_link("Account", B["accountId"])
-        out["links"] = links
     return out

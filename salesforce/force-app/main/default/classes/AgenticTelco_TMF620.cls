@@ -1,5 +1,5 @@
 /**
- * TMF620 Product Catalog Management (v4 resource shapes) – custom TMF API on Salesforce.
+ * TMF620 Product Catalog Management (v4 resource shapes) – TMF facade within Salesforce (Apex).
  * The sfcomms org exposes no TMF620 endpoint (Direct Access and managed-package paths return 404), so this resource
  * reads the native Comms Cloud EPC objects. Read-only.
  *   GET /agentictelco/tmf620/productOffering[/{id}]     ?isBundle=true&category.id=..&scope=all&limit=50

@@ -1,19 +1,18 @@
 """AgenticTelco MVP · L4 Enterprise Context: builds one context pack per request (each fact tagged with its source) and runs the
-ADVISORY policy check. Read-only: it reads Salesforce through native APIs and the TMF facade, and the legacy stand-ins through their
-adapters. Identity comes from the L3 cross-reference (matching in L3, meaning in L4)."""
+ADVISORY policy check. Read-only: it reads Salesforce only through TM Forum Open APIs (Salesforce's own and the TMF facade within
+Salesforce), and the legacy stand-ins through their adapters. Identity comes from the L3 cross-reference (matching in L3, meaning in L4)."""
 import json, time
+from urllib.parse import quote
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 import httpx, jsonschema, yaml
 from fastapi import FastAPI, HTTPException, Request
-from stack.mvp.common import (sf_id, q, q1, J, Span, sf, soql, SF_DATA, NATIVE, FACADE, STANDIN, OPA_URL, url, traceparent, parse_traceparent,
+from stack.mvp.common import (sf_id, q, q1, J, Span, sf, tmf_ok, APEX, CC, OPA_URL, url, traceparent, parse_traceparent,
                               brightwell, copy_json, init_schema)
 
 app = FastAPI(title="AgenticTelco MVP L4 context service")
 HERE = Path(__file__).parent
-APEX = "/services/apexrest/agentictelco"
-CC = f"{SF_DATA}/connect/comms"
 
 def semantic_model():
     m = yaml.safe_load((HERE / "semantic" / "model.yaml").read_text())
@@ -57,7 +56,7 @@ def resolve_identity(account_id):
 _offers = {"t": 0, "v": None}
 def offerings(trace):
     # no cache: every run reads the catalogue, so each trace shows where the offer came from
-    r = sf(trace, "Catalogue and prices", "GET", f"{APEX}/tmf620/productOffering?isBundle=true", runtime=FACADE, api="TMF620")
+    r = sf(trace, "Catalogue and prices", "GET", f"{APEX}/tmf620/productOffering?isBundle=true", api="TMF620")
     out = []
     for o in r.json() or []:
         speed = next((int(v["value"]) for c in o.get("prodSpecCharValueUse") or [] if c.get("x-code") == "AT_ATT_DL_SPEED"
@@ -67,7 +66,7 @@ def offerings(trace):
         ever = prices.get("Evergreen - Monthly") or {}
         out.append({"id": o["id"], "code": o.get("code"), "name": o["name"], "downloadSpeedMbps": speed,
                     "monthlyPriceGBP": (term.get("price") or {}).get("value"), "priceId": term.get("id"),
-                    "evergreenPriceGBP": (ever.get("price") or {}).get("value"), "src": "salesforce:TMF620 facade (Product2 + PricebookEntry)"})
+                    "evergreenPriceGBP": (ever.get("price") or {}).get("value"), "src": "salesforce:TMF620 Product Catalog"})
     out.sort(key=lambda x: x["downloadSpeedMbps"] or 0)
     _offers.update(t=time.time(), v=out)
     return out
@@ -77,11 +76,11 @@ def promotions(trace):
     """TMF671 read: promotions in the org. Only AgenticTelco business promotions could apply to this upgrade (none today),
     so Fibre 900 stays at its list price of £45 a month."""
     if True:   # no cache: every run's trace shows the TMF671 read
-        r = sf(trace, "Promotions", "GET", f"{APEX}/tmf671/promotion", runtime=FACADE, api="TMF671")
+        r = sf(trace, "Promotions", "GET", f"{APEX}/tmf671/promotion", api="TMF671")
         _promos.update(t=time.time(), v=r.json() if r.status_code == 200 else [])
     active = [p for p in _promos["v"] if p.get("lifecycleStatus") == "active"]
     return {"activeInOrg": len(active), "applicable": [p["name"] for p in active if (p.get("name") or "").startswith("AgenticTelco Business")],
-            "src": "salesforce:TMF671 facade (Promotion)"}
+            "src": "salesforce:TMF671 Promotion"}
 
 def months_between(d0, d1):
     return max(0, (d1.year - d0.year) * 12 + d1.month - d0.month - (1 if d1.day < d0.day else 0))
@@ -99,7 +98,7 @@ def opa(trace, mode, ctx, to, parent=None, component="L4 context service"):
     return d
 
 def ids_or_400(**ids):
-    """Check every Salesforce ID before it goes into a SOQL string; reject anything else with 400."""
+    """Check every Salesforce ID before it goes into a TMF API path or filter; reject anything else with 400."""
     try:
         return [sf_id(v, k) for k, v in ids.items()]
     except ValueError as e:
@@ -121,13 +120,10 @@ def build_pack(trace, contact_id, account_id, parent=None):
         raise HTTPException(409, "identity not in the cross-reference: stop for human review")
     L = ident["links"]
     jobs = {
-        "acr": lambda: soql(trace, "Contact role on the account", "SELECT Role, Contact.Name, Contact.FirstName FROM AccountContactRole "
-                                   f"WHERE ContactId='{contact_id}' AND AccountId='{account_id}' AND Account.Name LIKE 'AgenticTelco%'", api="TMF632 (sObject)"),
+        "org": lambda: tmf_ok(sf(trace, "Organization and contact roles", "GET", f"{APEX}/tmf632/organization/{account_id}", api="TMF632"), "TMF632"),
         "customer": lambda: sf(trace, "Customer", "GET", f"{CC}/customermanagement/v4/customer/{account_id}", api="TMF629").json(),
-        "asset": lambda: soql(trace, "Installed service, site and contract end", "SELECT Id, Name, Product2Id, Product2.Name, Price, UsageEndDate, "
-                                     "LocationId, Location.Name, Location.ExternalReference, Location.VisitorAddress.PostalCode, Location.VisitorAddress.Street, "
-                                     f"Location.VisitorAddress.City FROM Asset WHERE AccountId='{account_id}' AND Status='Installed' AND Name LIKE 'AgenticTelco%' "
-                                     "ORDER BY CreatedDate DESC LIMIT 1", api="TMF637 (sObject)"),
+        "products": lambda: tmf_ok(sf(trace, "Installed service, site and contract end", "GET",
+                                      f"{APEX}/tmf637/product?relatedParty.id={account_id}&status=active&limit=1", api="TMF637"), "TMF637"),
         "offers": lambda: offerings(trace),
         "promos": lambda: promotions(trace),
         "billing": lambda: httpx.get(f"{url('standins')}/tmf-api/accountManagement/v4/billingAccount/{L['billingCustomer']['external_id']}",
@@ -138,31 +134,34 @@ def build_pack(trace, contact_id, account_id, parent=None):
     with ThreadPoolExecutor(len(jobs)) as ex:
         fut = {k: ex.submit(f) for k, f in jobs.items()}
         res = {k: f.result() for k, f in fut.items()}
-    asset = (res["asset"] or [None])[0]
-    if asset:   # the native installed-service API [TMF637] for the product itself
-        inv = sf(trace, "Installed service [TMF637]", "GET", f"{CC}/productinventorymanagement/v5/productinventory/{asset['Id']}", api="TMF637").json()
-    acr = (res["acr"] or [{}])[0]
-    role = acr.get("Role")
+    prod = (res["products"] or [None])[0]
+    if prod:   # Salesforce's own TMF637 resource for the same installed product (serial number)
+        inv = sf(trace, "Installed service (Salesforce TMF637)", "GET", f"{CC}/productinventorymanagement/v5/productinventory/{prod['id']}", api="TMF637").json()
+    me = next((p for p in (res["org"] or {}).get("relatedParty", []) if p.get("id") == contact_id), {})
+    role = me.get("role")
+    place = ((prod or {}).get("place") or [{}])[0]
+    adr = place.get("geographicAddress") or {}
+    asset = prod and {"Id": prod["id"], "Product2Id": (prod.get("productOffering") or {}).get("id"), "UsageEndDate": prod.get("terminationDate"),
+                      "Price": (((prod.get("productPrice") or [{}])[0].get("price") or {}).get("taxIncludedAmount") or {}).get("value"),
+                      "LocationId": place.get("id")}
     offers = res["offers"]
     cur = next((o for o in offers if asset and o["id"] == asset["Product2Id"]), None)
     end = date.fromisoformat(asset["UsageEndDate"]) if asset and asset.get("UsageEndDate") else None
     bal = {b["balanceType"]: b["amount"]["value"] for b in res["billing"].get("accountBalance", [])}
-    loc = (asset or {}).get("Location") or {}
-    adr = loc.get("VisitorAddress") or {}
     pack = {
-        "requester": {"name": (acr.get("Contact") or {}).get("FirstName") or (acr.get("Contact") or {}).get("Name"), "fullName": (acr.get("Contact") or {}).get("Name"),
+        "requester": {"name": me.get("x-givenName") or me.get("name"), "fullName": me.get("name"),
                       "contactId": contact_id, "authorisedContact": role == AUTH_ROLE, "role": role,
-                      "src": "salesforce:AccountContactRole"},
-        "customer": {"name": (res["customer"] or {}).get("name", "").replace("AgenticTelco – ", ""), "salesforceAccount": account_id, "src": "salesforce:TMF629 customer"},
+                      "src": "salesforce:TMF632 Party (contact role)"},
+        "customer": {"name": (res["customer"] or {}).get("name", "").replace("AgenticTelco – ", ""), "salesforceAccount": account_id, "src": "salesforce:TMF629 Customer"},
         "identity": {"salesforceAccount": account_id, "billingCustomer": L["billingCustomer"]["external_id"], "inventorySite": L["inventorySite"]["external_id"],
                      "verified": ident["verified"], "src": "L3 identity_xref (verified)"},
-        "site": {"addressKey": loc.get("ExternalReference"), "name": loc.get("Name"), "street": adr.get("Street"), "city": adr.get("City"),
-                 "postcode": adr.get("PostalCode"), "locationId": (asset or {}).get("LocationId"), "src": "salesforce:Location+Address"},
+        "site": {"addressKey": ((place.get("externalIdentifier") or [{}])[0]).get("id"), "name": place.get("name"), "street": adr.get("streetName"),
+                 "city": adr.get("city"), "postcode": adr.get("postcode"), "locationId": place.get("id"), "src": "salesforce:TMF637 Product Inventory (place)"},
         "currentBroadband": {"product": (cur or {}).get("name"), "productId": (cur or {}).get("id"), "assetId": (asset or {}).get("Id"),
                              "downloadSpeedMbps": (cur or {}).get("downloadSpeedMbps"), "monthlyPriceGBP": (asset or {}).get("Price"),
-                             "serialNumber": (inv or {}).get("productSerialNumber") if asset else None, "src": "salesforce:Asset via TMF637"},
+                             "serialNumber": (inv or {}).get("productSerialNumber") if asset else None, "src": "salesforce:TMF637 Product Inventory"},
         "contractMonthsLeft": {"value": months_between(date.today(), end) if end else 0, "contractEnd": str(end) if end else None,
-                               "src": "salesforce:Asset end date (stand-in for agreement)"},
+                               "src": "salesforce:TMF637 Product Inventory (terminationDate as contract end)"},
         "availableAtSite": {"value": [x["name"] for x in res["avail"].get("qualifiedProductOffering", [])], "asOf": res["avail"].get("asOf"),
                             "src": "legacy stand-in: availability (TMF679 shape, refreshed overnight)"},
         "overdueBalance": {"value": (bal.get("overdue") or 0) > 0, "amountGBP": bal.get("overdue") or 0, "src": "legacy stand-in: Billing B (TMF666 shape)"},
@@ -197,9 +196,10 @@ async def context(request: Request):
                 out["paymentLink"] = c.post(f"{url('standins')}/payment/link", json={"billingAccount": pack["identity"]["billingCustomer"]},
                                             headers={"traceparent": traceparent(trace, sp.span_id)}).json()
         if "not_authorised" in denied:
-            dm = soql(trace, "Who can order for this business", "SELECT Contact.Name FROM AccountContactRole WHERE AccountId='"
-                      + ids_or_400(accountId=b.get("accountId"))[0] + "' AND Role='" + AUTH_ROLE + "' LIMIT 1", api="TMF632 (sObject)")
-            out["decisionMaker"] = (dm[0]["Contact"]["Name"] if dm else None)
+            org = tmf_ok(sf(trace, "Who can order for this business", "GET", f"{APEX}/tmf632/organization/{ids_or_400(accountId=b.get('accountId'))[0]}"
+                            f"?relatedParty.role={quote(AUTH_ROLE)}", api="TMF632", parent=sp.span_id), "TMF632")
+            dm = org.get("relatedParty") or []
+            out["decisionMaker"] = (dm[0]["name"] if dm else None)
         sp.status, sp.response = 200, {"allowed": [o["name"] for o in allowed], "denied": denied}
         sp.attrs.update(allowed=[o["name"] for o in allowed], denied=denied)
     q("update mvp.conversation set state = state || %s where id=%s", J({"contextPack": pack}), b.get("conversationId"))
@@ -220,9 +220,10 @@ async def authorised_contact(request: Request):
     b = await request.json()
     trace, parent = parse_traceparent(request.headers.get("traceparent"))
     contact_id, account_id = ids_or_400(contactId=b.get("contactId"), accountId=b.get("accountId"))
-    acr = soql(trace, "Contact role on the account", "SELECT Role FROM AccountContactRole WHERE ContactId='" + contact_id
-               + "' AND AccountId='" + account_id + "' AND Account.Name LIKE 'AgenticTelco%'", api="TMF632 (sObject)")
-    ctx = {"requester": {"authorisedContact": bool(acr) and acr[0]["Role"] == AUTH_ROLE}}
+    r = sf(trace, "Contact role on the account", "GET", f"{APEX}/tmf632/organization/{account_id}", api="TMF632", parent=parent)
+    org = r.json() if r.status_code == 200 else {}   # 404: not an AgenticTelco organization, so nobody there is authorised
+    role = next((p.get("role") for p in org.get("relatedParty") or [] if p.get("id") == contact_id), None)
+    ctx = {"requester": {"authorisedContact": role == AUTH_ROLE}}
     with Span(trace, "L1", "Intent service", "Policy check: authorised contact", runtime="OPA (Rego) · agentictelco.upgrade", api="OPA",
               method="POST", path="/v1/data/agentictelco/upgrade/deny", parent=parent) as sp:
         r = httpx.post(f"{OPA_URL}/v1/data/agentictelco/upgrade/deny", json={"input": {"mode": "intent-validation", "context": ctx, "proposal": {}}}, timeout=10)

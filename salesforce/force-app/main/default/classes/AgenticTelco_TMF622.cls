@@ -1,5 +1,5 @@
 /**
- * TMF622 Product Ordering (v4/v5 resource shapes) – custom TMF API on Salesforce.
+ * TMF622 Product Ordering (v4/v5 resource shapes) – TMF facade within Salesforce (Apex).
  * The org's native Direct Access TMF622 v5 resource exists but every GET fails on this org (its internal GraphQL query
  * selects Order.PoNumber / Order.OrderReferenceNumber, which are not available here) so reads and AgenticTelco writes go
  * through this resource over the standard Order / OrderItem objects and the AgenticTelco EPC price book.
@@ -10,7 +10,8 @@
  * Upgrade (MVP build item 1): a productOrderItem may carry "action":"modify" with "product":{"id":<installed Asset id>}.
  * Mapping only, no business rules: the action and the installed product it modifies are recorded on the OrderItem
  * and returned in TMF622 shape. Whether the upgrade is allowed is decided outside Salesforce (OPA), and the asset
- * change is done by the L5 workflow through standard sObject REST.
+ * change is done by the L5 workflow through the TMF637 facade (AgenticTelco_TMF637).
+ * POST also adds the usage record the org's Custom Assetize Order flow expects (internal step, see ensureUsageRecord).
  */
 @RestResource(urlMapping='/agentictelco/tmf622/*')
 global with sharing class AgenticTelco_TMF622 {
@@ -45,7 +46,12 @@ global with sharing class AgenticTelco_TMF622 {
         String name = (AgenticTelco_Tmf.PREFIX + ' PO ' + ext).left(80);
         List<Order> existing = [SELECT Id, Name, OrderNumber, Status, Description, EffectiveDate, CreatedDate, AccountId, Account.Name, TotalAmount
                                 FROM Order WHERE Name = :name LIMIT 1];
-        if (!existing.isEmpty()) { AgenticTelco_Tmf.respond(200, serialize(existing)[0]); return; }
+        if (!existing.isEmpty()) {
+            Map<String, Object> ex = serialize(existing)[0];
+            if (existing[0].Status == 'Draft') ex.put('x-usageRecord', ensureUsageRecord(existing[0].Id));
+            AgenticTelco_Tmf.respond(200, ex);
+            return;
+        }
         Account acc = AgenticTelco_Tmf.account(b.get('relatedParty'));
         if (acc == null) { AgenticTelco_Tmf.error(400, 'MISSING_CUSTOMER', 'relatedParty must reference a Salesforce Account id'); return; }
         Id pb = AgenticTelco_Tmf.pricebookId();
@@ -99,8 +105,11 @@ global with sharing class AgenticTelco_TMF622 {
                 notes.add(e.Product2.Name);
             }
             insert ois;
-            AgenticTelco_Tmf.respond(201, serialize([SELECT Id, Name, OrderNumber, Status, Description, EffectiveDate, CreatedDate, AccountId,
-                                                     Account.Name, TotalAmount FROM Order WHERE Id = :o.Id])[0]);
+            Id usage = ensureUsageRecord(o.Id);
+            Map<String, Object> created = serialize([SELECT Id, Name, OrderNumber, Status, Description, EffectiveDate, CreatedDate, AccountId,
+                                                     Account.Name, TotalAmount FROM Order WHERE Id = :o.Id])[0];
+            created.put('x-usageRecord', usage);
+            AgenticTelco_Tmf.respond(201, created);
         } catch (Exception ex) {
             Database.rollback(sp);
             AgenticTelco_Tmf.error(422, 'ORDER_REJECTED', ex.getTypeName() + ': ' + ex.getMessage());
@@ -180,6 +189,19 @@ global with sharing class AgenticTelco_TMF622 {
                 'x-runtime' => AgenticTelco_Tmf.SOR_LABEL, '@type' => 'ProductOrder' });
         }
         return out;
+    }
+
+    /**
+     * Internal step, never called by the stack directly: the org's 'Custom Assetize Order' flow expects a Subscription
+     * Management usage record (AppUsageAssignment) on each order, and Salesforce only accepts it while the order is Draft.
+     * The facade adds it when it creates the order, so the order can later be completed. The flow itself is untouched.
+     */
+    public static Id ensureUsageRecord(Id orderId) {
+        List<AppUsageAssignment> have = [SELECT Id FROM AppUsageAssignment WHERE RecordId = :orderId AND AppUsageType = 'SubscriptionManagement' LIMIT 1];
+        if (!have.isEmpty()) return have[0].Id;
+        AppUsageAssignment u = new AppUsageAssignment(RecordId = orderId, AppUsageType = 'SubscriptionManagement');
+        insert u;
+        return u.Id;
     }
 
     static final String MODIFY_MARK = ' action=modify product=';

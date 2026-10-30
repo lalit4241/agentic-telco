@@ -27,8 +27,17 @@ const MODEL = 'Qwen3-4B-Instruct-2507 (local, Ollama)';
 
 // ---- recorded runs (recordings/mvp/<case>.json = final /api/state of a real run; the UI replays it by timestamp)
 const cut = (v, n = 1500) => { if (v == null) return v; const s = JSON.stringify(v); return s.length > n ? s.slice(0, n) + '…' : v; };
+// Redaction (the gateway already redacts /api/state; this is the second line): no tokens, session ids, login or instance URLs.
+const SECRET_KEY = /^(?:(?:access|refresh|id|bearer|api)?_?token|session_?id|sid|(?:set-)?cookie)$|authori[sz]ation|password|secret|frontdoor/i;
+function redact(x) {
+  if (Array.isArray(x)) return x.map(redact);
+  if (x && typeof x === 'object') return Object.fromEntries(Object.entries(x).map(([k, v]) => [k, SECRET_KEY.test(k) ? '[redacted]' : redact(v)]));
+  if (typeof x === 'string') return x.replace(/\b00D[A-Za-z0-9]{12,15}![A-Za-z0-9._-]+/g, '[redacted]')
+    .replace(/https?:\/\/[A-Za-z0-9.-]+\.(?:my\.)?(?:salesforce|force|cloudforce|salesforce-setup|visualforce)\.com[^\s"']*/g, (u) => (/\/lightning\/r\//.test(u) && !/frontdoor|sid=/.test(u) ? u : '[instance]' + u.replace(/^https?:\/\/[^/]+/, '').split('?')[0]));
+  return x;
+}
 function trim(st) {
-  const s = JSON.parse(JSON.stringify(st));
+  const s = redact(JSON.parse(JSON.stringify(st)));
   s.spans = (s.spans || []).map((x) => ({ ...x, request: cut(x.request), response: cut(x.response) }));
   if (s.network) s.network = { site: s.network.site, exchange: s.network.exchange, fibrePath: s.network.fibrePath, accessPort: { id: (s.network.accessPort || {}).id }, 'x-mocked': true };
   return s;
@@ -43,6 +52,15 @@ function recordings() {
   }
   return out;
 }
+// ---- Salesforce evidence gallery: web/src/mvp/evidence/NN-name.(jpg|png), story order; captions.json { "NN-name.jpg": "caption" }
+function evidence() {
+  const dir = R('src', 'mvp', 'evidence');
+  if (!fs.existsSync(dir)) return [];
+  const caps = fs.existsSync(path.join(dir, 'captions.json')) ? JSON.parse(rd(path.join(dir, 'captions.json'))) : {};
+  return fs.readdirSync(dir).filter((f) => /^\d\d-.*\.(jpe?g|png)$/.test(f)).sort().map((f) => ({
+    file: f, caption: caps[f] || '[Caption to come]',
+    src: 'data:image/' + (/png$/.test(f) ? 'png' : 'jpeg') + ';base64,' + fs.readFileSync(path.join(dir, f)).toString('base64') }));
+}
 function leakCheck(str, pw) {
   const secFile = path.join(ROOT, '.data', 'secrets.env');
   const secrets = fs.existsSync(secFile) ? rd(secFile).split('\n').filter((l) => /PASSWORD|KEY|SECRET|TOKEN/.test(l)).map((l) => l.split('=').slice(1).join('=').trim()).filter((v) => v.length >= 8) : [];
@@ -55,7 +73,7 @@ const appJs = (cfg) => 'window.MVP_CFG=' + JSON.stringify(cfg).replace(/<\/scrip
 fs.mkdirSync(R('dist'), { recursive: true });
 
 if (LIVE) {
-  const js = appJs({ mode: 'live', copy, bpmn, rego, model: MODEL, mark: mark(2) });
+  const js = appJs({ mode: 'live', copy, bpmn, rego, model: MODEL, mark: mark(2), evidence: evidence() });
   const html = rd(R('src', 'mvp', 'index.template.html')).replace('/*CSS*/', () => css).replace('/*FAVICON*/', fav).replace('/*BODYCLASS*/', 'live')
     .replace('/*GATEHTML*/', '').replace('/*SCRIPT*/', () => js.replace(/<\/script/gi, '<\\/script'));
   leakCheck(html);
@@ -68,7 +86,7 @@ const pwFile = path.join(ROOT, '.demo-password');
 const pw = process.env.TF_DEMO_PASSWORD || (fs.existsSync(pwFile) ? rd(pwFile).trim() : '');
 if (!pw) { console.error('Set TF_DEMO_PASSWORD or create .demo-password (git-ignored) before building.'); process.exit(1); }
 const recs = recordings();
-const js = appJs({ mode: 'recorded', copy, bpmn, rego, model: MODEL, mark: mark(2), recordings: recs });
+const js = appJs({ mode: 'recorded', copy, bpmn, rego, model: MODEL, mark: mark(2), recordings: recs, evidence: evidence() });
 leakCheck(js);
 const appHtml = '<style>' + css + '</style>';
 const salt = crypto.randomBytes(16), iv = crypto.randomBytes(12), iter = 250000, hsalt = crypto.randomBytes(16).toString('hex');

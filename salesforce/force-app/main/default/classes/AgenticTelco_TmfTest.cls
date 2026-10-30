@@ -425,4 +425,131 @@ private class AgenticTelco_TmfTest {
         System.assertEquals(0, AgenticTelco_Tmf.party(null).size());
         Test.stopTest();
     }
+
+    @IsTest
+    static void tmf637Lifecycle() {
+        Contact c = new Contact(LastName = 'Test', FirstName = 'Sam', AccountId = accId());
+        insert c;
+        Schema.Location loc = new Schema.Location(Name = 'AgenticTelco T Site', ExternalReference = 'A0001', LocationType = 'Site');
+        insert loc;
+        Asset foreign = new Asset(Name = 'Other asset', AccountId = accId(), Status = 'Installed', Quantity = 1);
+        insert foreign;
+        Test.startTest();
+        Map<String, Object> body = new Map<String, Object>{ 'name' => 'AgenticTelco Fibre 150 T', 'productSerialNumber' => 'AT-T-1',
+            'status' => 'active', 'description' => 'test', 'startDate' => '2025-01-01', 'terminationDate' => '2027-01-01',
+            'productOffering' => new Map<String, Object>{ 'id' => bundleId() },
+            'relatedParty' => new List<Object>{ new Map<String, Object>{ 'id' => accId(), 'role' => 'Customer' },
+                                                new Map<String, Object>{ 'id' => c.Id, 'role' => 'User' } },
+            'place' => new List<Object>{ new Map<String, Object>{ 'id' => loc.Id } },
+            'productPrice' => new List<Object>{ new Map<String, Object>{ 'price' => new Map<String, Object>{
+                'taxIncludedAmount' => new Map<String, Object>{ 'value' => 45, 'unit' => 'GBP' } } } } };
+        req('POST', '/agentictelco/tmf637/product', null, body);
+        AgenticTelco_TMF637.doPost();
+        System.assertEquals(201, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        Map<String, Object> old = (Map<String, Object>) resp();
+        System.assertEquals('active', old.get('status'));
+        String oldId = (String) old.get('id');
+        req('POST', '/agentictelco/tmf637/product', null, body);
+        AgenticTelco_TMF637.doPost();
+        System.assertEquals(200, RestContext.response.statusCode);
+        body.put('productSerialNumber', 'AT-T-2');
+        body.put('name', 'AgenticTelco Fibre 900 T');
+        req('POST', '/agentictelco/tmf637/product', null, body);
+        AgenticTelco_TMF637.doPost();
+        String newId = (String) ((Map<String, Object>) resp()).get('id');
+        req('GET', '/agentictelco/tmf637/product', new Map<String, String>{ 'relatedParty.id' => accId(), 'status' => 'active',
+            'productSerialNumber' => 'AT-T-1', 'creationDate.gt' => '2020-01-01T00:00:00Z', 'limit' => '5' }, null);
+        AgenticTelco_TMF637.doGet();
+        System.assertEquals(1, ((List<Object>) resp()).size());
+        req('PATCH', '/agentictelco/tmf637/product/' + oldId, null, new Map<String, Object>{ 'status' => 'terminated', 'terminationDate' => '2026-10-30',
+            'productRelationship' => new List<Object>{ new Map<String, Object>{ 'relationshipType' => 'Upgrade', 'product' => new Map<String, Object>{ 'id' => newId } } } });
+        AgenticTelco_TMF637.doPatch();
+        System.assertEquals(200, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        Map<String, Object> done = (Map<String, Object>) resp();
+        System.assertEquals('terminated', done.get('status'));
+        System.assertEquals(1, ((List<Object>) done.get('productRelationship')).size());
+        req('GET', '/agentictelco/tmf637/product/' + newId, null, null);
+        AgenticTelco_TMF637.doGet();
+        System.assertEquals(1, ((List<Object>) ((Map<String, Object>) resp()).get('productRelationship')).size());
+        // errors
+        req('GET', '/agentictelco/tmf637/product/' + foreign.Id, null, null);
+        AgenticTelco_TMF637.doGet();
+        System.assertEquals(404, RestContext.response.statusCode);
+        req('PATCH', '/agentictelco/tmf637/product/' + foreign.Id, null, new Map<String, Object>{ 'status' => 'terminated' });
+        AgenticTelco_TMF637.doPatch();
+        System.assertEquals(404, RestContext.response.statusCode);
+        req('PATCH', '/agentictelco/tmf637/product', null, new Map<String, Object>());
+        AgenticTelco_TMF637.doPatch();
+        System.assertEquals(400, RestContext.response.statusCode);
+        req('PATCH', '/agentictelco/tmf637/product/' + newId, null, new Map<String, Object>{ 'status' => 'bogus' });
+        AgenticTelco_TMF637.doPatch();
+        System.assertEquals(400, RestContext.response.statusCode);
+        req('PATCH', '/agentictelco/tmf637/product/' + newId, null, new Map<String, Object>{ 'productRelationship' => new List<Object>{
+            new Map<String, Object>{ 'relationshipType' => 'Upgrade', 'product' => new Map<String, Object>{ 'id' => foreign.Id } } } });
+        AgenticTelco_TMF637.doPatch();
+        System.assertEquals(422, RestContext.response.statusCode);
+        req('POST', '/agentictelco/tmf637/product', null, new Map<String, Object>{ 'name' => 'Other' });
+        AgenticTelco_TMF637.doPost();
+        System.assertEquals(400, RestContext.response.statusCode);
+        req('POST', '/agentictelco/tmf637/product', null, new Map<String, Object>{ 'name' => 'AgenticTelco X' });
+        AgenticTelco_TMF637.doPost();
+        System.assertEquals(400, RestContext.response.statusCode);
+        req('POST', '/agentictelco/tmf637/product', null, new Map<String, Object>{ 'name' => 'AgenticTelco X', 'productSerialNumber' => 'AT-T-9' });
+        AgenticTelco_TMF637.doPost();
+        System.assertEquals(400, RestContext.response.statusCode);
+        req('POST', '/agentictelco/tmf637/product', null, new Map<String, Object>{ 'name' => 'AgenticTelco X', 'productSerialNumber' => 'AT-T-9',
+            'relatedParty' => new List<Object>{ new Map<String, Object>{ 'id' => accId(), 'role' => 'Customer' } }, 'productOffering' => new Map<String, Object>{ 'id' => 'bad' } });
+        AgenticTelco_TMF637.doPost();
+        System.assertEquals(422, RestContext.response.statusCode);
+        System.assertEquals('pendingActive', AgenticTelco_TMF637.status('Shipped'));
+        System.assertEquals('other', AgenticTelco_TMF637.status('Other'));
+        System.assertEquals(null, AgenticTelco_TMF637.status(null));
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void tmf632Organization() {
+        Contact c = new Contact(LastName = 'Test', FirstName = 'Sam', AccountId = accId());
+        Contact d = new Contact(LastName = 'Other', FirstName = 'Ola', AccountId = accId());
+        insert new List<Contact>{ c, d };
+        insert new List<AccountContactRole>{ new AccountContactRole(AccountId = accId(), ContactId = c.Id, Role = 'Decision Maker'),
+                                             new AccountContactRole(AccountId = accId(), ContactId = d.Id, Role = 'Technical Buyer') };
+        Account other = new Account(Name = 'Not ours');
+        insert other;
+        Test.startTest();
+        req('GET', '/agentictelco/tmf632/organization/' + accId(), null, null);
+        AgenticTelco_TMF632.doGet();
+        System.assertEquals(200, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        System.assertEquals(2, ((List<Object>) ((Map<String, Object>) resp()).get('relatedParty')).size());
+        req('GET', '/agentictelco/tmf632/organization/' + accId(), new Map<String, String>{ 'relatedParty.role' => 'Decision Maker' }, null);
+        AgenticTelco_TMF632.doGet();
+        List<Object> ps = (List<Object>) ((Map<String, Object>) resp()).get('relatedParty');
+        System.assertEquals(1, ps.size());
+        System.assertEquals(String.valueOf(c.Id), ((Map<String, Object>) ps[0]).get('id'));
+        req('GET', '/agentictelco/tmf632/organization/' + other.Id, null, null);
+        AgenticTelco_TMF632.doGet();
+        System.assertEquals(404, RestContext.response.statusCode);
+        req('GET', '/agentictelco/tmf632/organization/bad', null, null);
+        AgenticTelco_TMF632.doGet();
+        System.assertEquals(404, RestContext.response.statusCode);
+        req('GET', '/agentictelco/tmf632/', null, null);
+        AgenticTelco_TMF632.doGet();
+        System.assertEquals(400, RestContext.response.statusCode);
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void tmf622UsageRecord() {
+        Order o = new Order(Name = 'AgenticTelco PO U', AccountId = accId(), Status = 'Draft', EffectiveDate = Date.today());
+        insert o;
+        Test.startTest();
+        Id u1 = AgenticTelco_TMF622.ensureUsageRecord(o.Id);
+        Id u2 = AgenticTelco_TMF622.ensureUsageRecord(o.Id);
+        System.assertEquals(u1, u2);
+        req('POST', '/agentictelco/tmf622/productOrder', null, new Map<String, Object>{ 'externalId' => 'U' });
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(200, RestContext.response.statusCode);
+        System.assertEquals(String.valueOf(u1), ((Map<String, Object>) resp()).get('x-usageRecord'));
+        Test.stopTest();
+    }
 }

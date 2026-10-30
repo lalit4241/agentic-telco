@@ -1,5 +1,5 @@
 /**
- * TMF648 Quote Management (v4 resource shapes) – custom TMF API on Salesforce.
+ * TMF648 Quote Management (v4 resource shapes) – TMF facade within Salesforce (Apex).
  * The sfcomms org exposes no TMF648 resource (Direct Access and managed-package paths return 404).
  *   GET   /agentictelco/tmf648/quote[/{id}]
  *   POST  /agentictelco/tmf648/quote            (idempotent on externalId)

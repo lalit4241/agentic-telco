@@ -1,6 +1,6 @@
 """AgenticTelco MVP shared helpers: config, L3 Postgres access, OpenTelemetry-shaped audit spans, Salesforce calls.
 
-Salesforce is reached only server-side through the Salesforce CLI (stack.zg_common.sf_session): no token is handled here."""
+Salesforce is reached only server-side (Salesforce CLI session, no token handled here) and only through TM Forum Open API paths."""
 import contextlib, json, os, re, secrets, time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -107,15 +107,79 @@ def audit(trace_id, layer, component, step, **kw):
 # ---- Salesforce (server-side, via the Salesforce CLI) -------------------------------------------------------------
 from stack.zg_common.sf_session import request as _sf_request, API_V   # noqa: E402
 SF_DATA = f"/services/data/{API_V}"
-NATIVE = "native Salesforce API"
-FACADE = "TMF facade within Salesforce (Apex)"
+APEX = "/services/apexrest/agentictelco"          # TMF facade within Salesforce (Apex classes AgenticTelco_TMFnnn)
+CC = f"{SF_DATA}/connect/comms"                    # Salesforce's own TMF Open APIs (Communications Cloud)
+TMF_SF = "TMF Open API (Salesforce)"               # the on-screen chip for every Salesforce call
+OOTB = "Salesforce (out of the box)"               # 'Provided by' (detail drawer only)
+FACADE = "TMF facade within Salesforce (Apex)"     # 'Provided by' (detail drawer only)
 STANDIN = "Legacy stand-in (mocked)"
+TMF_NAMES = {"TMF620": "Product Catalog", "TMF622": "Product Order", "TMF629": "Customer", "TMF632": "Party", "TMF637": "Product Inventory", "TMF639": "Resource Inventory",
+             "TMF641": "Service Order", "TMF648": "Quote", "TMF666": "Account", "TMF671": "Promotion", "TMF679": "Product Offering Qualification",
+             "TMF921": "Intent"}
 
-def sf(trace_id, step, method, path, body=None, runtime=NATIVE, api=None, layer="L6", component="Salesforce", parent=None):
-    with Span(trace_id, layer, component, step, runtime=runtime, api=api, method=method, path=path, parent=parent, request=body) as sp:
+
+def tmf(tag):
+    """'TMF622' -> 'TMF622 Product Order'."""
+    return f"{tag} {TMF_NAMES[tag]}"
+
+
+def provided_by(path):
+    """Everything above L6 reaches Salesforce only through TM Forum Open APIs: Salesforce's own (connect/comms) or the
+    AgenticTelco TMF facade (apexrest/agentictelco). Any other Salesforce path (SOQL, sObject REST) is refused here."""
+    p = (path or "").split("?")[0]
+    if p.startswith(APEX + "/tmf"):
+        return FACADE
+    if p.startswith(CC + "/"):
+        return OOTB
+    raise ValueError(f"not a TM Forum Open API path: {p}")
+
+
+def sf(trace_id, step, method, path, body=None, api=None, layer="L6", component="Salesforce", parent=None):
+    """One Salesforce call through a TMF Open API. api is the TMF tag, e.g. 'TMF622'."""
+    by = provided_by(path)
+    with Span(trace_id, layer, component, step, runtime=TMF_SF, api=tmf(api), method=method, path=path, parent=parent, request=body,
+              attrs={"providedBy": by, "tmf": api}) as sp:
         r = _sf_request(method, path, body)
         sp.status, sp.response = r.status_code, r.json()
         return r
+
+
+def sf_unaudited(method, path, body=None):
+    """Same TMF-only guard as sf(), without an audit span: used only to reset the demo between runs (outside any journey)."""
+    provided_by(path)
+    return _sf_request(method, path, body)
+
+
+_SECRET_KEY = re.compile(r"^(?:(?:access|refresh|id|bearer|api)?_?token|session_?id|sid|(?:set-)?cookie)$|authori[sz]ation|password|secret|frontdoor", re.I)
+_SESSION = re.compile(r"\b00D[A-Za-z0-9]{12,15}![A-Za-z0-9._-]+")
+_SF_HOST = re.compile(r"https?://[A-Za-z0-9.-]+\.(?:my\.)?(?:salesforce|force|cloudforce|salesforce-setup|visualforce)\.com[^\s\"']*")
+
+
+def _redact_str(v):
+    v = _SESSION.sub("[redacted]", v)
+    def host(m):
+        u = m.group(0)
+        if "/lightning/r/" in u and "frontdoor" not in u and "sid=" not in u:
+            return u            # a Lightning record link is fine (opening it needs the viewer's own login)
+        return "[instance]" + re.sub(r"^https?://[^/]+", "", u).split("?")[0]
+    return _SF_HOST.sub(host, v)
+
+
+def redact(v):
+    """Redacted copy for the UI and recordings: no tokens, session ids, login/frontdoor or instance URLs (record links stay)."""
+    if isinstance(v, dict):
+        return {k: ("[redacted]" if _SECRET_KEY.search(str(k)) else redact(x)) for k, x in v.items()}
+    if isinstance(v, list):
+        return [redact(x) for x in v]
+    if isinstance(v, str):
+        return _redact_str(v)
+    return v
+
+
+def tmf_ok(r, what):
+    if r.status_code >= 300:
+        raise RuntimeError(f"{what} failed {r.status_code}: {r.text[:300]}")
+    return r.json()
 
 _SFID = re.compile(r"[A-Za-z0-9]{15}(?:[A-Za-z0-9]{3})?")
 _SFID_SUFFIX = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
@@ -123,7 +187,7 @@ _SFID_SUFFIX = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
 
 def sf_id(value, field="id"):
     """Return value if it is a valid 15- or 18-character Salesforce ID, else raise ValueError.
-    Every ID that goes into a SOQL string passes through here first, so a crafted value can't change the query.
+    Every ID that goes into a TMF API path or filter passes through here first, so a crafted value can't change the call.
     For 18-character IDs the 3-character case-safe suffix is checked too."""
     if not isinstance(value, str) or not _SFID.fullmatch(value):
         raise ValueError(f"{field}: not a valid Salesforce ID")
@@ -138,7 +202,6 @@ def sf_id(value, field="id"):
 
 
 _SAFE_KEY = re.compile(r"[A-Za-z0-9-]{1,64}")
-_SOQL_DT = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
 
 
 def safe_key(value, field="key"):
@@ -147,21 +210,6 @@ def safe_key(value, field="key"):
         raise ValueError(f"{field}: not a valid business key")
     return value
 
-
-def soql_datetime(value, field="datetime"):
-    """ISO date-time cut to seconds, for a SOQL literal (YYYY-MM-DDTHH:MM:SS)."""
-    v = (value or "")[:19]
-    if not _SOQL_DT.fullmatch(v):
-        raise ValueError(f"{field}: not an ISO date-time")
-    return v
-
-
-def soql(trace_id, step, query, api=None):
-    from urllib.parse import quote
-    r = sf(trace_id, step, "GET", f"{SF_DATA}/query?q=" + quote(query), api=api)
-    if r.status_code != 200:
-        raise RuntimeError(f"SOQL failed {r.status_code}: {r.text[:200]}")
-    return r.json()["records"]
 
 def brightwell():
     return json.loads((ROOT / "seed" / "customers" / "brightwell.json").read_text())

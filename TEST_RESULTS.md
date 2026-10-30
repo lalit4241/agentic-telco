@@ -4,15 +4,17 @@ The MVP ("Agent upgrades a Business Customer Service (B2B), on existing systems"
 
 ## MVP summary
 
+Latest run: 30 Oct 2026, 18:00–18:11 UK time (GMT), after the "TMF Open APIs only" change: everything above L6 reaches Salesforce only through TM Forum Open APIs (Salesforce's own TMF APIs plus the `AgenticTelco_` Apex facades); no SOQL and no sObject REST.
+
 | Suite | Command | Result |
 |---|---|---|
-| Apex tests (TMF620/622/648/671 facades in Salesforce) | `sf apex run test -o sfcomms --class-names AgenticTelco_TmfTest --code-coverage` | **8/8 passed, 97% run coverage** (TMF620 95%, TMF622 97%, TMF648 97%, TMF671 100%, shared Tmf 99%) |
-| OPA policy tests (MVP rule `mvp-2026-10-30.1`) | `.tools/bin/opa test stack/mvp/policy` | **10/10 passed** (22/22 with the legacy policies) |
-| Python unit tests | `.venv/bin/python -m pytest -q tests/test_unit.py tests/test_mvp_unit.py` | **48/48 passed** (25 existing + 23 MVP: copy, BPMN steps, traceparent, contract months, semantic terms, policy codes, intent schema, and the Salesforce ID checks before SOQL: valid 15/18-char IDs accepted, bad checksum, wrong length and injection attempts rejected, context service returns 400) |
-| Web build tests (MVP) | `cd web && npm test` | **11/11 passed** (8 layers and 27 glossary terms from `docs/mvp/layer-panels.md`, four "recorded run" journeys, L6 wording, footer, hosting wording, AES-256-GCM gate, no secrets) |
+| Apex tests (TMF620/622/632/637/648/671 facades in Salesforce) | `sf apex run test -o sfcomms --class-names AgenticTelco_TmfTest --code-coverage` | **10/10 passed, 97.1% coverage** (deploy 0AfQH00000Q5Zm90AF; TMF637 98%, TMF632 90%, TMF622 98%, TMF648 97%, TMF620 95%, TMF671 100%, shared Tmf 99%) |
+| OPA policy tests (MVP rule `mvp-2026-10-30.1`) | `.tools/bin/opa test stack/mvp/policy` | **10/10 passed** |
+| Python unit tests | `.venv/bin/python -m pytest -q tests/test_unit.py tests/test_mvp_unit.py` | **53/53 passed**, including: the MVP stack issues no SOQL and no sObject REST (static scan of `stack/mvp/**`), the runtime guard rejects `/query` and `/sobjects`, the scan catches a planted regression, no "native Salesforce" label left, redaction |
+| Web build tests (MVP) | `cd web && npm test` | **13/13 passed**, including: every L6 call in the four recordings has method, path and a "TMFnnn Name" tag (the mocked payment link is the one non-TMF stand-in); Salesforce paths are only `apexrest/agentictelco/tmfNNN` or `connect/comms`; chips read "TMF Open API (Salesforce)" / "Legacy stand-in (mocked)"; no "conformant"/"certified" claims; evidence gallery in story order |
 | Legacy web build tests | `cd web && npm run test:legacy` | **10/10 passed** |
-| Playwright e2e (MVP) | `cd web && npm run e2e` | **36/36 passed** (password gate, 8 layer cards, all 8 drawers, 4 cases, delayed chevron, architecture tab with 27 terms, presenter mode, no console errors) |
-| Live journeys, checked against the org | `./run.sh mvp-record` (`scripts/record_mvp.py` + `scripts/mvp/verify_recordings.py`) | **4/4 passed, ALL PASS** |
+| Playwright e2e (MVP) | `cd web && npm run e2e` | **48/48 passed** (adds: L6 API view, call detail with "Provided by", record link and redaction, L4 TMF reads behind the context pack, Exposed APIs list, Salesforce evidence gallery) |
+| Live journeys, checked against the org | `./run.sh mvp-record` (`scripts/record_mvp.py` + `scripts/mvp/verify_recordings.py`) | **4/4 passed, ALL PASS** (also checks the TMF637 Upgrade productRelationship and that no trace path uses `/query` or `/sobjects`) |
 
 ## Model speed test (build step 0)
 
@@ -26,18 +28,17 @@ The MVP ("Agent upgrades a Business Customer Service (B2B), on existing systems"
 
 Qwen3-4B-Instruct-2507 is the only model that called the tools correctly, so it was chosen. In the full journeys a turn takes longer than in the speed test, because one turn includes the context pack (Salesforce reads) and up to three model calls.
 
-## MVP journeys (live, 30 Oct 2026)
+## MVP journeys (live, 30 Oct 2026, TMF Open APIs only)
 
-| Case | Turn times | Outcome | Checked in the org |
-|---|---|---|---|
-| 1. Happy path (Sam, Decision Maker) | 25.8 s, 18.1 s | Offer Fibre 900 £45, contract end 28 August 2027 kept; order 00000168 Activated at £45; Live 31 October 2026; intent fulfilled | New Fibre 900 Asset InstallDate 2026-10-31, UsageEndDate 2027-08-28, £45; Fibre 150 Obsolete; flowCreatedAssets = 0 |
-| 2. Not authorised (Alex, Business User) | 22.8 s | Policy says no; agent points to Sam; no order | No records written |
-| 3. Overdue balance | 16.8 s | Only the overdue reason (£312.40) and the pay link; no order | No records written |
-| 4. Order delayed (+2 days) | 17.0 s, 51.5 s | Jeopardy: Sam told first with the revised date 2 November 2026; order 00000169 Activated at £45; Live 2 November 2026; intent atRisk → fulfilled | New Asset InstallDate 2026-11-02 = live date, UsageEndDate 2027-08-28, £45; Fibre 150 Obsolete; flowCreatedAssets = 0 |
+| Case | Turn times | Outcome | Salesforce calls | Checked in the org |
+|---|---|---|---|---|
+| 1. Happy path (Sam, Decision Maker), recorded 18:11 UK | 18.3 s, 19.0 s | Offer Fibre 900 £45, contract end 28 August 2027 kept; order 00000172 Activated at £45; Live 31 October 2026; intent fulfilled | 22, all TMF (620, 622, 629, 632, 637, 648, 671) | Fibre 900 Installed, install 31/10/2026, usage end 28/08/2027, £45; Fibre 150 Obsolete with end date 31/10/2026; Upgrade relationship Fibre 150 → Fibre 900; flowCreatedAssets = 0 |
+| 2. Not authorised (Alex, Business User), 18:00 UK | 16.4 s | Policy says no; agent points to Sam; no order | 7 reads, all TMF | No records written |
+| 3. Overdue balance, 18:00 UK | 18.0 s | Only the overdue reason (£312.40) and the pay link; no order | 6 reads, all TMF | No records written |
+| 4. Order delayed (+2 days), 18:02 UK | 22.8 s, 21.3 s | Sam told first with the revised date 2 November 2026; order 00000171 Activated at £45; Live 2 November 2026; intent atRisk → fulfilled | 22, all TMF | Fibre 900 install date 2026-11-02 = live date; Fibre 150 Obsolete; Upgrade relationship; flowCreatedAssets = 0 |
 
-- The first turns were slower than the earlier run of the same day (17–19 s) because the model had just been reloaded after a host restart.
-- Delayed turn 2 (51.5 s): one Salesforce read (TMF637 installed service) took 33 s; the trace shows it.
-- Each case resets the seed, so after the run the happy-path Fibre 900 Asset is Obsolete as well; the verifier checks that the run itself wrote Obsolete and Installed.
+- Each case resets the seed first, so the org now holds the happy-path end state (recorded last); the delayed run's Fibre 900 is Obsolete again, and the verifier allows for that by comparing recording times.
+- Salesforce evidence screenshots (`web/src/mvp/evidence/`, captured with `scripts/mvp/sf_evidence.js`): 01–03 before the happy run, 04–09 after it.
 
 ## What is real and what is mocked in the MVP
 

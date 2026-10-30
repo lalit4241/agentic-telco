@@ -10,7 +10,7 @@ Scenario knobs (PUT /standin/scenario) are labelled in the UI: they change only 
 import time, uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException, Request
-from stack.mvp.common import q, q1, J, Span, STANDIN, parse_traceparent, DEMO_DAY_SECONDS, init_schema
+from stack.mvp.common import q, q1, J, Span, STANDIN, TMF_NAMES, parse_traceparent, DEMO_DAY_SECONDS, init_schema
 
 app = FastAPI(title="AgenticTelco MVP legacy stand-ins (mocked)")
 BILLING_DELAY_S = 1.2
@@ -39,7 +39,10 @@ def tid(request):
 
 def span(request, step, api, comp):
     t, p = tid(request)
-    return Span(t, "L6", comp, step, runtime=STANDIN, api=api, method=request.method, path=request.url.path, parent=p)
+    tag = (api or "").split(" ")[0]
+    label = f"{tag} {TMF_NAMES[tag]}" if tag in TMF_NAMES else api
+    return Span(t, "L6", comp, step, runtime=STANDIN, api=label, method=request.method, path=request.url.path, parent=p,
+                attrs={"providedBy": STANDIN, "tmf": tag if tag in TMF_NAMES else None})
 
 def now():
     return datetime.now(timezone.utc)

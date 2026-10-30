@@ -1,5 +1,6 @@
 """Check the recorded MVP runs (recordings/mvp/*.json) against the Salesforce org and the accepted business decisions.
-Read-only: SOQL queries only. Usage (repo root): PYTHONPATH=. .venv/bin/python scripts/mvp/verify_recordings.py"""
+Read-only: SOQL queries only. This is an independent out-of-band check of the org (test tooling, not part of the MVP
+stack); the MVP stack itself uses only TM Forum Open APIs. Usage (repo root): PYTHONPATH=. .venv/bin/python scripts/mvp/verify_recordings.py"""
 import json, pathlib, re, sys
 from urllib.parse import quote
 from stack.zg_common.sf_session import request as sfr, API_V
@@ -25,12 +26,19 @@ for c in ("happy", "delayed"):
     new = L["newAsset"].split("/")[-2]; old = L["oldAsset"].split("/")[-2]; oid = L["order"].split("/")[-2]
     a = q(f"select Name, Status, InstallDate, UsageEndDate, Price, Product2.Name from Asset where Id in ('{new}','{old}')")
     na = next(x for x in a if x["Product2"]["Name"].endswith("900")); oa = next(x for x in a if x["Product2"]["Name"].endswith("150"))
-    later = c != "delayed"   # each case resets to the seed, so an earlier run's Fibre 900 asset is Obsolete after the next run
+    # each case resets to the seed, so a run's Fibre 900 asset is Obsolete once a later write case has run
+    later = any(R[o]["recordedAt"] > R[c]["recordedAt"] for o in ("happy", "delayed") if o != c)
     check(na["Status"] in (("Installed", "Obsolete") if later else ("Installed",)) and na["InstallDate"] == live and na["UsageEndDate"] == "2027-08-28" and float(na["Price"]) == 45.0,
           f"{c}: new asset Installed, InstallDate={na['InstallDate']} (live {live}), UsageEndDate={na['UsageEndDate']}, £{na['Price']}")
     check(oa["Status"] == "Obsolete", f"{c}: Fibre 150 asset {oa['Status']}")
     wrote = json.dumps([sp.get("request") for sp in s["spans"]])
-    check('"Obsolete"' in wrote and '"Installed"' in wrote, f"{c}: the run itself wrote Fibre 150 -> Obsolete and Fibre 900 -> Installed (status now {na['Status']})")
+    check('"terminated"' in wrote and '"active"' in wrote and '"Upgrade"' in wrote,
+          f"{c}: the run itself wrote (TMF637) Fibre 150 -> terminated (Obsolete), Fibre 900 -> active (Installed) and the Upgrade productRelationship (status now {na['Status']})")
+    rel = q(f"select Id, RelationshipType from AssetRelationship where AssetId='{old}' and RelatedAssetId='{new}'")
+    check(len(rel) == 1 and rel[0]["RelationshipType"] == "Upgrade", f"{c}: AssetRelationship Upgrade Fibre 150 -> Fibre 900 exists")
+    paths = [sp.get("path") or "" for sp in s["spans"]]
+    check(not any(re.search(r"/query\b|/sobjects\b|/composite\b", p_) for p_ in paths) and all(sp.get("runtime") != "native Salesforce API" for sp in s["spans"]),
+          f"{c}: no SOQL or sObject REST in the trace ({sum(1 for p_ in paths if p_.startswith('/services/'))} Salesforce calls, all TMF)")
     o = q(f"select Status, OrderNumber, (select Product2.Name, UnitPrice from OrderItems) from Order where Id='{oid}'")[0]
     check(o["Status"] == "Activated" and all(float(i["UnitPrice"]) == 45.0 for i in o["OrderItems"]["records"]), f"{c}: order {o['OrderNumber']} {o['Status']} at £45")
     check(any("TMF671" in (sp.get("api") or "") for sp in s["spans"]), f"{c}: TMF671 promotion read in the trace")

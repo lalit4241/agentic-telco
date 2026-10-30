@@ -2,12 +2,12 @@
  "case": "overdue",
  "title": "Overdue balance",
  "label": "recorded run",
- "recordedAt": "2026-10-30T17:06:42.808334+00:00",
- "conversationId": "C-e6f46d2351",
+ "recordedAt": "2026-10-30T18:00:56.317533+00:00",
+ "conversationId": "C-110b72e918",
  "turns": [
   {
    "message": "opening",
-   "seconds": 16.8,
+   "seconds": 18.0,
    "tools": [
     "get_context"
    ]
@@ -15,11 +15,11 @@
  ],
  "state": {
   "conversation": {
-   "id": "C-e6f46d2351",
-   "trace_id": "b0044903df212aabe8eec37ec6546436",
+   "id": "C-110b72e918",
+   "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
    "contact_id": "003QH00000TU8kDYAT",
    "case_name": "overdue",
-   "started_at": "2026-10-30T17:06:25.987024+00:00"
+   "started_at": "2026-10-30T18:00:38.271109+00:00"
   },
   "state": {
    "case": "overdue",
@@ -29,7 +29,7 @@
    "contactRole": "Decision Maker",
    "contextPack": {
     "site": {
-     "src": "salesforce:Location+Address",
+     "src": "salesforce:TMF637 Product Inventory (place)",
      "city": "Ipswich",
      "name": "AgenticTelco Site 4471 \u2013 Brightwell, Martlesham",
      "street": "1 Fibre Way, Martlesham",
@@ -38,7 +38,7 @@
      "locationId": "131QH000001CX9JYAW"
     },
     "customer": {
-     "src": "salesforce:TMF629 customer",
+     "src": "salesforce:TMF629 Customer",
      "name": "Brightwell Design Ltd",
      "salesforceAccount": "001QH00002La125YAB"
     },
@@ -84,7 +84,7 @@
      }
     ],
     "requester": {
-     "src": "salesforce:AccountContactRole",
+     "src": "salesforce:TMF632 Party (contact role)",
      "name": "Sam",
      "role": "Decision Maker",
      "fullName": "Sam Taylor",
@@ -92,7 +92,7 @@
      "authorisedContact": true
     },
     "promotions": {
-     "src": "salesforce:TMF671 facade (Promotion)",
+     "src": "salesforce:TMF671 Promotion",
      "applicable": [],
      "activeInOrg": 2
     },
@@ -111,7 +111,7 @@
      ]
     },
     "currentBroadband": {
-     "src": "salesforce:Asset via TMF637",
+     "src": "salesforce:TMF637 Product Inventory",
      "assetId": "02iQH000003GH4nYAG",
      "product": "AgenticTelco Fibre 150",
      "productId": "01tQH00000IbOIjYAN",
@@ -120,7 +120,7 @@
      "downloadSpeedMbps": 150
     },
     "contractMonthsLeft": {
-     "src": "salesforce:Asset end date (stand-in for agreement)",
+     "src": "salesforce:TMF637 Product Inventory (terminationDate as contract end)",
      "value": 9,
      "contractEnd": "2027-08-28"
     }
@@ -131,17 +131,17 @@
   },
   "messages": [
    {
-    "seq": 155,
-    "at": "2026-10-30T17:06:26.008067+00:00",
+    "seq": 190,
+    "at": "2026-10-30T18:00:38.295759+00:00",
     "role": "user",
     "content": "We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. Our broadband already struggles. What do you suggest?",
     "meta": null
    },
    {
-    "seq": 158,
-    "at": "2026-10-30T17:06:42.765168+00:00",
+    "seq": 193,
+    "at": "2026-10-30T18:00:56.285696+00:00",
     "role": "assistant",
-    "content": "We\u2019ve noticed there\u2019s an overdue balance of \u00a3312.40. Until that\u2019s paid, we can\u2019t upgrade your connection. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/b8c239. Once it\u2019s cleared, we\u2019ll look at what\u2019s available.",
+    "content": "We\u2019re sorry, but there\u2019s an overdue balance of \u00a3312.40 that needs to be paid before we can help. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/e0bd44. Once that\u2019s sorted, I\u2019ll check what we can offer.",
     "meta": {
      "tools": [
       "get_context"
@@ -151,10 +151,10 @@
   ],
   "spans": [
    {
-    "seq": 866,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "23dafee595d4f1de",
-    "parent_span_id": "643cbcf6cf29579b",
+    "seq": 1063,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "a601731fbb4fc578",
+    "parent_span_id": "ec63972c04b7a438",
     "layer": "L2",
     "component": "Agent (LangGraph)",
     "step": "Model call",
@@ -163,9 +163,9 @@
     "method": "POST",
     "path": "/api/chat",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:26.010422+00:00",
-    "end_ts": "2026-10-30T17:06:28.823844+00:00",
-    "duration_ms": 2813.4,
+    "start_ts": "2026-10-30T18:00:38.298669+00:00",
+    "end_ts": "2026-10-30T18:00:41.628807+00:00",
+    "duration_ms": 3330.1,
     "attributes": {
      "model": "qwen3-4b-instruct-2507",
      "toolCalls": [
@@ -179,7 +179,7 @@
      "content": "",
      "tool_calls": [
       {
-       "id": "AlxVFg1d6HON7kofCkcqQ2ZG7KZxwvnN",
+       "id": "r7crffR60kAlnfkSXCucdPaJY6j1wuEE",
        "function": {
         "name": "get_context",
         "index": 0,
@@ -192,10 +192,10 @@
     }
    },
    {
-    "seq": 867,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "591f074ceccc8c91",
-    "parent_span_id": "a1a52e30437a0b4d",
+    "seq": 1064,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "27e6610d3f28f1db",
+    "parent_span_id": "fbe076c17d82a51c",
     "layer": "L3",
     "component": "Postgres identity_xref",
     "step": "Resolve the same customer across systems",
@@ -204,8 +204,8 @@
     "method": null,
     "path": null,
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.864635+00:00",
-    "end_ts": "2026-10-30T17:06:28.864640+00:00",
+    "start_ts": "2026-10-30T18:00:41.674116+00:00",
+    "end_ts": "2026-10-30T18:00:41.674121+00:00",
     "duration_ms": 0,
     "attributes": {},
     "request": null,
@@ -241,22 +241,25 @@
     }
    },
    {
-    "seq": 868,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "e2cf115fa21a1ac8",
-    "parent_span_id": "a1a52e30437a0b4d",
+    "seq": 1065,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "292b9cb10e6a00f9",
+    "parent_span_id": "fbe076c17d82a51c",
     "layer": "L6",
     "component": "Availability stand-in",
     "step": "Availability: what can be delivered at the address key",
     "runtime": "Legacy stand-in (mocked)",
-    "api": "TMF679",
+    "api": "TMF679 Product Offering Qualification",
     "method": "GET",
     "path": "/tmf-api/productOfferingQualification/v5/availability/A00000001975",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.893626+00:00",
-    "end_ts": "2026-10-30T17:06:28.894429+00:00",
-    "duration_ms": 0.8,
-    "attributes": {},
+    "start_ts": "2026-10-30T18:00:41.703079+00:00",
+    "end_ts": "2026-10-30T18:00:41.703781+00:00",
+    "duration_ms": 0.7,
+    "attributes": {
+     "tmf": "TMF679",
+     "providedBy": "Legacy stand-in (mocked)"
+    },
     "request": null,
     "response": {
      "asOf": "2026-10-30T02:00:00+00:00",
@@ -279,22 +282,25 @@
     }
    },
    {
-    "seq": 869,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "1dd9c9ada900fc86",
-    "parent_span_id": "a1a52e30437a0b4d",
+    "seq": 1066,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "60e6eedbd37c12d1",
+    "parent_span_id": "fbe076c17d82a51c",
     "layer": "L6",
     "component": "Billing B stand-in",
     "step": "Billing B: read balance (slow legacy)",
     "runtime": "Legacy stand-in (mocked)",
-    "api": "TMF666",
+    "api": "TMF666 Account",
     "method": "GET",
     "path": "/tmf-api/accountManagement/v4/billingAccount/BIL-B-0077812",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.886403+00:00",
-    "end_ts": "2026-10-30T17:06:30.087278+00:00",
-    "duration_ms": 1200.9,
-    "attributes": {},
+    "start_ts": "2026-10-30T18:00:41.703334+00:00",
+    "end_ts": "2026-10-30T18:00:42.904300+00:00",
+    "duration_ms": 1201,
+    "attributes": {
+     "tmf": "TMF666",
+     "providedBy": "Legacy stand-in (mocked)"
+    },
     "request": null,
     "response": {
      "id": "BIL-B-0077812",
@@ -322,93 +328,25 @@
     }
    },
    {
-    "seq": 870,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "38a2845d2bbd2598",
-    "parent_span_id": null,
-    "layer": "L6",
-    "component": "Salesforce",
-    "step": "Promotions",
-    "runtime": "TMF facade within Salesforce (Apex)",
-    "api": "TMF671",
-    "method": "GET",
-    "path": "/services/apexrest/agentictelco/tmf671/promotion",
-    "status": 200,
-    "start_ts": "2026-10-30T17:06:28.867809+00:00",
-    "end_ts": "2026-10-30T17:06:30.326473+00:00",
-    "duration_ms": 1458.7,
-    "attributes": {},
-    "request": null,
-    "response": [
-     {
-      "id": "0c8QH0000002ZEbYAM",
-      "href": "/services/apexrest/agentictelco/tmf671/promotion/0c8QH0000002ZEbYAM",
-      "name": "Festive Promo",
-      "@type": "Promotion",
-      "validFor": {
-       "endDateTime": "2027-02-28T13:29:00.000Z",
-       "startDateTime": "2026-03-01T13:29:00.000Z"
-      },
-      "x-runtime": "custom TMF API on Salesforce",
-      "description": "Festive Promo of 10% discount",
-      "lifecycleStatus": "active",
-      "x-promotionCode": "FestivePromo"
-     },
-     {
-      "id": "0c8QH0000002ZEcYAM",
-      "href": "/services/apexrest/agentictelco/tmf671/promotion/0c8QH0000002ZEcYAM",
-      "name": "Spring 2026 Welcome Discount",
-      "@type": "Promotion",
-      "validFor": {
-       "endDateTime": null,
-       "startDateTime": "2026-06-11T07:00:00.000Z"
-      },
-      "x-runtime": "custom TMF API on Salesforce",
-      "description": null,
-      "lifecycleStatus": "active",
-      "x-promotionCode": null
-     }
-    ]
-   },
-   {
-    "seq": 871,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "2806d1f600cc9d89",
-    "parent_span_id": null,
-    "layer": "L6",
-    "component": "Salesforce",
-    "step": "Catalogue and prices",
-    "runtime": "TMF facade within Salesforce (Apex)",
-    "api": "TMF620",
-    "method": "GET",
-    "path": "/services/apexrest/agentictelco/tmf620/productOffering?isBundle=true",
-    "status": 200,
-    "start_ts": "2026-10-30T17:06:28.867626+00:00",
-    "end_ts": "2026-10-30T17:06:30.376223+00:00",
-    "duration_ms": 1508.6,
-    "attributes": {},
-    "request": null,
-    "response": {
-     "truncated": "[{\"@type\": \"ProductOffering\", \"@baseType\": \"ProductOffering\", \"x-runtime\": \"custom TMF API on Salesforce\", \"x-sor\": \"Salesforce Comms Cloud native EPC (Product2, PricebookEntry, ProductRelatedComponent, ProductAttributeDefinition)\", \"prodSpecCharValueUse\": [{\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"150 Mbps\", \"value\": \"150\"}], \"x-priceImpacting\": false, \"configurable\": false, \"maxCardinality\": 1, \"minCardinality\": 1, \"valueType\": \"string\", \"x-category\": \"AgenticTelco Broadband Speed\", \"x-code\": \"AT_ATT_DL_SPEED\", \"name\": \"AgenticTelco Download Speed\"}, {\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"No contract (30-day rolling)\", \"value\": \"0\"}, {\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"12 months\", \"value\": \"12\"}, {\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"24 months\", \"value\": \"24\"}], \"x-priceImpacting\": true, \"configurable\": true, \"maxCardinality\": 1, \"minCardinality\": 1, \"valueType\": \"string\", \"x-category\": \"AgenticTelco Contract\", \"x-code\": \"AT_ATT_TERM\", \"name\": \"AgenticTelco Contract Term\"}], \"bundledProductOffering\": [{\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 1, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 1}, \"x-group\": \"AgenticTelco Core 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbN8AYAV\", \"name\": \"AgenticTelco Fibre Access Line\", \"id\": \"01tQH00000IbN8AYAV\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 1, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 1}, \"x-group\": \"AgenticTelco Core 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbONZYA3\", \"name\": \"AgenticTelco Wi-Fi 6 Router\", \"id\": \"01tQH00000IbONZYA3\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 1, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 0}, \"x-group\": \"AgenticTelco Core 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOPBYA3\", \"name\": \"AgenticTelco Standard Installation\", \"id\": \"01tQH00000IbOPBYA3\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 0, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 0}, \"x-group\": \"AgenticTelco Add-ons 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOQnYAN\", \"name\": \"AgenticTelco Static IP\", \"id\": \"01tQH00000IbOQnYAN\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 0, \"numberRelOfferUpperLimit\": 3, \"numberRelOfferLowerLimit\": 0}, \"x-group\": \"AgenticTelco Add-ons 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOSPYA3\", \"name\": \"AgenticTelco Wi-Fi Extender\", \"id\": \"01tQH00000IbOSPYA3\"}], \"productOfferingTerm\": [{\"duration\": {\"units\": \"month\", \"amount\": 1}, \"name\": \"No contract (30-day rolling)\"}, {\"duration\": {\"units\": \"month\", \"amount\": 12}, \"name\": \"12 months\"}, {\"duration\": {\"units\": \"month\", \"amount\": 24}, \"name\": \"24 months\"}], \"productOfferingPrice\": [{\"recurringChargePeriodLength\": 1, \"recurringChargePeriodType\": \"month\", \"@type\": \"ProductOfferingPrice\", \"x-sellingModel\": \"Evergreen - Monthly\", \"isBundle\": false, \"lifecycleStatus\": \"Active\", \"price\": {\"value\": 32, \"unit\": \"GBP\"}, \"priceType\": \"recurring\", \"name\": \"AgenticTelco Fibre 150 \\u2013 Evergreen - Monthly\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOfferingPrice/01uQH000003xV7hYAE\", \"id\": \"01uQH000003xV7hYAE\"}, {\"productOfferingTerm\": [{\"duration\": {\"units\": \"month\", \"amount\": 12}, \"name\": \"Minimum term (12 or 24 months, chosen via AgenticTelco Contract Term)\"}], \"recurringChargePeriodLength\": 1, \"recurringChargePeriodType\": \"month\", \"@type\": \"ProductOfferingPrice\", \"x-sellingModel\": \"AgenticTelco Term Monthly\", \"isBundle\": false, \"lifecycleStatus\": \"Active\", \"price\": {\"value\": 27, \"unit\": \"GBP\"}, \"priceType\": \"recurring\", \"name\": \"AgenticTelco Fibre 150 \\u2013 AgenticTelco Term Monthly\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOfferingPrice/01uQH000003xV4TYAU\", \"id\": \"01uQH000003xV4TYAU\"}], \"productSpecification\": {\"@referredType\": \"ProductSpecification\", \"href\": \"/services/apexrest/agentictelco/tmf620/productSpecification/01tQH00000IbOIjYAN\", \"name\": \"AgenticTelco Fibre 150\", \"id\": \"01tQH00000IbOIjYAN\"}, \"category\": [{\"@referredType\": \"Category\", \"href\": \"/services/apexrest/agentictelco/tmf620/category/0ZGQH000000IDA54AO\", \"name\": \"AgenticTelco Broadband\", \"id\": \"0ZGQH000000IDA54AO\"}], \"lastUpdate\": \"2026-10-26T18:40:02.000Z\", \"isSellable\": true, \"isBundle\": true, \"lifecycleStatus\": \"Active\", \"version\": \"1.0\", \"description\": \"Full-fibre broadband, 150 Mbps download.\", \"code\": \"AT-FIBRE-150\", \"name\": \"AgenticTelco Fibre 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOIjYAN\", \"id\": \"01tQH00000IbOIjYAN\"}, {\"@type\": \"ProductOffering\", \"@baseType\": \"ProductOffering\", \"x-runtime\": \"custom TMF API on Salesforce\", \"x-sor\": \"Salesforce Comms Cloud native EPC (Product2, PricebookEntry, ProductRelatedComponent, ProductAttributeDefinition)\", \"prodSpecCharValueUse\": [{\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"1.6 Gbps\", \"value\": \"1600\"}], \"x-priceImpacting\": false, \"configurable\": false, \"maxCardinality\": 1, \"minCardinality\": 1, \"valueType\": \"string\", \"x-category\": \"AgenticTelco Broadband Speed\", \"x-code\": \"AT_ATT_DL_SPEED\", \"name\": \"AgenticTelco Download Speed\"}, {\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"No contract (30-day rolling)\", \"value\": \"0\"}, {\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"12 months\", \"value\": \"12\"}, {\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"24 months\", \"value\": \"24\"}], \"x-priceImpacting\": true, "
-    }
-   },
-   {
-    "seq": 872,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "666d885635e08594",
+    "seq": 1067,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "f9ea0077ca8b87c9",
     "parent_span_id": null,
     "layer": "L6",
     "component": "Salesforce",
     "step": "Customer",
-    "runtime": "native Salesforce API",
-    "api": "TMF629",
+    "runtime": "TMF Open API (Salesforce)",
+    "api": "TMF629 Customer",
     "method": "GET",
     "path": "/services/data/v68.0/connect/comms/customermanagement/v4/customer/001QH00002La125YAB",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.865785+00:00",
-    "end_ts": "2026-10-30T17:06:30.377308+00:00",
-    "duration_ms": 1511.5,
-    "attributes": {},
+    "start_ts": "2026-10-30T18:00:41.677347+00:00",
+    "end_ts": "2026-10-30T18:00:43.348216+00:00",
+    "duration_ms": 1670.9,
+    "attributes": {
+     "tmf": "TMF629",
+     "providedBy": "Salesforce (out of the box)"
+    },
     "request": null,
     "response": {
      "id": "001QH00002La125YAB",
@@ -433,123 +371,412 @@
     }
    },
    {
-    "seq": 873,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "973e1117cbab2639",
+    "seq": 1068,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "e21f241301758dd1",
     "parent_span_id": null,
     "layer": "L6",
     "component": "Salesforce",
     "step": "Installed service, site and contract end",
-    "runtime": "native Salesforce API",
-    "api": "TMF637 (sObject)",
+    "runtime": "TMF Open API (Salesforce)",
+    "api": "TMF637 Product Inventory",
     "method": "GET",
-    "path": "/services/data/v68.0/query?q=SELECT%20Id%2C%20Name%2C%20Product2Id%2C%20Product2.Name%2C%20Price%2C%20UsageEndDate%2C%20LocationId%2C%20Location.Name%2C%20Location.ExternalReference%2C%20Location.VisitorAddress.PostalCode%2C%20Location.VisitorAddress.Street%2C%20Location.VisitorAddress.City%20FROM%20Asset%20WHERE%20AccountId%3D%27001QH00002La125YAB%27%20AND%20Status%3D%27Installed%27%20AND%20Name%20LIKE%20%27AgenticTelco%25%27%20ORDER%20BY%20CreatedDate%20DESC%20LIMIT%201",
+    "path": "/services/apexrest/agentictelco/tmf637/product?relatedParty.id=001QH00002La125YAB&status=active&limit=1",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.867214+00:00",
-    "end_ts": "2026-10-30T17:06:30.413289+00:00",
-    "duration_ms": 1546.1,
-    "attributes": {},
+    "start_ts": "2026-10-30T18:00:41.678977+00:00",
+    "end_ts": "2026-10-30T18:00:44.227563+00:00",
+    "duration_ms": 2548.6,
+    "attributes": {
+     "tmf": "TMF637",
+     "providedBy": "TMF facade within Salesforce (Apex)"
+    },
     "request": null,
-    "response": {
-     "done": true,
-     "records": [
-      {
-       "Id": "02iQH000003GH4nYAG",
-       "Name": "AgenticTelco Fibre 150 \u2013 Brightwell site 4471",
-       "Price": 27,
-       "Location": {
-        "Name": "AgenticTelco Site 4471 \u2013 Brightwell, Martlesham",
-        "attributes": {
-         "url": "/services/data/v68.0/sobjects/Location/131QH000001CX9JYAW",
-         "type": "Location"
+    "response": [
+     {
+      "id": "02iQH000003GH4nYAG",
+      "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GH4nYAG",
+      "name": "AgenticTelco Fibre 150 \u2013 Brightwell site 4471",
+      "@type": "Product",
+      "place": [
+       {
+        "id": "131QH000001CX9JYAW",
+        "name": "AgenticTelco Site 4471 \u2013 Brightwell, Martlesham",
+        "role": "installationSite",
+        "@type": "GeographicSite",
+        "geographicAddress": {
+         "city": "Ipswich",
+         "postcode": "IP5 3RE",
+         "streetName": "1 Fibre Way, Martlesham"
         },
-        "VisitorAddress": {
-         "City": "Ipswich",
-         "Street": "1 Fibre Way, Martlesham",
-         "PostalCode": "IP5 3RE",
-         "attributes": {
-          "url": "/services/data/v68.0/sobjects/Address/130QH00000AFmubYAD",
-          "type": "Address"
+        "externalIdentifier": [
+         {
+          "id": "A00000001975",
+          "externalIdentifierType": "addressKey"
+         }
+        ]
+       }
+      ],
+      "status": "active",
+      "startDate": "2025-08-28",
+      "x-runtime": "TMF facade within Salesforce (Apex)",
+      "x-sfStatus": "Installed",
+      "description": "AgenticTelco MVP: Fibre 150 on a 24-month term (synthetic)",
+      "creationDate": "2026-10-30T15:53:21.000Z",
+      "productPrice": [
+       {
+        "@type": "ProductPrice",
+        "price": {
+         "taxIncludedAmount": {
+          "unit": "GBP",
+          "value": 27
          }
         },
-        "ExternalReference": "A00000001975"
+        "priceType": "recurring",
+        "recurringChargePeriod": "month"
+       }
+      ],
+      "relatedParty": [
+       {
+        "id": "001QH00002La125YAB",
+        "name": "AgenticTelco \u2013 Brightwell Design Ltd",
+        "role": "Customer",
+        "@referredType": "Organization"
        },
-       "Product2": {
-        "Name": "AgenticTelco Fibre 150",
-        "attributes": {
-         "url": "/services/data/v68.0/sobjects/Product2/01tQH00000IbOIjYAN",
-         "type": "Product2"
-        }
+       {
+        "id": "003QH00000TU8kDYAT",
+        "name": "Sam Taylor",
+        "role": "User",
+        "@referredType": "Individual"
+       }
+      ],
+      "productOffering": {
+       "id": "01tQH00000IbOIjYAN",
+       "href": "/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOIjYAN",
+       "name": "AgenticTelco Fibre 150",
+       "@referredType": "ProductOffering"
+      },
+      "terminationDate": "2027-08-28",
+      "productRelationship": [
+       {
+        "id": "1ARQH0000002ibF4AQ",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHRNYA4",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHRNYA4",
+         "name": "AgenticTelco Fibre 500 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:20:48.000Z"
+        },
+        "relationshipType": "Upgrade"
        },
-       "LocationId": "131QH000001CX9JYAW",
-       "Product2Id": "01tQH00000IbOIjYAN",
-       "attributes": {
-        "url": "/services/data/v68.0/sobjects/Asset/02iQH000003GH4nYAG",
-        "type": "Asset"
+       {
+        "id": "1ARQH0000002icr4AA",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHWDYA4",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHWDYA4",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:23:57.000Z"
+        },
+        "relationshipType": "Upgrade"
        },
-       "UsageEndDate": "2027-08-28"
-      }
-     ],
-     "totalSize": 1
-    }
+       {
+        "id": "1ARQH0000002ieT4AQ",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHb3YAG",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHb3YAG",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:26:20.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002ig54AA",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHftYAG",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHftYAG",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:31:08.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002ihh4AA",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHkjYAG",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHkjYAG",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:33:31.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002ijJ4AQ",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHrBYAW",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHrBYAW",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:37:44.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002ikv4AA",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHsnYAG",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHsnYAG",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:40:43.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002imX4AQ",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GHzFYAW",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHzFYAW",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:45:14.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002io94AA",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GI45YAG",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GI45YAG",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T16:47:28.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002ipl4AA",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GIAYYA4",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GIAYYA4",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T17:05:18.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002irN4AQ",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GILpYAO",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GILpYAO",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T17:08:32.000Z"
+        },
+        "relationshipType": "Upgrade"
+       },
+       {
+        "id": "1ARQH0000002iub4AA",
+        "@type": "ProductRelationship",
+        "product": {
+         "id": "02iQH000003GJ4zYAG",
+         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ4zYAG",
+         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+         "@referredType": "Product"
+        },
+        "validFor": {
+         "startDateTime": "2026-10-30T17:59:52.000Z"
+        },
+        "relationshipType": "Upgrade"
+       }
+      ],
+      "productSerialNumber": "AT-PI-B4471"
+     }
+    ]
    },
    {
-    "seq": 874,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "25eb708d22ded001",
+    "seq": 1069,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "78a02dbe7204f23e",
     "parent_span_id": null,
     "layer": "L6",
     "component": "Salesforce",
-    "step": "Contact role on the account",
-    "runtime": "native Salesforce API",
-    "api": "TMF632 (sObject)",
+    "step": "Promotions",
+    "runtime": "TMF Open API (Salesforce)",
+    "api": "TMF671 Promotion",
     "method": "GET",
-    "path": "/services/data/v68.0/query?q=SELECT%20Role%2C%20Contact.Name%2C%20Contact.FirstName%20FROM%20AccountContactRole%20WHERE%20ContactId%3D%27003QH00000TU8kDYAT%27%20AND%20AccountId%3D%27001QH00002La125YAB%27%20AND%20Account.Name%20LIKE%20%27AgenticTelco%25%27",
+    "path": "/services/apexrest/agentictelco/tmf671/promotion",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.865528+00:00",
-    "end_ts": "2026-10-30T17:06:30.420511+00:00",
-    "duration_ms": 1555,
-    "attributes": {},
+    "start_ts": "2026-10-30T18:00:41.679712+00:00",
+    "end_ts": "2026-10-30T18:00:44.231779+00:00",
+    "duration_ms": 2552.1,
+    "attributes": {
+     "tmf": "TMF671",
+     "providedBy": "TMF facade within Salesforce (Apex)"
+    },
+    "request": null,
+    "response": [
+     {
+      "id": "0c8QH0000002ZEbYAM",
+      "href": "/services/apexrest/agentictelco/tmf671/promotion/0c8QH0000002ZEbYAM",
+      "name": "Festive Promo",
+      "@type": "Promotion",
+      "validFor": {
+       "endDateTime": "2027-02-28T13:29:00.000Z",
+       "startDateTime": "2026-03-01T13:29:00.000Z"
+      },
+      "x-runtime": "TMF facade within Salesforce (Apex)",
+      "description": "Festive Promo of 10% discount",
+      "lifecycleStatus": "active",
+      "x-promotionCode": "FestivePromo"
+     },
+     {
+      "id": "0c8QH0000002ZEcYAM",
+      "href": "/services/apexrest/agentictelco/tmf671/promotion/0c8QH0000002ZEcYAM",
+      "name": "Spring 2026 Welcome Discount",
+      "@type": "Promotion",
+      "validFor": {
+       "endDateTime": null,
+       "startDateTime": "2026-06-11T07:00:00.000Z"
+      },
+      "x-runtime": "TMF facade within Salesforce (Apex)",
+      "description": null,
+      "lifecycleStatus": "active",
+      "x-promotionCode": null
+     }
+    ]
+   },
+   {
+    "seq": 1070,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "9b709485d339c85c",
+    "parent_span_id": null,
+    "layer": "L6",
+    "component": "Salesforce",
+    "step": "Organization and contact roles",
+    "runtime": "TMF Open API (Salesforce)",
+    "api": "TMF632 Party",
+    "method": "GET",
+    "path": "/services/apexrest/agentictelco/tmf632/organization/001QH00002La125YAB",
+    "status": 200,
+    "start_ts": "2026-10-30T18:00:41.675267+00:00",
+    "end_ts": "2026-10-30T18:00:44.311366+00:00",
+    "duration_ms": 2636.1,
+    "attributes": {
+     "tmf": "TMF632",
+     "providedBy": "TMF facade within Salesforce (Apex)"
+    },
     "request": null,
     "response": {
-     "done": true,
-     "records": [
+     "id": "001QH00002La125YAB",
+     "href": "/services/apexrest/agentictelco/tmf632/organization/001QH00002La125YAB",
+     "name": "AgenticTelco \u2013 Brightwell Design Ltd",
+     "@type": "Organization",
+     "x-runtime": "TMF facade within Salesforce (Apex)",
+     "tradingName": "Brightwell Design Ltd",
+     "relatedParty": [
       {
-       "Role": "Decision Maker",
-       "Contact": {
-        "Name": "Sam Taylor",
-        "FirstName": "Sam",
-        "attributes": {
-         "url": "/services/data/v68.0/sobjects/Contact/003QH00000TU8kDYAT",
-         "type": "Contact"
-        }
-       },
-       "attributes": {
-        "url": "/services/data/v68.0/sobjects/AccountContactRole/02ZQH000001jfxh2AA",
-        "type": "AccountContactRole"
-       }
+       "id": "003QH00000TTvZJYA1",
+       "name": "Alex Reed",
+       "role": "Business User",
+       "@type": "RelatedPartyRefOrPartyRoleRef",
+       "x-givenName": "Alex",
+       "x-isPrimary": false,
+       "@referredType": "Individual"
+      },
+      {
+       "id": "003QH00000TU8kDYAT",
+       "name": "Sam Taylor",
+       "role": "Decision Maker",
+       "@type": "RelatedPartyRefOrPartyRoleRef",
+       "x-givenName": "Sam",
+       "x-isPrimary": false,
+       "@referredType": "Individual"
       }
-     ],
-     "totalSize": 1
+     ]
     }
    },
    {
-    "seq": 875,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "45e02840e68b4ba9",
+    "seq": 1071,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "983ba83d252ba3ad",
     "parent_span_id": null,
     "layer": "L6",
     "component": "Salesforce",
-    "step": "Installed service [TMF637]",
-    "runtime": "native Salesforce API",
-    "api": "TMF637",
+    "step": "Catalogue and prices",
+    "runtime": "TMF Open API (Salesforce)",
+    "api": "TMF620 Product Catalog",
+    "method": "GET",
+    "path": "/services/apexrest/agentictelco/tmf620/productOffering?isBundle=true",
+    "status": 200,
+    "start_ts": "2026-10-30T18:00:41.679083+00:00",
+    "end_ts": "2026-10-30T18:00:44.367169+00:00",
+    "duration_ms": 2688.1,
+    "attributes": {
+     "tmf": "TMF620",
+     "providedBy": "TMF facade within Salesforce (Apex)"
+    },
+    "request": null,
+    "response": {
+     "truncated": "[{\"@type\": \"ProductOffering\", \"@baseType\": \"ProductOffering\", \"x-runtime\": \"TMF facade within Salesforce (Apex)\", \"x-sor\": \"Salesforce Comms Cloud native EPC (Product2, PricebookEntry, ProductRelatedComponent, ProductAttributeDefinition)\", \"prodSpecCharValueUse\": [{\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"150 Mbps\", \"value\": \"150\"}], \"x-priceImpacting\": false, \"configurable\": false, \"maxCardinality\": 1, \"minCardinality\": 1, \"valueType\": \"string\", \"x-category\": \"AgenticTelco Broadband Speed\", \"x-code\": \"AT_ATT_DL_SPEED\", \"name\": \"AgenticTelco Download Speed\"}, {\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"No contract (30-day rolling)\", \"value\": \"0\"}, {\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"12 months\", \"value\": \"12\"}, {\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"24 months\", \"value\": \"24\"}], \"x-priceImpacting\": true, \"configurable\": true, \"maxCardinality\": 1, \"minCardinality\": 1, \"valueType\": \"string\", \"x-category\": \"AgenticTelco Contract\", \"x-code\": \"AT_ATT_TERM\", \"name\": \"AgenticTelco Contract Term\"}], \"bundledProductOffering\": [{\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 1, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 1}, \"x-group\": \"AgenticTelco Core 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbN8AYAV\", \"name\": \"AgenticTelco Fibre Access Line\", \"id\": \"01tQH00000IbN8AYAV\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 1, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 1}, \"x-group\": \"AgenticTelco Core 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbONZYA3\", \"name\": \"AgenticTelco Wi-Fi 6 Router\", \"id\": \"01tQH00000IbONZYA3\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 1, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 0}, \"x-group\": \"AgenticTelco Core 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOPBYA3\", \"name\": \"AgenticTelco Standard Installation\", \"id\": \"01tQH00000IbOPBYA3\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 0, \"numberRelOfferUpperLimit\": 1, \"numberRelOfferLowerLimit\": 0}, \"x-group\": \"AgenticTelco Add-ons 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOQnYAN\", \"name\": \"AgenticTelco Static IP\", \"id\": \"01tQH00000IbOQnYAN\"}, {\"bundledProductOfferingOption\": {\"numberRelOfferDefault\": 0, \"numberRelOfferUpperLimit\": 3, \"numberRelOfferLowerLimit\": 0}, \"x-group\": \"AgenticTelco Add-ons 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOSPYA3\", \"name\": \"AgenticTelco Wi-Fi Extender\", \"id\": \"01tQH00000IbOSPYA3\"}], \"productOfferingTerm\": [{\"duration\": {\"units\": \"month\", \"amount\": 1}, \"name\": \"No contract (30-day rolling)\"}, {\"duration\": {\"units\": \"month\", \"amount\": 12}, \"name\": \"12 months\"}, {\"duration\": {\"units\": \"month\", \"amount\": 24}, \"name\": \"24 months\"}], \"productOfferingPrice\": [{\"recurringChargePeriodLength\": 1, \"recurringChargePeriodType\": \"month\", \"@type\": \"ProductOfferingPrice\", \"x-sellingModel\": \"Evergreen - Monthly\", \"isBundle\": false, \"lifecycleStatus\": \"Active\", \"price\": {\"value\": 32, \"unit\": \"GBP\"}, \"priceType\": \"recurring\", \"name\": \"AgenticTelco Fibre 150 \\u2013 Evergreen - Monthly\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOfferingPrice/01uQH000003xV7hYAE\", \"id\": \"01uQH000003xV7hYAE\"}, {\"productOfferingTerm\": [{\"duration\": {\"units\": \"month\", \"amount\": 12}, \"name\": \"Minimum term (12 or 24 months, chosen via AgenticTelco Contract Term)\"}], \"recurringChargePeriodLength\": 1, \"recurringChargePeriodType\": \"month\", \"@type\": \"ProductOfferingPrice\", \"x-sellingModel\": \"AgenticTelco Term Monthly\", \"isBundle\": false, \"lifecycleStatus\": \"Active\", \"price\": {\"value\": 27, \"unit\": \"GBP\"}, \"priceType\": \"recurring\", \"name\": \"AgenticTelco Fibre 150 \\u2013 AgenticTelco Term Monthly\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOfferingPrice/01uQH000003xV4TYAU\", \"id\": \"01uQH000003xV4TYAU\"}], \"productSpecification\": {\"@referredType\": \"ProductSpecification\", \"href\": \"/services/apexrest/agentictelco/tmf620/productSpecification/01tQH00000IbOIjYAN\", \"name\": \"AgenticTelco Fibre 150\", \"id\": \"01tQH00000IbOIjYAN\"}, \"category\": [{\"@referredType\": \"Category\", \"href\": \"/services/apexrest/agentictelco/tmf620/category/0ZGQH000000IDA54AO\", \"name\": \"AgenticTelco Broadband\", \"id\": \"0ZGQH000000IDA54AO\"}], \"lastUpdate\": \"2026-10-26T18:40:02.000Z\", \"isSellable\": true, \"isBundle\": true, \"lifecycleStatus\": \"Active\", \"version\": \"1.0\", \"description\": \"Full-fibre broadband, 150 Mbps download.\", \"code\": \"AT-FIBRE-150\", \"name\": \"AgenticTelco Fibre 150\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOIjYAN\", \"id\": \"01tQH00000IbOIjYAN\"}, {\"@type\": \"ProductOffering\", \"@baseType\": \"ProductOffering\", \"x-runtime\": \"TMF facade within Salesforce (Apex)\", \"x-sor\": \"Salesforce Comms Cloud native EPC (Product2, PricebookEntry, ProductRelatedComponent, ProductAttributeDefinition)\", \"prodSpecCharValueUse\": [{\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"1.6 Gbps\", \"value\": \"1600\"}], \"x-priceImpacting\": false, \"configurable\": false, \"maxCardinality\": 1, \"minCardinality\": 1, \"valueType\": \"string\", \"x-category\": \"AgenticTelco Broadband Speed\", \"x-code\": \"AT_ATT_DL_SPEED\", \"name\": \"AgenticTelco Download Speed\"}, {\"@type\": \"ProductSpecificationCharacteristicValueUse\", \"productSpecCharacteristicValue\": [{\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"No contract (30-day rolling)\", \"value\": \"0\"}, {\"valueType\": \"string\", \"isDefault\": false, \"x-display\": \"12 months\", \"value\": \"12\"}, {\"valueType\": \"string\", \"isDefault\": true, \"x-display\": \"24 months\", \"value\": \"24\"}], \"x-priceImpa"
+    }
+   },
+   {
+    "seq": 1072,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "fcb4b1e729441732",
+    "parent_span_id": null,
+    "layer": "L6",
+    "component": "Salesforce",
+    "step": "Installed service (Salesforce TMF637)",
+    "runtime": "TMF Open API (Salesforce)",
+    "api": "TMF637 Product Inventory",
     "method": "GET",
     "path": "/services/data/v68.0/connect/comms/productinventorymanagement/v5/productinventory/02iQH000003GH4nYAG",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:30.422580+00:00",
-    "end_ts": "2026-10-30T17:06:32.020667+00:00",
-    "duration_ms": 1598.1,
-    "attributes": {},
+    "start_ts": "2026-10-30T18:00:44.371277+00:00",
+    "end_ts": "2026-10-30T18:00:46.870266+00:00",
+    "duration_ms": 2499,
+    "attributes": {
+     "tmf": "TMF637",
+     "providedBy": "Salesforce (out of the box)"
+    },
     "request": null,
     "response": {
      "id": "02iQH000003GH4nYAG",
@@ -594,10 +821,10 @@
     }
    },
    {
-    "seq": 876,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "4f148299c0399165",
-    "parent_span_id": "a1a52e30437a0b4d",
+    "seq": 1073,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "5b7bd8933b4d4ec4",
+    "parent_span_id": "fbe076c17d82a51c",
     "layer": "L4",
     "component": "L4 context service",
     "step": "Policy check (advisory)",
@@ -606,9 +833,9 @@
     "method": "POST",
     "path": "/v1/data/agentictelco/upgrade/decision",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:32.021965+00:00",
-    "end_ts": "2026-10-30T17:06:32.037846+00:00",
-    "duration_ms": 15.9,
+    "start_ts": "2026-10-30T18:00:46.871675+00:00",
+    "end_ts": "2026-10-30T18:00:46.882838+00:00",
+    "duration_ms": 11.2,
     "attributes": {
      "deny": [
       "overdue_balance"
@@ -635,10 +862,10 @@
     }
    },
    {
-    "seq": 877,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "fa807b99c7c88e48",
-    "parent_span_id": "a1a52e30437a0b4d",
+    "seq": 1074,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "5b4818267fcc8c1e",
+    "parent_span_id": "fbe076c17d82a51c",
     "layer": "L4",
     "component": "L4 context service",
     "step": "Policy check (advisory)",
@@ -647,9 +874,9 @@
     "method": "POST",
     "path": "/v1/data/agentictelco/upgrade/decision",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:32.039573+00:00",
-    "end_ts": "2026-10-30T17:06:32.047640+00:00",
-    "duration_ms": 8.1,
+    "start_ts": "2026-10-30T18:00:46.884335+00:00",
+    "end_ts": "2026-10-30T18:00:46.891945+00:00",
+    "duration_ms": 7.6,
     "attributes": {
      "deny": [
       "overdue_balance"
@@ -676,10 +903,10 @@
     }
    },
    {
-    "seq": 878,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "d6c8b36431f8d52f",
-    "parent_span_id": "a1a52e30437a0b4d",
+    "seq": 1075,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "46f420bb5dc99152",
+    "parent_span_id": "fbe076c17d82a51c",
     "layer": "L4",
     "component": "L4 context service",
     "step": "Policy check (advisory)",
@@ -688,9 +915,9 @@
     "method": "POST",
     "path": "/v1/data/agentictelco/upgrade/decision",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:32.048541+00:00",
-    "end_ts": "2026-10-30T17:06:32.058488+00:00",
-    "duration_ms": 10,
+    "start_ts": "2026-10-30T18:00:46.893090+00:00",
+    "end_ts": "2026-10-30T18:00:46.900920+00:00",
+    "duration_ms": 7.8,
     "attributes": {
      "deny": [
       "not_available_at_site",
@@ -720,10 +947,10 @@
     }
    },
    {
-    "seq": 879,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "6c1c1af08111d9fd",
-    "parent_span_id": "a1a52e30437a0b4d",
+    "seq": 1076,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "003ec472051c93de",
+    "parent_span_id": "fbe076c17d82a51c",
     "layer": "L6",
     "component": "Payment stand-in",
     "step": "Payment link (mocked)",
@@ -732,13 +959,16 @@
     "method": "POST",
     "path": "/payment/link",
     "status": 201,
-    "start_ts": "2026-10-30T17:06:32.067584+00:00",
-    "end_ts": "2026-10-30T17:06:32.068351+00:00",
-    "duration_ms": 0.8,
-    "attributes": {},
+    "start_ts": "2026-10-30T18:00:46.909699+00:00",
+    "end_ts": "2026-10-30T18:00:46.910315+00:00",
+    "duration_ms": 0.6,
+    "attributes": {
+     "tmf": null,
+     "providedBy": "Legacy stand-in (mocked)"
+    },
     "request": null,
     "response": {
-     "url": "https://pay.agentictelco.example/b/BIL-B-0077812/b8c239",
+     "url": "https://pay.agentictelco.example/b/BIL-B-0077812/e0bd44",
      "amount": {
       "unit": "GBP",
       "value": 312.4
@@ -747,10 +977,10 @@
     }
    },
    {
-    "seq": 880,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "a1a52e30437a0b4d",
-    "parent_span_id": "6e6f10369247bf00",
+    "seq": 1077,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "fbe076c17d82a51c",
+    "parent_span_id": "5e9b4f5686641f21",
     "layer": "L4",
     "component": "L4 context service",
     "step": "Build the context pack",
@@ -759,9 +989,9 @@
     "method": "POST",
     "path": "/context",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.863470+00:00",
-    "end_ts": "2026-10-30T17:06:32.070316+00:00",
-    "duration_ms": 3206.9,
+    "start_ts": "2026-10-30T18:00:41.672552+00:00",
+    "end_ts": "2026-10-30T18:00:46.911666+00:00",
+    "duration_ms": 5239.1,
     "attributes": {
      "denied": [
       "overdue_balance"
@@ -771,7 +1001,7 @@
     "request": {
      "accountId": "001QH00002La125YAB",
      "contactId": "003QH00000TU8kDYAT",
-     "conversationId": "C-e6f46d2351"
+     "conversationId": "C-110b72e918"
     },
     "response": {
      "denied": [
@@ -781,10 +1011,10 @@
     }
    },
    {
-    "seq": 881,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "6e6f10369247bf00",
-    "parent_span_id": "643cbcf6cf29579b",
+    "seq": 1078,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "5e9b4f5686641f21",
+    "parent_span_id": "ec63972c04b7a438",
     "layer": "L2",
     "component": "MCP server",
     "step": "Tool: get_context",
@@ -793,9 +1023,9 @@
     "method": "CALL",
     "path": "get_context",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:28.846028+00:00",
-    "end_ts": "2026-10-30T17:06:32.073660+00:00",
-    "duration_ms": 3227.6,
+    "start_ts": "2026-10-30T18:00:41.660770+00:00",
+    "end_ts": "2026-10-30T18:00:46.915836+00:00",
+    "duration_ms": 5255.1,
     "attributes": {},
     "request": null,
     "response": {
@@ -807,7 +1037,7 @@
       "role": "Decision Maker",
       "authorisedContact": true
      },
-     "paymentLink": "https://pay.agentictelco.example/b/BIL-B-0077812/b8c239",
+     "paymentLink": "https://pay.agentictelco.example/b/BIL-B-0077812/e0bd44",
      "policyVersion": "mvp-2026-10-30.1",
      "blockedBecause": [
       "There is an overdue balance on the business account."
@@ -819,10 +1049,10 @@
     }
    },
    {
-    "seq": 882,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "ae8d2667f022fb92",
-    "parent_span_id": "643cbcf6cf29579b",
+    "seq": 1079,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "7197defce36af88d",
+    "parent_span_id": "ec63972c04b7a438",
     "layer": "L2",
     "component": "Agent (LangGraph)",
     "step": "Model call",
@@ -831,26 +1061,26 @@
     "method": "POST",
     "path": "/api/chat",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:32.086172+00:00",
-    "end_ts": "2026-10-30T17:06:42.760049+00:00",
-    "duration_ms": 10673.9,
+    "start_ts": "2026-10-30T18:00:46.928946+00:00",
+    "end_ts": "2026-10-30T18:00:56.281691+00:00",
+    "duration_ms": 9352.8,
     "attributes": {
      "model": "qwen3-4b-instruct-2507",
      "toolCalls": [],
-     "outputTokens": 76,
-     "promptTokens": 1139
+     "outputTokens": 74,
+     "promptTokens": 1138
     },
     "request": null,
     "response": {
-     "content": "We\u2019ve noticed there\u2019s an overdue balance of \u00a3312.40. Until that\u2019s paid, we can\u2019t upgrade your connection. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/b8c239. Once it\u2019s cleared, we\u2019ll look at what\u2019s available.",
+     "content": "We\u2019re sorry, but there\u2019s an overdue balance of \u00a3312.40 that needs to be paid before we can help. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/e0bd44. Once that\u2019s sorted, I\u2019ll check what we can offer.",
      "tool_calls": null
     }
    },
    {
-    "seq": 883,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "643cbcf6cf29579b",
-    "parent_span_id": "24af8be11f684287",
+    "seq": 1080,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "ec63972c04b7a438",
+    "parent_span_id": "ff17167f66efec04",
     "layer": "L2",
     "component": "Agent (LangGraph)",
     "step": "Agent turn",
@@ -859,24 +1089,24 @@
     "method": "TURN",
     "path": "/chat",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:26.006329+00:00",
-    "end_ts": "2026-10-30T17:06:42.766112+00:00",
-    "duration_ms": 16759.8,
+    "start_ts": "2026-10-30T18:00:38.294526+00:00",
+    "end_ts": "2026-10-30T18:00:56.286236+00:00",
+    "duration_ms": 17991.7,
     "attributes": {},
     "request": {
      "message": "We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. Our broadband already struggles. What do you suggest?"
     },
     "response": {
-     "reply": "We\u2019ve noticed there\u2019s an overdue balance of \u00a3312.40. Until that\u2019s paid, we can\u2019t upgrade your connection. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/b8c239. Once it\u2019s cleared, we\u2019ll look at what\u2019s available.",
+     "reply": "We\u2019re sorry, but there\u2019s an overdue balance of \u00a3312.40 that needs to be paid before we can help. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/e0bd44. Once that\u2019s sorted, I\u2019ll check what we can offer.",
      "tools": [
       "get_context"
      ]
     }
    },
    {
-    "seq": 884,
-    "trace_id": "b0044903df212aabe8eec37ec6546436",
-    "span_id": "24af8be11f684287",
+    "seq": 1081,
+    "trace_id": "a405d81765f30f7c8c588e99f9f7829d",
+    "span_id": "ff17167f66efec04",
     "parent_span_id": null,
     "layer": "L1",
     "component": "Web chat",
@@ -886,15 +1116,15 @@
     "method": "POST",
     "path": "/api/chat",
     "status": 200,
-    "start_ts": "2026-10-30T17:06:25.996996+00:00",
-    "end_ts": "2026-10-30T17:06:42.769723+00:00",
-    "duration_ms": 16772.7,
+    "start_ts": "2026-10-30T18:00:38.284164+00:00",
+    "end_ts": "2026-10-30T18:00:56.288651+00:00",
+    "duration_ms": 18004.5,
     "attributes": {},
     "request": {
      "message": "We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. Our broadband already struggles. What do you suggest?"
     },
     "response": {
-     "reply": "We\u2019ve noticed there\u2019s an overdue balance of \u00a3312.40. Until that\u2019s paid, we can\u2019t upgrade your connection. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/b8c239. Once it\u2019s cleared, we\u2019ll look at what\u2019s available.",
+     "reply": "We\u2019re sorry, but there\u2019s an overdue balance of \u00a3312.40 that needs to be paid before we can help. You can pay it here: https://pay.agentictelco.example/b/BIL-B-0077812/e0bd44. Once that\u2019s sorted, I\u2019ll check what we can offer.",
      "tools": [
       "get_context"
      ],
@@ -910,7 +1140,7 @@
      "mode": "advisory",
      "context": {
       "site": {
-       "src": "salesforce:Location+Address",
+       "src": "salesforce:TMF637 Product Inventory (place)",
        "city": "Ipswich",
        "name": "AgenticTelco Site 4471 \u2013 Brightwell, Martlesham",
        "street": "1 Fibre Way, Martlesham",
@@ -919,7 +1149,7 @@
        "locationId": "131QH000001CX9JYAW"
       },
       "customer": {
-       "src": "salesforce:TMF629 customer",
+       "src": "salesforce:TMF629 Customer",
        "name": "Brightwell Design Ltd",
        "salesforceAccount": "001QH00002La125YAB"
       },
@@ -965,7 +1195,7 @@
        }
       ],
       "requester": {
-       "src": "salesforce:AccountContactRole",
+       "src": "salesforce:TMF632 Party (contact role)",
        "name": "Sam",
        "role": "Decision Maker",
        "fullName": "Sam Taylor",
@@ -973,7 +1203,7 @@
        "authorisedContact": true
       },
       "promotions": {
-       "src": "salesforce:TMF671 facade (Promotion)",
+       "src": "salesforce:TMF671 Promotion",
        "applicable": [],
        "activeInOrg": 2
       },
@@ -992,7 +1222,7 @@
        ]
       },
       "currentBroadband": {
-       "src": "salesforce:Asset via TMF637",
+       "src": "salesforce:TMF637 Product Inventory",
        "assetId": "02iQH000003GH4nYAG",
        "product": "AgenticTelco Fibre 150",
        "productId": "01tQH00000IbOIjYAN",
@@ -1001,7 +1231,7 @@
        "downloadSpeedMbps": 150
       },
       "contractMonthsLeft": {
-       "src": "salesforce:Asset end date (stand-in for agreement)",
+       "src": "salesforce:TMF637 Product Inventory (terminationDate as contract end)",
        "value": 9,
        "contractEnd": "2027-08-28"
       }
@@ -1021,7 +1251,7 @@
      ],
      "policyVersion": "mvp-2026-10-30.1"
     },
-    "at": "2026-10-30T17:06:32.039070+00:00"
+    "at": "2026-10-30T18:00:46.883966+00:00"
    },
    {
     "mode": "advisory",
@@ -1030,7 +1260,7 @@
      "mode": "advisory",
      "context": {
       "site": {
-       "src": "salesforce:Location+Address",
+       "src": "salesforce:TMF637 Product Inventory (place)",
        "city": "Ipswich",
        "name": "AgenticTelco Site 4471 \u2013 Brightwell, Martlesham",
        "street": "1 Fibre Way, Martlesham",
@@ -1039,7 +1269,7 @@
        "locationId": "131QH000001CX9JYAW"
       },
       "customer": {
-       "src": "salesforce:TMF629 customer",
+       "src": "salesforce:TMF629 Customer",
        "name": "Brightwell Design Ltd",
        "salesforceAccount": "001QH00002La125YAB"
       },
@@ -1085,7 +1315,7 @@
        }
       ],
       "requester": {
-       "src": "salesforce:AccountContactRole",
+       "src": "salesforce:TMF632 Party (contact role)",
        "name": "Sam",
        "role": "Decision Maker",
        "fullName": "Sam Taylor",
@@ -1093,7 +1323,7 @@
        "authorisedContact": true
       },
       "promotions": {
-       "src": "salesforce:TMF671 facade (Promotion)",
+       "src": "salesforce:TMF671 Promotion",
        "applicable": [],
        "activeInOrg": 2
       },
@@ -1112,7 +1342,7 @@
        ]
       },
       "currentBroadband": {
-       "src": "salesforce:Asset via TMF637",
+       "src": "salesforce:TMF637 Product Inventory",
        "assetId": "02iQH000003GH4nYAG",
        "product": "AgenticTelco Fibre 150",
        "productId": "01tQH00000IbOIjYAN",
@@ -1121,7 +1351,7 @@
        "downloadSpeedMbps": 150
       },
       "contractMonthsLeft": {
-       "src": "salesforce:Asset end date (stand-in for agreement)",
+       "src": "salesforce:TMF637 Product Inventory (terminationDate as contract end)",
        "value": 9,
        "contractEnd": "2027-08-28"
       }
@@ -1141,7 +1371,7 @@
      ],
      "policyVersion": "mvp-2026-10-30.1"
     },
-    "at": "2026-10-30T17:06:32.048313+00:00"
+    "at": "2026-10-30T18:00:46.892836+00:00"
    },
    {
     "mode": "advisory",
@@ -1150,7 +1380,7 @@
      "mode": "advisory",
      "context": {
       "site": {
-       "src": "salesforce:Location+Address",
+       "src": "salesforce:TMF637 Product Inventory (place)",
        "city": "Ipswich",
        "name": "AgenticTelco Site 4471 \u2013 Brightwell, Martlesham",
        "street": "1 Fibre Way, Martlesham",
@@ -1159,7 +1389,7 @@
        "locationId": "131QH000001CX9JYAW"
       },
       "customer": {
-       "src": "salesforce:TMF629 customer",
+       "src": "salesforce:TMF629 Customer",
        "name": "Brightwell Design Ltd",
        "salesforceAccount": "001QH00002La125YAB"
       },
@@ -1205,7 +1435,7 @@
        }
       ],
       "requester": {
-       "src": "salesforce:AccountContactRole",
+       "src": "salesforce:TMF632 Party (contact role)",
        "name": "Sam",
        "role": "Decision Maker",
        "fullName": "Sam Taylor",
@@ -1213,7 +1443,7 @@
        "authorisedContact": true
       },
       "promotions": {
-       "src": "salesforce:TMF671 facade (Promotion)",
+       "src": "salesforce:TMF671 Promotion",
        "applicable": [],
        "activeInOrg": 2
       },
@@ -1232,7 +1462,7 @@
        ]
       },
       "currentBroadband": {
-       "src": "salesforce:Asset via TMF637",
+       "src": "salesforce:TMF637 Product Inventory",
        "assetId": "02iQH000003GH4nYAG",
        "product": "AgenticTelco Fibre 150",
        "productId": "01tQH00000IbOIjYAN",
@@ -1241,7 +1471,7 @@
        "downloadSpeedMbps": 150
       },
       "contractMonthsLeft": {
-       "src": "salesforce:Asset end date (stand-in for agreement)",
+       "src": "salesforce:TMF637 Product Inventory (terminationDate as contract end)",
        "value": 9,
        "contractEnd": "2027-08-28"
       }
@@ -1263,7 +1493,7 @@
      ],
      "policyVersion": "mvp-2026-10-30.1"
     },
-    "at": "2026-10-30T17:06:32.059356+00:00"
+    "at": "2026-10-30T18:00:46.901800+00:00"
    }
   ],
   "model": "qwen3-4b-instruct-2507",
@@ -1310,6 +1540,11 @@
    "freePorts900": 1,
    "ossState": null,
    "x-mocked": true
+  },
+  "links": {
+   "order": null,
+   "account": "https://techmahindra5.lightning.force.com/lightning/r/Account/001QH00002La125YAB/view",
+   "oldAsset": "https://techmahindra5.lightning.force.com/lightning/r/Asset/02iQH000003GH4nYAG/view"
   }
  }
 }

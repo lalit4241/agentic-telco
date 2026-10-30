@@ -1,5 +1,5 @@
 /**
- * TMF671 Promotion Management (v4 shapes, read-only) – custom TMF API on Salesforce.
+ * TMF671 Promotion Management (v4 shapes, read-only) – TMF facade within Salesforce (Apex).
  * The native Direct Access TMF671 resource exists on sfcomms but returns HTTP 500 on this org's existing promotion data
  * ("rewardDetails is null"), so the demo reads promotions here.  GET /agentictelco/tmf671/promotion[/{id}]
  */

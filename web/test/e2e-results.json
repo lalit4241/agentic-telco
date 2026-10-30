@@ -1,5 +1,5 @@
 {
- "at": "2026-10-30T17:40:33.010Z",
+ "at": "2026-10-30T18:17:31.990Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -43,6 +43,11 @@
   },
   {
    "name": "L6 chip wording",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "no \"native Salesforce API\" anywhere",
    "ok": true,
    "detail": ""
   },
@@ -102,6 +107,11 @@
    "detail": ""
   },
   {
+   "name": "L4 API view: context reads are TMF calls",
+   "ok": true,
+   "detail": "8 rows"
+  },
+  {
    "name": "happy: L5 drawer opens with run data",
    "ok": true,
    "detail": ""
@@ -118,6 +128,41 @@
   },
   {
    "name": "L6: record links to Salesforce",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "L6 API view: every call shows method, path and TMF tag",
+   "ok": true,
+   "detail": "28 rows"
+  },
+  {
+   "name": "L6 API view: Salesforce calls read \"TMF Open API (Salesforce)\"",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "call detail: Provided by, TMF tag, request and response",
+   "ok": true,
+   "detail": "L6 · SalesforceCreate Fibre 900 (active) at the same siteTMF637 Product Inventory TMF Open API (Salesforce)×POST /servic"
+  },
+  {
+   "name": "call detail: link to the Salesforce record",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "call detail: redacted (no tokens, session ids, login URLs)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "call detail: out-of-the-box call says so",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "legacy calls read \"Legacy stand-in (mocked)\"",
    "ok": true,
    "detail": ""
   },
@@ -170,6 +215,21 @@
    "name": "glossary filter",
    "ok": true,
    "detail": ""
+  },
+  {
+   "name": "architecture: system-of-record line",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "architecture: Exposed APIs (out of the box, facade, stand-ins mocked)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Salesforce evidence gallery (story order)",
+   "ok": true,
+   "detail": "9"
   },
   {
    "name": "presenter mode toggles",

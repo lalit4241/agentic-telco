@@ -92,12 +92,12 @@
     $('#app').innerHTML =
       '<header class="hd"><div class="brand">' + (CFG.mark || '') + '<div><div class="brand-name">AgenticTelco</div><div class="brand-sub">TelForce business portal</div></div></div>' +
       '<div class="ttl"><div class="kick">AGENTICTELCO MVP · BASED ON ZERO GRAVITY ARCHITECTURE</div><h1>Agent upgrades a Business Customer Service (B2B), on existing systems</h1></div>' +
-      '<div class="tabs"><button data-tab="demo" class="on">Demo</button><button data-tab="arch">Architecture</button></div>' +
+      '<div class="tabs"><button data-tab="demo" class="on">Demo</button><button data-tab="arch">Architecture</button><button data-tab="evidence">Salesforce evidence</button></div>' +
       '<button class="tb" id="b-pres" title="Presenter mode (P)">Presenter</button>' + (LIVE ? '' : '<button class="tb" id="btn-lock" title="Lock">Lock</button>') + '</header>' +
       '<div class="modebar' + (LIVE ? '' : ' rec') + '" id="modebar"></div>' +
       '<div class="banner"><div class="big">Agent proposes<i>·</i>Policy decides<i>·</i>Workflow writes</div><div class="small">The AI never holds business rules and never writes to a system of record</div></div>' +
       '<section id="v-demo"><div class="wrap"><div class="col-l"></div><div class="col-r"></div></div></section>' +
-      '<section id="v-arch" hidden></section>' +
+      '<section id="v-arch" hidden></section><section id="v-evidence" hidden></section>' +
       '<div class="dr" id="drawer" aria-hidden="true"></div>' +
       '<div class="foot">Concept demo by Lalit Chauhan · not an official Salesforce product</div>';
     $('.col-l').innerHTML =
@@ -129,7 +129,7 @@
     });
     renderArch(); modebar(); render();
   }
-  function setTab(t) { S.tab = t; document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); }); $('#v-demo').hidden = t !== 'demo'; $('#v-arch').hidden = t !== 'arch'; }
+  function setTab(t) { S.tab = t; document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); }); $('#v-demo').hidden = t !== 'demo'; $('#v-arch').hidden = t !== 'arch'; $('#v-evidence').hidden = t !== 'evidence'; if (t === 'evidence') renderEvidence(); }
   function togglePresenter() { S.presenter = !S.presenter; S.follow = S.presenter; document.body.classList.toggle('presenter', S.presenter); $('#b-pres').classList.toggle('on', S.presenter); }
 
   function modebar() {
@@ -207,19 +207,67 @@
     var box = $('#ld', d);
     if (!v) { box.innerHTML = '<p class="small">Start a case to see what this layer does for the request.</p>'; return; }
     (RENDER[id] || function () { })(box, v);
+    var own = id === 'L6' || id === 'L8' ? [] : v.spans.filter(function (s) { return s.layer === id && isCall(s); });
+    if (id === 'L4') {   // the TMF reads behind each context pack (L6 calls made while the pack was being built)
+      var packs = v.spans.filter(function (s) { return s.layer === 'L4' && /context pack/i.test(s.step); });
+      var reads = v.spans.filter(function (s) {
+        return s.layer === 'L6' && isCall(s) && packs.some(function (p) { return s.parent_span_id === p.span_id || (T(s.start_ts) >= T(p.start_ts) && T(s.start_ts) <= T(p.end_ts)); });
+      });
+      if (reads.length) box.insertAdjacentHTML('beforeend', '<div class="sec">TMF reads behind the context pack (' + reads.length + ')</div><div id="l4reads">' + apiRows(reads, v, false) + '</div>');
+    }
+    if (own.length) box.insertAdjacentHTML('beforeend', '<div class="sec">API calls from this layer (' + own.length + ')</div>' + apiRows(own, v, false));
     $('.db', d).scrollTop = keepScroll;
   }
   function spanRows(list, cols) { return '<table class="t"><tr>' + cols.map(function (c) { return '<th>' + c[0] + '</th>'; }).join('') + '</tr>' + list.map(function (s) { return '<tr>' + cols.map(function (c) { return '<td>' + c[1](s) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; }
   function ms(s) { return s.running ? '<span class="warn">running…</span>' : (s.duration_ms >= 1000 ? (s.duration_ms / 1000).toFixed(1) + ' s' : Math.round(s.duration_ms) + ' ms'); }
-  function rtChip(s) { var r = s.runtime || ''; if (/facade/i.test(r)) return '<span class="chip fac">TMF facade within Salesforce (Apex)</span>'; if (/native Salesforce/i.test(r)) return '<span class="chip sf">native Salesforce API</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">legacy stand-in (mocked)</span>'; return '<span class="chip ours">' + esc(r) + '</span>'; }
+  /* Every Salesforce call reads 'TMF Open API (Salesforce)'; who provides it (out of the box or the TMF facade) is shown in the call detail only. */
+  var SF_CHIP = 'TMF Open API (Salesforce)', STANDIN_CHIP = 'Legacy stand-in (mocked)';
+  function rtChip(s) { var r = s.runtime || ''; if (/TMF Open API \(Salesforce\)/.test(r)) return '<span class="chip sf">' + SF_CHIP + '</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">' + STANDIN_CHIP + '</span>'; return '<span class="chip ours">' + esc(r) + '</span>'; }
+  function tmfTag(s) { var m = String(s.api || '').match(/^(TMF\d+)\s*(.*)$/); return m ? '<span class="tmf"><b>' + esc(m[1]) + '</b> ' + esc(m[2]) + '</span>' : '<span class="mono small">' + esc(s.api || '') + '</span>'; }
+  function shortPath(p) { return String(p || '').replace(/^\/services\/apexrest\/agentictelco/, '…/apexrest/agentictelco').replace(/^\/services\/data\/v\d+\.\d+\/connect\/comms/, '…/connect/comms'); }
+  function isCall(s) { return s.method && s.path; }
+  function apiRows(list, v, extra) {
+    return '<table class="t api"><tr><th>Time</th><th>Step</th><th>Method · path</th><th>TMF API</th><th>Runs as</th><th>Status</th>' + (extra ? '<th>Record</th>' : '') + '</tr>' + list.map(function (s) {
+      return '<tr class="call" data-sid="' + esc(s.span_id) + '" tabindex="0" title="Open the request and response"><td>' + hm(T(s.start_ts)) + '</td><td>' + esc(s.step) + '<div class="small">' + esc(s.component) + '</div></td>' +
+        '<td><span class="mth">' + esc(s.method) + '</span> <span class="mono small">' + esc(shortPath(s.path)) + '</span></td><td>' + tmfTag(s) + '</td><td>' + rtChip(s) + '</td><td>' + (s.running ? '…' : esc(s.status)) + '</td>' + (extra ? '<td>' + linkFor(s, v) + '</td>' : '') + '</tr>';
+    }).join('') + '</table>';
+  }
+  /* client-side redaction as well (the gateway and the build already redact): no tokens, session ids, login or instance URLs */
+  var SECRET_KEY = /^(?:(?:access|refresh|id|bearer|api)?_?token|session_?id|sid|(?:set-)?cookie)$|authori[sz]ation|password|secret|frontdoor/i;
+  function redact(x) {
+    if (Array.isArray(x)) return x.map(redact);
+    if (x && typeof x === 'object') { var o = {}; Object.keys(x).forEach(function (k) { o[k] = SECRET_KEY.test(k) ? '[redacted]' : redact(x[k]); }); return o; }
+    if (typeof x === 'string') return x.replace(/\b00D[A-Za-z0-9]{12,15}![A-Za-z0-9._-]+/g, '[redacted]').replace(/https?:\/\/[A-Za-z0-9.-]+\.(?:my\.)?(?:salesforce|force|cloudforce|salesforce-setup|visualforce)\.com[^\s"']*/g, function (u) { return /\/lightning\/r\//.test(u) && !/frontdoor|sid=/.test(u) ? u : '[instance]' + u.replace(/^https?:\/\/[^\/]+/, '').split('?')[0]; });
+    return x;
+  }
+  function providedBy(s) { var a = s.attributes || {}; if (a.providedBy) return a.providedBy; return /apexrest\/agentictelco/.test(s.path || '') ? 'TMF facade within Salesforce (Apex)' : /connect\/comms/.test(s.path || '') ? 'Salesforce (out of the box)' : /stand-in/i.test(s.runtime || '') ? STANDIN_CHIP : (s.runtime || ''); }
+  function openCall(sid) {
+    var v = view(S.full, S.t) || S.full; if (!v) return;
+    var s = (v.spans || []).filter(function (x) { return x.span_id === sid; })[0]; if (!s) return;
+    var d = $('#calld'); if (!d) { d = document.createElement('div'); d.id = 'calld'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); document.body.appendChild(d); }
+    var link = linkFor(s, v), J = function (o) { return o == null ? '—' : esc(JSON.stringify(redact(o), null, 1)); };
+    d.innerHTML = '<div class="cd"><div class="cdh"><div><div class="small">' + esc(s.layer) + ' · ' + esc(s.component) + '</div><h3>' + esc(s.step) + '</h3>' +
+      '<div>' + tmfTag(s) + ' ' + rtChip(s) + '</div></div><button class="x" aria-label="Close">×</button></div>' +
+      '<div class="cdb"><p><span class="mth">' + esc(s.method) + '</span> <span class="mono">' + esc(s.path) + '</span></p>' +
+      '<p class="pby">Provided by: <b>' + esc(providedBy(s)) + '</b></p>' +
+      '<p>Status <b>' + (s.running ? 'running…' : esc(s.status)) + '</b> · ' + ms(s) + (link ? ' · Salesforce record: ' + link : '') + '</p>' +
+      '<div class="sec">Request</div><pre class="js">' + J(s.request) + '</pre><div class="sec">Response</div><pre class="js">' + J(s.response) + '</pre>' +
+      '<p class="small">Redacted: no tokens, session IDs or instance login URLs. Long bodies are shortened in the recorded runs. Record links open Salesforce and need your own login.</p></div></div>';
+    d.classList.add('open');
+    var close = function () { d.classList.remove('open'); };
+    $('.x', d).onclick = close; d.onclick = function (e) { if (e.target === d) close(); };
+    $('.x', d).focus();
+  }
+  document.addEventListener('click', function (e) { var r = e.target.closest && e.target.closest('tr.call'); if (r && !(e.target.closest('a'))) openCall(r.dataset.sid); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('#calld')) $('#calld').classList.remove('open'); if (e.key === 'Enter' && e.target.matches && e.target.matches('tr.call')) openCall(e.target.dataset.sid); });
   function linkFor(s, v) {
     var L = v.links || {}, ms_ = v.milestones || [], has = function (n) { return ms_.some(function (m) { return m.name === n; }); }, a = function (u, t) { return u ? '<a class="link" target="_blank" rel="noopener" href="' + esc(u) + '">' + t + '</a>' : ''; };
     if (/Create quote/.test(s.step) && has('QuoteCreated')) return a(L.quote, 'Quote');
     if (/Place upgrade order|Order in progress|Complete order/.test(s.step) && has('OrderInProgress')) return a(L.order, 'Order ' + (L.orderNumber || ''));
-    if (/Create Fibre 900/.test(s.step) && has('AssetChanged')) return a(L.newAsset, 'New asset');
-    if (/Obsolete/.test(s.step)) return a(L.oldAsset, 'Fibre 150 asset');
-    if (/AssetRelationship/.test(s.step) && has('AssetChanged')) return a(L.relationship, 'Upgrade link');
-    if (/^Customer$/.test(s.step)) return a(L.account, 'Account');
+    if (/Create Fibre 900/.test(s.step) && has('AssetChanged')) return a(L.newAsset, 'Fibre 900 asset');
+    if (/productRelationship/.test(s.step) && has('AssetChanged')) return a(L.relationship, 'Upgrade link');
+    if (/Fibre 150 terminated|Read current installed service|^Installed service/.test(s.step)) return a(L.oldAsset, 'Fibre 150 asset');
+    if (/^Customer$|Organization and contact roles|Contact role on the account|Who can order/.test(s.step)) return a(L.account, 'Account');
     return '';
   }
   function portIs900(v) { return (v.milestones || []).some(function (m) { return m.name === 'PortReserved' || m.name === 'Live'; }); }
@@ -265,8 +313,9 @@
           if (typeof val === 'object') val = JSON.stringify(val);
           if (typeof val === 'boolean') val = val ? 'yes' : 'no';
           var src = x.src || x.source || '';
-          var ch = /salesforce/i.test(src) ? (/TMF6(20|48|22|71)/.test(src) ? 'fac' : 'sf') : /stand-in|billing|availab|legacy/i.test(src) ? 'st' : /L3|identity/i.test(src) ? 'l3' : 'ours';
-          items.push('<div class="pk"><b>' + esc(k) + '</b>' + esc(val) + (src ? '<div><span class="chip ' + ch + '">' + esc(src) + '</span></div>' : '') + '</div>');
+          var ch = /salesforce/i.test(src) ? 'sf' : /stand-in|billing|availab|legacy/i.test(src) ? 'st' : /L3|identity/i.test(src) ? 'l3' : 'ours';
+          var shown = ch === 'sf' ? SF_CHIP + ' · ' + src.replace(/^salesforce:/, '') : src;
+          items.push('<div class="pk"><b>' + esc(k) + '</b>' + esc(val) + (src ? '<div><span class="chip ' + ch + '">' + esc(shown) + '</span></div>' : '') + '</div>');
         });
         h += '<div class="pack">' + items.join('') + '</div>';
       }
@@ -290,9 +339,9 @@
     },
     L6: function (b, v) {
       var calls = v.spans.filter(function (s) { return s.layer === 'L6'; });
-      b.innerHTML = '<p><span class="chip sf">native Salesforce API</span><span class="chip fac">TMF facade within Salesforce (Apex)</span><span class="chip st">legacy stand-in (mocked)</span></p>' +
-        spanRows(calls, [['Time', function (s) { return hm(T(s.start_ts)); }], ['Call', function (s) { return esc(s.step) + '<div class="small">' + esc(s.component) + '</div>'; }], ['API', function (s) { return '<span class="mono">' + esc(s.api) + '</span>'; }], ['Runs as', rtChip], ['Status', function (s) { return s.running ? '…' : esc(s.status); }], ['Record', function (s) { return linkFor(s, v); }]]) +
-        '<p class="small">Only the L5 workflow writes (quote, order, asset change). Custom Assetize Order flow is left as is; the run checks it created no Asset.</p>';
+      b.innerHTML = '<p><span class="chip sf">' + SF_CHIP + '</span><span class="chip st">' + STANDIN_CHIP + '</span> <span class="small">Click a call to see its request and response.</span></p>' +
+        apiRows(calls, v, true) +
+        '<p class="small">Everything above this layer reaches Salesforce only through TM Forum Open APIs. Only the L5 workflow writes (quote, order, installed-product change). The Custom Assetize Order flow is left as is; the run checks it created no installed product.</p>';
     },
     L7: function (b, v) {
       var n = v.network || {}, up = portIs900(v), jeo = (v.jeopardy || []).length && !up, sent = (v.milestones || []).some(function (m) { return m.name === 'SentToOSS'; });
@@ -330,13 +379,51 @@
     });
   }
 
+  /* ---------- exposed APIs (architecture tab) ---------- */
+  var EXPOSED = [
+    { g: 'Salesforce (out of the box)', c: 'sf', rows: [
+      ['TMF629', 'Customer', 'GET', '/services/data/v68.0/connect/comms/customermanagement/v4/customer/{id}', 'Customer (Account)'],
+      ['TMF637', 'Product Inventory', 'GET', '/services/data/v68.0/connect/comms/productinventorymanagement/v5/productinventory/{id}', 'Installed product by id (serial number)']] },
+    { g: 'TMF facade within Salesforce (Apex)', c: 'sf', rows: [
+      ['TMF620', 'Product Catalog', 'GET', '/services/apexrest/agentictelco/tmf620/productOffering', 'Offers, prices, characteristics'],
+      ['TMF671', 'Promotion', 'GET', '/services/apexrest/agentictelco/tmf671/promotion', 'Promotions in the org'],
+      ['TMF632', 'Party', 'GET', '/services/apexrest/agentictelco/tmf632/organization/{id}', 'Organization with contacts and their roles'],
+      ['TMF637', 'Product Inventory', 'GET', '/services/apexrest/agentictelco/tmf637/product?relatedParty.id=', 'Installed products of a customer, with site and contract end'],
+      ['TMF637', 'Product Inventory', 'POST', '/services/apexrest/agentictelco/tmf637/product', 'Create an installed product (idempotent on serial number)'],
+      ['TMF637', 'Product Inventory', 'PATCH', '/services/apexrest/agentictelco/tmf637/product/{id}', 'Status, end date, Upgrade productRelationship'],
+      ['TMF648', 'Quote', 'POST · PATCH · GET', '/services/apexrest/agentictelco/tmf648/quote', 'Quote and quote lines'],
+      ['TMF622', 'Product Order', 'POST · PATCH · GET', '/services/apexrest/agentictelco/tmf622/productOrder', 'Order and order items; adds the usage record internally']] },
+    { g: 'Legacy stand-ins (mocked)', c: 'st', rows: [
+      ['TMF666', 'Account', 'GET', '/tmf-api/accountManagement/v4/billingAccount/{id}', 'Billing B balance'],
+      ['TMF679', 'Product Offering Qualification', 'GET', '/tmf-api/productOfferingQualification/v5/availability/{addressKey}', 'What can be delivered at the site'],
+      ['TMF639', 'Resource Inventory', 'GET', '/tmf-api/resourceInventoryManagement/v4/site/{id}', 'Exchange and access port'],
+      ['TMF641', 'Service Order', 'POST · GET', '/tmf-api/serviceOrdering/v4/serviceOrder', 'Legacy OSS, overnight batch'],
+      ['—', 'Payment link', 'POST', '/payment/link', 'Overdue-balance payment link (not a TMF API)']] }];
+  function exposedApis() {
+    return '<div class="ph" style="border:1px solid var(--line);border-radius:10px 10px 0 0;margin-top:12px"><h2>Exposed APIs (TMF-aligned)</h2></div><div class="panel" style="border-top:0;border-radius:0 0 10px 10px;padding:8px 12px" id="exposed">' +
+      EXPOSED.map(function (g) {
+        return '<div class="sec">' + (g.c === 'st' ? '<span class="chip st">' + STANDIN_CHIP + '</span>' : '<span class="chip sf">' + SF_CHIP + '</span> Provided by: ' + esc(g.g)) + '</div><table class="t api"><tr><th>TMF API</th><th>Method</th><th>Path</th><th>Used for</th></tr>' +
+          g.rows.map(function (r) { return '<tr><td><span class="tmf"><b>' + r[0] + '</b> ' + esc(r[1]) + '</span></td><td><span class="mth">' + esc(r[2]) + '</span></td><td class="mono small">' + esc(r[3]) + '</td><td>' + esc(r[4]) + '</td></tr>'; }).join('') + '</table>';
+      }).join('') + '<p class="small">TMF-aligned resource shapes. The facade classes (AgenticTelco_TMF6nn) only map data; the rules live in the policy and the workflow.</p></div>';
+  }
+
+  /* ---------- Salesforce evidence (screenshots of the org, story order) ---------- */
+  function renderEvidence() {
+    var ev = CFG.evidence || [];
+    $('#v-evidence').innerHTML = '<div class="arch"><h2 style="margin:4px 0">Salesforce evidence</h2><p class="small">Lightning record pages from the Salesforce org before and after the recorded happy-path run, in story order. AgenticTelco demo records only; user details are blurred.</p>' +
+      (ev.length ? '<div class="evg">' + ev.map(function (e, i) { return '<figure class="ev"><img loading="lazy" alt="' + esc(e.caption) + '" src="' + e.src + '"><figcaption><b>' + (i + 1) + '.</b> ' + esc(e.caption) + '</figcaption></figure>'; }).join('') + '</div>' : '<p class="small">No screenshots in this build.</p>') + '</div>';
+    document.querySelectorAll('.ev img').forEach(function (im) { im.onclick = function () { window.open().document.write('<img style="max-width:100%" src="' + im.src + '">'); }; });
+  }
+
   /* ---------- architecture tab ---------- */
   function renderArch() {
     var g = COPY.glossary || [];
     $('#v-arch').innerHTML = '<div class="arch"><h2 style="margin:4px 0">How the new architecture works</h2>' +
       '<div class="flow"><span><b>Sam</b> asks in chat</span><em>→</em><span>L1 Intent</span><em>→</em><span>L2 Agent proposes</span><em>→</em><span>L4 Context &amp; Policy decides</span><em>→</em><span>L5 Workflow writes</span><em>→</em><span>L6 Salesforce + legacy</span><em>→</em><span>L7 network</span><em>·</em><span>L3 remembers · L8 proves</span></div>' +
       '<div class="agrid">' + LAYER_IDS.map(function (id) { var l = layerCopy[id] || {}, k = statusKind(l.status); return '<div class="ac" data-layer="' + id + '" style="--c:var(--' + id.toLowerCase() + ')"><span class="lab ' + k[0] + '">' + esc(l.status) + '</span><h3>' + id + ' · ' + esc(l.name) + '</h3><div class="q">' + esc(l.question) + '</div><div class="tech">' + esc(l.label) + '</div></div>'; }).join('') + '</div>' +
-      '<div class="keys" style="padding:12px 0"><div class="key"><b>Agent proposes</b>The model suggests and explains; it has no write tool and holds no rule.</div><div class="key"><b>Policy decides</b>One versioned OPA policy, checked advisory (L4) and binding (L5).</div><div class="key"><b>Workflow writes</b>BPMN (Operaton) is the only writer, through Salesforce APIs and the TMF facade layer within Salesforce.</div></div>' +
+      '<div class="keys" style="padding:12px 0"><div class="key"><b>Agent proposes</b>The model suggests and explains; it has no write tool and holds no rule.</div><div class="key"><b>Policy decides</b>One versioned OPA policy, checked advisory (L4) and binding (L5).</div><div class="key"><b>Workflow writes</b>BPMN (Operaton) is the only writer, through TM Forum Open APIs exposed by Salesforce.</div></div>' +
+      '<p class="sorline"><b>All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer.</b></p>' +
+      exposedApis() +
       '<div class="ph" style="border:1px solid var(--line);border-radius:10px 10px 0 0"><h2>Glossary (' + g.length + ' terms, from docs/mvp/layer-panels.md)</h2><input class="glf" id="glf" placeholder="Filter terms…"></div>' +
       '<div class="panel" style="border-top:0;border-radius:0 0 10px 10px;padding:12px"><div class="gl" id="gl"></div></div></div>';
     var draw = function (f) { $('#gl').innerHTML = g.filter(function (x) { return !f || (x.term + x.definition).toLowerCase().indexOf(f) >= 0; }).map(function (x) { return '<div class="gt"><b>' + esc(x.term) + '</b> · ' + esc(x.definition) + '</div>'; }).join(''); };
