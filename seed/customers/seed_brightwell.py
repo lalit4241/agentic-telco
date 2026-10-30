@@ -5,8 +5,8 @@ Standard objects only, via OOTB sObject REST through the Salesforce CLI (no toke
   Account · 2 Contacts · 2 AccountContactRole (Sam = Decision Maker, Alex = Business User) · Location (site 4471,
   ExternalReference = address key A00000001975) · Address · Fibre 150 Asset at that Location.
 Every record carries the AgenticTelco prefix; existing records are reused, never deleted. Data is synthetic.
-  --reset   put the demo back to the baseline before a recorded run: the seeded Fibre 150 Asset → Installed (end date
-            cleared) and Assets created by earlier MVP runs on this Account → Obsolete. Only AgenticTelco Assets on the
+  --reset   put the demo back to the baseline before a recorded run: the seeded Fibre 150 Asset → Installed (contract end
+            date restored) and Assets created by earlier MVP runs on this Account → Obsolete. Only AgenticTelco Assets on the
             AgenticTelco Brightwell Account are touched; nothing is deleted.
 Writes seed/customers/brightwell.json (ids only)."""
 import json, os, sys
@@ -17,6 +17,7 @@ from stack.zg_common.sf_session import request, API_V
 D = f"/services/data/{API_V}"
 ACC_NO = "AT-B-BRIGHTWELL"
 ADDRESS_KEY = "A00000001975"
+CONTRACT_END = "2027-08-28"   # 24-month term; Asset end date stands in for the agreement (MVP-KEY-DESIGN Appendix A)
 
 def soql(s):
     r = request("GET", f"{D}/query?q=" + quote(s))
@@ -71,15 +72,15 @@ def main():
         patch("Location", loc, {"VisitorAddressId": addr})
     asset, n = ensure("Asset", f"AccountId='{acc}' AND SerialNumber='AT-PI-B4471' AND Name LIKE 'AgenticTelco%'", dict(
         Name="AgenticTelco Fibre 150 – Brightwell site 4471", AccountId=acc, ContactId=people["sam"]["contactId"], Product2Id=fib150,
-        Status="Installed", Quantity=1, Price=27, SerialNumber="AT-PI-B4471", LocationId=loc, InstallDate="2025-08-28",
+        Status="Installed", Quantity=1, Price=27, SerialNumber="AT-PI-B4471", LocationId=loc, InstallDate="2025-08-28", UsageEndDate=CONTRACT_END,
         Street="1 Fibre Way, Martlesham", City="Ipswich", PostalCode="IP5 3RE", Country="United Kingdom",
         Description="AgenticTelco MVP: Fibre 150 on a 24-month term (synthetic)"))
     log.append(("Asset Fibre 150", asset, n))
     if "--reset" in sys.argv:
         for a in soql(f"SELECT Id, Status, UsageEndDate FROM Asset WHERE AccountId='{acc}' AND Name LIKE 'AgenticTelco%'"):
             if a["Id"] == asset:
-                if a["Status"] != "Installed" or a["UsageEndDate"]:
-                    patch("Asset", a["Id"], {"Status": "Installed", "UsageEndDate": None}); print("  reset", a["Id"], "→ Installed")
+                if a["Status"] != "Installed" or a["UsageEndDate"] != CONTRACT_END:
+                    patch("Asset", a["Id"], {"Status": "Installed", "UsageEndDate": CONTRACT_END}); print("  reset", a["Id"], "→ Installed")
             elif a["Status"] != "Obsolete":
                 patch("Asset", a["Id"], {"Status": "Obsolete"}); print("  reset", a["Id"], "→ Obsolete")
     for name, rid, new in log:

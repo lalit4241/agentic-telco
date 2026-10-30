@@ -5,6 +5,9 @@
 #   ./run.sh down      stop everything
 #   ./run.sh journeys  record the demo journeys into recordings/
 #   ./run.sh test      unit + policy + engine guardrail + crash/resume + e2e tests
+#   ./run.sh mvp-up    start the AgenticTelco MVP (PG16, OPA mvp policy, Operaton, Ollama, MVP services); UI on http://127.0.0.1:8120/
+#   ./run.sh mvp-down  stop the MVP
+#   ./run.sh mvp-record  run the four MVP journeys live, save recordings/mvp/*.json and verify them against the org
 set -euo pipefail
 cd "$(dirname "$0")"
 export PG_BIN=${PG_BIN:-/usr/lib/postgresql/17/bin}
@@ -71,7 +74,39 @@ case "${1:-up}" in
     if [[ "${ZG_SOR_MODE:-standin}" == "commscloud" ]]; then .venv/bin/python seed/customers/seed_customers.py --reset-inventory; fi
     .venv/bin/python scripts/run_journeys.py ;;
   test) scripts/test_all.sh ;;
+  mvp-up)
+    # MVP on PostgreSQL 16 (pgserver binaries; override with MVP_PG_BIN). Data dir .data/pg16; schema created by stack/mvp/bootstrap.
+    MVP_PG_BIN=${MVP_PG_BIN:-/workspace/.zg-tools/pgvenv/lib/python3.12/site-packages/pgserver/pginstall/bin}
+    mkdir -p .data/logs
+    if [[ ! -d .data/pg16 ]]; then
+      "$MVP_PG_BIN/initdb" -D .data/pg16 -U zg --auth=trust -E UTF8 >/dev/null
+      "$MVP_PG_BIN/pg_ctl" -D .data/pg16 -l .data/logs/pg16.log -o "-p 55432 -k /tmp -c listen_addresses=127.0.0.1" -w start >/dev/null
+      "$MVP_PG_BIN/createdb" -h 127.0.0.1 -p 55432 -U zg agentictelco; "$MVP_PG_BIN/createdb" -h 127.0.0.1 -p 55432 -U zg operaton
+    else
+      chmod 700 .data/pg16   # Postgres refuses a data dir with wider permissions (e.g. after a box restore)
+      (cd .data/pg16 && mkdir -p pg_notify pg_serial pg_snapshots pg_twophase pg_commit_ts pg_dynshmem pg_replslot pg_tblspc pg_stat_tmp pg_stat pg_logical/snapshots pg_logical/mappings)   # empty dirs a restore can drop
+      "$MVP_PG_BIN/pg_isready" -h 127.0.0.1 -p 55432 -q || "$MVP_PG_BIN/pg_ctl" -D .data/pg16 -l .data/logs/pg16.log -o "-p 55432 -k /tmp -c listen_addresses=127.0.0.1" -w start >/dev/null
+    fi
+    if ! curl -sf 127.0.0.1:8181/health >/dev/null; then nohup .tools/bin/opa run --server --addr 127.0.0.1:8181 --log-level error stack/mvp/policy/upgrade.rego > .data/logs/opa.log 2>&1 < /dev/null & fi
+    if ! curl -sf 127.0.0.1:11434/api/version >/dev/null; then OLLAMA_MODELS=$PWD/.tools/ollama/models nohup .tools/ollama/bin/ollama serve > .data/logs/ollama.log 2>&1 < /dev/null & fi
+    if ! curl -s -o /dev/null 127.0.0.1:8180/engine-rest/version; then
+      cp stack/l5_orchestrator/operaton/production.yml .tools/operaton/configuration/production.yml
+      JAVA_HOME=$PWD/.tools/jre PATH=$PWD/.tools/jre/bin:$PATH nohup .tools/operaton/start.sh --rest --production > .data/logs/operaton.log 2>&1 < /dev/null &
+    fi
+    PG_BIN=$MVP_PG_BIN scripts/wait_for.sh pg opa operaton
+    .venv/bin/python -m stack.mvp.bootstrap
+    nohup .venv/bin/honcho -f Procfile.mvp start > .data/logs/mvp-stack.log 2>&1 < /dev/null &
+    echo $! > .data/mvp-honcho.pid
+    for p in 8125 8122 8121 8123 8120; do for i in $(seq 1 60); do curl -sf 127.0.0.1:$p/health >/dev/null && break; sleep 1; done; done
+    echo "MVP up: http://127.0.0.1:8120/  (live mode; Salesforce via the sf CLI alias sfcomms)" ;;
+  mvp-down)
+    [[ -f .data/mvp-honcho.pid ]] && kill "$(cat .data/mvp-honcho.pid)" 2>/dev/null || true
+    pkill -f "honcho -f Procfile.mvp" 2>/dev/null || true; sleep 2
+    pkill -f "uvicorn stack.mvp" 2>/dev/null || true; pkill -f "stack.mvp.workers" 2>/dev/null || true
+    pkill -f "operaton/internal" 2>/dev/null || true; pkill -f "opa run --server" 2>/dev/null || true; pkill -f "ollama serve" 2>/dev/null || true
+    "${MVP_PG_BIN:-/workspace/.zg-tools/pgvenv/lib/python3.12/site-packages/pgserver/pginstall/bin}/pg_ctl" -D .data/pg16 -w stop >/dev/null 2>&1 || true ;;
+  mvp-record) .venv/bin/python scripts/record_mvp.py && PYTHONPATH=. .venv/bin/python scripts/mvp/verify_recordings.py ;;
   reset)
     "$0" down || true; rm -rf .data/pg .data/kafka .data/kafka-logs .data/otel .data/stack.log; echo "reset done" ;;
-  *) echo "usage: $0 up|down|journeys|test|reset"; exit 1 ;;
+  *) echo "usage: $0 up|down|journeys|test|reset|mvp-up|mvp-down|mvp-record"; exit 1 ;;
 esac

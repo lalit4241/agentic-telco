@@ -1,0 +1,9 @@
+# AgenticTelco MVP: native process list (the target deployment is one Docker Compose host; this box has no Docker).
+# Postgres, OPA, Operaton and Ollama are started by `./run.sh mvp-up` before these.
+standins: .venv/bin/uvicorn stack.mvp.standins:app --host 127.0.0.1 --port 8125
+context:  .venv/bin/uvicorn stack.mvp.context:app --host 127.0.0.1 --port 8122
+intent:   .venv/bin/uvicorn stack.mvp.intent:app --host 127.0.0.1 --port 8121
+mcp:      .venv/bin/uvicorn stack.mvp.mcp_server:app --host 127.0.0.1 --port 8124
+agent:    .venv/bin/uvicorn stack.mvp.agent:app --host 127.0.0.1 --port 8123
+workers:  .venv/bin/python -m stack.mvp.workers
+gateway:  .venv/bin/uvicorn stack.mvp.gateway:app --host 127.0.0.1 --port 8120

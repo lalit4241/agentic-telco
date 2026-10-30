@@ -1,0 +1,335 @@
+{
+ "source": "docs/mvp/layer-panels.md",
+ "layers": [
+  {
+   "id": "L1",
+   "n": 1,
+   "name": "Intent",
+   "body": [
+    "Sam types the problem in plain words in the business portal. The agent turns it into a structured intent: an outcome such as \"support 15 more staff and cloud video at the Martlesham site, within contract\". A small intent service outside Salesforce checks and records it. It later records progress reports, including the delay and the final \"fulfilled\"."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "the customer states an outcome, not a product, so the operator can meet the need without exposing its catalogue or its systems."
+    },
+    {
+     "key": "What you'll see",
+     "text": "the intent and its progress reports (at risk with a revised date, then fulfilled)."
+    },
+    {
+     "key": "Tags",
+     "text": "intent [TMF921-shaped]"
+    }
+   ],
+   "question": "What does Sam want?",
+   "tech": "Web chat; TMF921-shaped intent service (ours), stored in Postgres",
+   "status": "Real; demo sign-in",
+   "label": "Web chat; TMF921-shaped intent service (ours), stored in Postgres",
+   "chip": "Intent"
+  },
+  {
+   "id": "L2",
+   "n": 2,
+   "name": "Agent",
+   "body": [
+    "One agent reads the facts it is given, recommends Fibre 900 and explains why in plain words. It has three tools: get the context, request the upgrade and check the order status. It proposes only. It cannot write to Salesforce or any other system of record."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "the model reasons and talks to the customer, but it holds no business rules and no write access, so it can't place an order on its own."
+    },
+    {
+     "key": "What you'll see",
+     "text": "the agent's plan, each tool call and its result, and the model calls with their token counts."
+    },
+    {
+     "key": "Tags",
+     "text": "none (MCP links the agent to our own three tools only)"
+    }
+   ],
+   "question": "What should we offer and why?",
+   "tech": "LangGraph (MIT), MCP SDK (MIT), local model Qwen3-4B-Instruct-2507 (Apache 2.0) via Ollama",
+   "status": "Real",
+   "label": "LangGraph (MIT), MCP SDK (MIT), local model Qwen3-4B-Instruct-2507 (Apache 2.0) via Ollama",
+   "chip": "Agent"
+  },
+  {
+   "id": "L3",
+   "n": 3,
+   "name": "Data",
+   "body": [
+    "It stores the conversation, the decisions, the intent and its reports, the delay history and the audit log. It also holds the cross-reference showing that Brightwell's Salesforce account, billing ID BIL-B-0077812, inventory site 4471 and address key A00000001975 belong to the same customer and site. The matching is a maintained table, not a guess by the agent."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "every system is talking about the same customer, and every step can be reconstructed afterwards."
+    },
+    {
+     "key": "What you'll see",
+     "text": "the cross-reference rows, each with where the link came from, and the audit rows written for this request."
+    },
+    {
+     "key": "Tags",
+     "text": "none"
+    }
+   ],
+   "question": "What do we remember?",
+   "tech": "PostgreSQL",
+   "status": "Real; IDs are examples",
+   "label": "PostgreSQL",
+   "chip": "Data"
+  },
+  {
+   "id": "L4",
+   "n": 4,
+   "name": "Context & Policy",
+   "body": [
+    "Business terms such as \"authorised contact\" and \"available at site\" are defined once, with their source. For Sam's request, the context service builds one context pack, with every fact tagged with where it came from. The same policy then runs twice: first as an advisory check before the agent makes an offer, then as the binding check in the workflow before anything is written. It checks four things: Sam is an authorised contact, there is no overdue balance, Fibre 900 is available at the site, and mid-contract changes are upgrades only."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "rules live in one visible, versioned, tested place, not inside the model and not buried in a system of record."
+    },
+    {
+     "key": "What you'll see",
+     "text": "the context pack with source chips (\"Salesforce\" or \"Legacy stand-in (mocked)\"), the policy decision and the rule that applied."
+    },
+    {
+     "key": "Today vs agentic",
+     "text": "in our own demo org, the \"Custom Assetize Order\" flow silently required a usage record on each order. Nothing documented it. That is an org customisation, not a Salesforce flaw. Here the same kind of rule is one visible policy."
+    },
+    {
+     "key": "Tags",
+     "text": "none (policy engine: OPA)"
+    }
+   ],
+   "question": "What do we know, and is it allowed?",
+   "tech": "YAML semantic model, Python/FastAPI context service, OPA (Rego)",
+   "status": "Real; balance and availability are stand-ins",
+   "label": "YAML semantic model, Python/FastAPI context service, OPA (Rego)",
+   "chip": "Context & Policy"
+  },
+  {
+   "id": "L5",
+   "n": 5,
+   "name": "Execution",
+   "body": [
+    "One business process takes Sam's acceptance through to \"live\". It runs the binding policy check, creates the quote, places the upgrade order and waits for fulfilment. A timer raises the delay and the revised date. At the end it marks Fibre 150 as obsolete, records Fibre 900 as installed and links the two as an upgrade. It is the only component that writes. The order ID is its business key, so a rerun can't write the same order twice."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "writes follow a fixed, auditable process that absorbs slow and batch legacy systems, whatever the agent says."
+    },
+    {
+     "key": "What you'll see",
+     "text": "the process diagram (BPMN) with the current step highlighted, including the delay."
+    },
+    {
+     "key": "Tags",
+     "text": "none"
+    }
+   ],
+   "question": "Who actually does the work?",
+   "tech": "Operaton BPMN (Apache-2.0), Python workers",
+   "status": "Real; OSS is a stand-in",
+   "label": "Operaton BPMN (Apache-2.0), Python workers",
+   "chip": "Execution"
+  },
+  {
+   "id": "L6",
+   "n": 6,
+   "name": "Systems of record",
+   "body": [
+    "Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Every call uses a standard telco API. Salesforce's native APIs cover customers, contacts and installed services. A thin TMF facade layer inside Salesforce (Apex) covers catalogue, quote, order and promotion. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same kind of standard API."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "Salesforce and the legacy estate stay in place, keep the records and nothing else, and can be replaced one at a time behind the same APIs."
+    },
+    {
+     "key": "What you'll see",
+     "text": "each call, labelled \"native Salesforce API\", \"TMF facade inside Salesforce (Apex)\" or \"Legacy stand-in (mocked)\", with links to the Salesforce records."
+    },
+    {
+     "key": "Tags",
+     "text": "Salesforce native APIs [TMF629] [TMF632] [TMF637] · TMF facade layer inside Salesforce (Apex) [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666] [TMF679] [TMF641] (shape only)"
+    }
+   ],
+   "question": "Where is the truth recorded?",
+   "tech": "Salesforce, with its native APIs and a thin TMF facade layer inside Salesforce (Apex); legacy stand-ins behind adapters",
+   "status": "Salesforce real; legacy billing, availability, inventory and OSS mocked",
+   "label": "Salesforce native APIs plus a thin TMF facade layer within Salesforce",
+   "chip": "Salesforce APIs + TMF facade (in Salesforce)"
+  },
+  {
+   "id": "L7",
+   "n": 7,
+   "name": "Digital Core",
+   "body": [
+    "It shows the operator's network at site 4471: the exchange, the fibre path to Martlesham and the access port. The port changes from 150 to 900 when the network fulfilment step completes. One line underneath lists the platform services an operator would provide."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "it shows where the order meets the network and what a production platform needs, without claiming the MVP has it."
+    },
+    {
+     "key": "What you'll see",
+     "text": "the network view for site 4471, labelled \"network view is our illustration\"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus, UK hosting); and the line \"MVP runs on a single Docker Compose host\"."
+    },
+    {
+     "key": "Tags",
+     "text": "none"
+    }
+   ],
+   "question": "What does it run on, and where does the order reach the network?",
+   "tech": "Network view (mocked); MVP runs on a single host",
+   "status": "Mocked, our illustration",
+   "label": "Network view (mocked); MVP runs on a single host",
+   "chip": "Digital Core"
+  },
+  {
+   "id": "L8",
+   "n": 8,
+   "name": "Observability",
+   "body": [
+    "It builds a step timeline for Sam's request from the audit log. It shows each step across the layers, how long it took, both policy decisions and the model's token counts."
+   ],
+   "bullets": [
+    {
+     "key": "Why it matters",
+     "text": "every decision can be explained and checked afterwards, and run cost comes from measured calls, not estimates."
+    },
+    {
+     "key": "What you'll see",
+     "text": "the step timeline for this request."
+    },
+    {
+     "key": "Tags",
+     "text": "none"
+    }
+   ],
+   "question": "How do we prove what happened?",
+   "tech": "Step timeline built from the L3 audit log, OTel-style trace IDs",
+   "status": "Real data from each run",
+   "label": "Step timeline built from the L3 audit log, OTel-style trace IDs",
+   "chip": "Observability"
+  }
+ ],
+ "glossary": [
+  {
+   "term": "Intent",
+   "definition": "A customer need written as an outcome, not a product, such as \"support 15 more staff and cloud video at this site\". Here it follows the shape of the TM Forum intent API (TMF921) but is not conformance-tested."
+  },
+  {
+   "term": "Intent report",
+   "definition": "A progress update on an intent, such as \"at risk, revised date\" or \"fulfilled\". The workflow sends these reports."
+  },
+  {
+   "term": "Agent",
+   "definition": "Software that uses a language model to understand a request, gather facts and propose an action. In this demo it proposes only and cannot write to any system of record."
+  },
+  {
+   "term": "MCP",
+   "definition": "Model Context Protocol, an open protocol that lets an agent call tools. Here it connects the agent to our own three tools only: get context, request upgrade and order status."
+  },
+  {
+   "term": "Business term",
+   "definition": "A word such as \"authorised contact\", defined once with the system it comes from, so every layer means the same thing."
+  },
+  {
+   "term": "Authorised contact",
+   "definition": "A contact allowed to order for the business. In Salesforce this is a contact with the role \"Decision Maker\" on the account; a \"Business User\" is not authorised."
+  },
+  {
+   "term": "Overdue balance",
+   "definition": "An unpaid amount past its due date in the billing system. If there is one, no order is placed."
+  },
+  {
+   "term": "Available at site",
+   "definition": "The product can be delivered at the site's address key, according to the availability system. That data is refreshed overnight."
+  },
+  {
+   "term": "Upgrade-only mid-contract",
+   "definition": "During a contract the customer can move up a speed tier, not down."
+  },
+  {
+   "term": "Context pack",
+   "definition": "The set of facts gathered for one request, each tagged with its source. The agent and the policy both work from it."
+  },
+  {
+   "term": "Policy",
+   "definition": "A written, versioned, tested business rule that a policy engine (OPA) evaluates. It decides whether an action is allowed; the model does not."
+  },
+  {
+   "term": "Advisory check",
+   "definition": "The policy check that runs before the agent makes an offer, so the agent only offers what is allowed."
+  },
+  {
+   "term": "Binding check",
+   "definition": "The same policy check, run by the workflow just before any write. This is the one that counts."
+  },
+  {
+   "term": "Workflow",
+   "definition": "The business process that carries out an agreed action step by step. It is the only part of the demo that writes to a system of record."
+  },
+  {
+   "term": "BPMN",
+   "definition": "Business Process Model and Notation, a standard way to draw and run business processes. The demo's workflow is a BPMN process running on Operaton."
+  },
+  {
+   "term": "Business key",
+   "definition": "A unique ID, here the order ID, that the workflow uses so that running a step again does not create a second order."
+  },
+  {
+   "term": "System of record",
+   "definition": "The system that holds the official version of a piece of data. Here Salesforce holds customers, quotes, orders and installed services; legacy systems hold billing and network data."
+  },
+  {
+   "term": "TMF facade",
+   "definition": "A thin layer inside Salesforce, written in Apex, that offers TM Forum APIs for catalogue, quote, order and promotion where Salesforce has no native one. It lives in the Salesforce org, not in a separate integration tier, and only translates data."
+  },
+  {
+   "term": "Legacy stand-in",
+   "definition": "A mocked version of an older system, such as billing or network fulfilment, built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen."
+  },
+  {
+   "term": "Adapter",
+   "definition": "A small piece of software in front of a legacy system that gives it a standard API, so the rest of the architecture never deals with its quirks."
+  },
+  {
+   "term": "Cross-reference",
+   "definition": "A maintained table linking one customer's IDs across systems, such as the Salesforce account, billing ID and network site. If a link is not verified, the workflow stops for human review."
+  },
+  {
+   "term": "Jeopardy",
+   "definition": "A warning that an order is at risk of missing its date. Here the legacy network system reports no free exchange port, the date moves by two days and the order stays in progress."
+  },
+  {
+   "term": "Hidden rule",
+   "definition": "A business rule buried inside a system's configuration or code, often undocumented. In our demo org, a custom flow silently required a usage record on each order."
+  },
+  {
+   "term": "TM Forum Open APIs",
+   "definition": "Industry-standard telco APIs published by TM Forum, each with a number, such as TMF622 for product orders. The demo is aligned with them, not certified."
+  },
+  {
+   "term": "ODA",
+   "definition": "Open Digital Architecture, TM Forum's reference architecture for telco IT, built from functional blocks. The demo is aligned to ODA functional blocks and uses TMF Open API contracts; it is not ODA-certified."
+  },
+  {
+   "term": "Digital core",
+   "definition": "The operator's network and the platform that runs its software. In the demo it is a labelled illustration; the MVP itself runs on one Docker Compose host."
+  },
+  {
+   "term": "Audit timeline",
+   "definition": "The step-by-step record of one request, built from the audit log: each step, its timing, both policy decisions and the model's token use."
+  }
+ ]
+}

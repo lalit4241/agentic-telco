@@ -2,11 +2,15 @@
   "name": "agentictelco-web",
   "version": "1.0.0",
   "private": true,
-  "description": "AgenticTelco – powered by Zero Gravity Framework: password-gated replay UI of the recorded open-source stack run",
+  "description": "AgenticTelco MVP (based on Zero Gravity architecture): password-gated business view + 8-layer replay of recorded live runs",
   "scripts": {
     "build": "node build.js",
+    "build:live": "node build.js --live",
+    "build:legacy": "node build-legacy.js",
     "test": "node --test test/*.test.js",
-    "e2e": "node build.js && node test/e2e.js"
+    "test:legacy": "node build-legacy.js && node --test test/legacy/*.test.js",
+    "e2e": "node build.js && node test/mvp-e2e.js",
+    "e2e:legacy": "node build-legacy.js && node test/legacy/e2e.js"
   },
   "license": "MIT",
   "dependencies": {

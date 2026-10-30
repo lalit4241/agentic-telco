@@ -1,0 +1,46 @@
+# AgenticTelco MVP · L4 semantic model. Each business term is defined once, with where it comes from.
+# Checked against model.schema.json at start-up and in the unit tests. The plain-English glossary the agent explains from
+# is generated from docs/mvp/layer-panels.md (web/src/mvp/copy.json); this file holds the machine meaning of the terms.
+version: mvp-2026-10-30.1
+terms:
+  authorisedContact:
+    label: Authorised contact
+    meaning: The person has the Account Contact Role "Decision Maker" on the business account, so may order for it.
+    type: boolean
+    source: {system: Salesforce, object: AccountContactRole, api: native Salesforce API (sObject query), field: Role}
+    rule: Role == "Decision Maker"
+  currentBroadband:
+    label: Current broadband
+    meaning: The Installed broadband service at the site.
+    type: object
+    source: {system: Salesforce, object: Asset, api: "TMF637 (native)", field: "Status = Installed, Product2"}
+  contractMonthsLeft:
+    label: In contract
+    meaning: Whole months until the current service's contract ends. More than 0 means the customer is in contract.
+    type: integer
+    source: {system: Salesforce, object: Asset, api: native Salesforce API, field: UsageEndDate, note: "Asset end date stands in for the agreement"}
+  availableAtSite:
+    label: Available at site
+    meaning: Products the network can deliver at the site's address key.
+    type: array
+    source: {system: Availability (legacy), api: "TMF679 shape (stand-in)", field: qualifiedProductOffering, note: "Refreshed overnight"}
+  overdueBalance:
+    label: Overdue balance
+    meaning: The business has an unpaid amount past its due date on its billing account.
+    type: boolean
+    source: {system: Billing B (legacy), api: "TMF666 shape (stand-in)", field: "accountBalance[overdue] > 0"}
+  site:
+    label: Site
+    meaning: The business location the service is delivered to, with its address key.
+    type: object
+    source: {system: Salesforce, object: "Location + Address", api: native Salesforce API, field: "ExternalReference = address key"}
+  offering:
+    label: Offer
+    meaning: A broadband product the business can buy, with its term price and download speed.
+    type: object
+    source: {system: Salesforce, object: "Product2 + PricebookEntry", api: "TMF620 (TMF facade inside Salesforce)"}
+  identity:
+    label: Same customer in every system
+    meaning: The verified links between the Salesforce account, the billing customer and the inventory site.
+    type: object
+    source: {system: AgenticTelco L3, object: mvp.identity_xref, api: Postgres, note: "Deterministic; no fuzzy matching; missing link stops the workflow"}

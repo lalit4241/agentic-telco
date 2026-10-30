@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgenticTelco MVP semantic model",
+  "type": "object",
+  "required": ["version", "terms"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"type": "string", "minLength": 3},
+    "terms": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["label", "meaning", "type", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "label": {"type": "string"},
+          "meaning": {"type": "string", "minLength": 10},
+          "type": {"enum": ["boolean", "integer", "array", "object", "string"]},
+          "rule": {"type": "string"},
+          "source": {
+            "type": "object",
+            "required": ["system", "api"],
+            "additionalProperties": false,
+            "properties": {"system": {"type": "string"}, "object": {"type": "string"}, "api": {"type": "string"},
+                           "field": {"type": "string"}, "note": {"type": "string"}}
+          }
+        }
+      }
+    }
+  }
+}

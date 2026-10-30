@@ -1,7 +1,7 @@
 // node --test: checks on the built page and its inputs (run `npm run build` first).
 const test = require('node:test'), assert = require('node:assert'), fs = require('fs'), path = require('path'), crypto = require('crypto');
-const ROOT = path.join(__dirname, '..', '..');
-const html = fs.readFileSync(path.join(__dirname, '..', 'dist', 'index.html'), 'utf8');
+const ROOT = path.join(__dirname, '..', '..', '..');
+const html = fs.readFileSync(path.join(__dirname, '..', '..', 'dist', 'legacy.html'), 'utf8');
 const pw = process.env.TF_DEMO_PASSWORD || fs.readFileSync(path.join(ROOT, '.demo-password'), 'utf8').trim();
 const payload = JSON.parse(html.match(/(\{"v":1,.*?"ct":"[^"]+"\})/s)[1]);
 function decrypt(p, password) {

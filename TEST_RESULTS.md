@@ -1,4 +1,53 @@
-# Test results — 26 Oct 2026 (UK time)
+# Test results — AgenticTelco MVP, 30 Oct 2026 (UK time)
+
+The MVP ("Agent upgrades a Business Customer Service (B2B), on existing systems") ran live on this host on 30 Oct 2026, 17:04–17:09 UK time (GMT): Brightwell Design Ltd, Fibre 150 (£27) → Fibre 900 (£45), against the Salesforce org `sfcomms` (instance GBR58). Start it with `./run.sh mvp-up`; re-record and verify with `./run.sh mvp-record`.
+
+## MVP summary
+
+| Suite | Command | Result |
+|---|---|---|
+| Apex tests (TMF620/622/648/671 facades in Salesforce) | `sf apex run test -o sfcomms --class-names AgenticTelco_TmfTest --code-coverage` | **8/8 passed, 97% run coverage** (TMF620 95%, TMF622 97%, TMF648 97%, TMF671 100%, shared Tmf 99%) |
+| OPA policy tests (MVP rule `mvp-2026-10-30.1`) | `.tools/bin/opa test stack/mvp/policy` | **10/10 passed** (22/22 with the legacy policies) |
+| Python unit tests | `.venv/bin/python -m pytest -q tests/test_unit.py tests/test_mvp_unit.py` | **32/32 passed** (25 existing + 7 MVP: copy, BPMN steps, traceparent, contract months, semantic terms, policy codes, intent schema) |
+| Web build tests (MVP) | `cd web && npm test` | **11/11 passed** (8 layers and 27 glossary terms from `docs/mvp/layer-panels.md`, four "recorded run" journeys, L6 wording, footer, hosting wording, AES-256-GCM gate, no secrets) |
+| Legacy web build tests | `cd web && npm run test:legacy` | **10/10 passed** |
+| Playwright e2e (MVP) | `cd web && npm run e2e` | **36/36 passed** (password gate, 8 layer cards, all 8 drawers, 4 cases, delayed chevron, architecture tab with 27 terms, presenter mode, no console errors) |
+| Live journeys, checked against the org | `./run.sh mvp-record` (`scripts/record_mvp.py` + `scripts/mvp/verify_recordings.py`) | **4/4 passed, ALL PASS** |
+
+## Model speed test (build step 0)
+
+8 vCPU, 15 GB RAM, CPU only, Ollama, `think=false`, temperature 0, `num_ctx` 4096 (`scripts/mvp/model_speedtest.py`, raw data in `docs/mvp/model-speedtest.json`).
+
+| Model (licence) | Load | Median turn | p90 | Max | Tool calls correct |
+|---|---|---|---|---|---|
+| **Qwen3-4B-Instruct-2507 (Apache 2.0) — chosen** | 11.4 s | 4.26 s | 5.91 s | 5.94 s | **8/8** |
+| Phi-4-mini-instruct (MIT) | 9.4 s | 3.20 s | 5.79 s | 8.32 s | 2/8 (writes tool calls as text) |
+| Granite 3.3 2B (Apache 2.0) | 7.6 s | 2.95 s | 6.98 s | 7.93 s | 2/8 (skips tool calls) |
+
+Qwen3-4B-Instruct-2507 is the only model that called the tools correctly, so it was chosen. In the full journeys a turn takes longer than in the speed test, because one turn includes the context pack (Salesforce reads) and up to three model calls.
+
+## MVP journeys (live, 30 Oct 2026)
+
+| Case | Turn times | Outcome | Checked in the org |
+|---|---|---|---|
+| 1. Happy path (Sam, Decision Maker) | 25.8 s, 18.1 s | Offer Fibre 900 £45, contract end 28 August 2027 kept; order 00000168 Activated at £45; Live 31 October 2026; intent fulfilled | New Fibre 900 Asset InstallDate 2026-10-31, UsageEndDate 2027-08-28, £45; Fibre 150 Obsolete; flowCreatedAssets = 0 |
+| 2. Not authorised (Alex, Business User) | 22.8 s | Policy says no; agent points to Sam; no order | No records written |
+| 3. Overdue balance | 16.8 s | Only the overdue reason (£312.40) and the pay link; no order | No records written |
+| 4. Order delayed (+2 days) | 17.0 s, 51.5 s | Jeopardy: Sam told first with the revised date 2 November 2026; order 00000169 Activated at £45; Live 2 November 2026; intent atRisk → fulfilled | New Asset InstallDate 2026-11-02 = live date, UsageEndDate 2027-08-28, £45; Fibre 150 Obsolete; flowCreatedAssets = 0 |
+
+- The first turns were slower than the earlier run of the same day (17–19 s) because the model had just been reloaded after a host restart.
+- Delayed turn 2 (51.5 s): one Salesforce read (TMF637 installed service) took 33 s; the trace shows it.
+- Each case resets the seed, so after the run the happy-path Fibre 900 Asset is Obsolete as well; the verifier checks that the run itself wrote Obsolete and Installed.
+
+## What is real and what is mocked in the MVP
+
+- **Real:** Salesforce records (Account, Contacts and roles, Quote, Order, Assets), the TMF620/622/648/671 facades (Apex inside Salesforce), OPA, Operaton BPMN, the model (local), the audit timeline.
+- **Stand-ins (labelled on screen):** Billing B (overdue balance), site availability, the legacy OSS (port reservation and the overnight batch).
+- **Mocked:** the L7 network view and the payment link.
+
+---
+
+# Earlier results — full AgenticTelco demo, 26 Oct 2026 (UK time)
 
 All results below come from runs on 26 Oct 2026. The stack ran in real-org mode:
 

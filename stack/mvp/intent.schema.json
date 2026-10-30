@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgenticTelco MVP Intent (TMF921 v5-shaped, simplified expression)",
+  "type": "object",
+  "required": ["@type", "name", "expression", "relatedParty", "x-proposal"],
+  "properties": {
+    "@type": {"const": "Intent"},
+    "name": {"type": "string", "minLength": 3},
+    "description": {"type": "string"},
+    "expression": {
+      "type": "object",
+      "required": ["@type", "expressionValue"],
+      "properties": {
+        "@type": {"const": "JsonLdExpression"},
+        "expressionValue": {
+          "type": "object",
+          "required": ["outcome", "site", "constraints"],
+          "properties": {
+            "outcome": {"type": "string", "minLength": 5},
+            "extraStaff": {"type": ["integer", "null"]},
+            "useCases": {"type": "array", "items": {"type": "string"}},
+            "site": {"type": "string"},
+            "constraints": {"type": "array", "items": {"type": "string"}},
+            "byDate": {"type": ["string", "null"]}
+          },
+          "not": {"anyOf": [{"required": ["product"]}, {"required": ["offering"]}]}
+        }
+      }
+    },
+    "relatedParty": {
+      "type": "array", "minItems": 2,
+      "items": {"type": "object", "required": ["id", "role"], "properties": {"id": {"type": "string"}, "role": {"enum": ["requester", "customer"]}}}
+    },
+    "x-proposal": {
+      "type": "object",
+      "required": ["recommendedOffering", "consentId", "conversationId"],
+      "properties": {"recommendedOffering": {"type": "string"}, "consentId": {"type": "integer"}, "conversationId": {"type": "string"}}
+    }
+  }
+}

@@ -1,9 +1,9 @@
-// Headless end-to-end test of web/dist/index.html (playwright-core + system Chrome). Writes docs/home.png and docs/journey.png.
+// LEGACY headless e2e of web/dist/legacy.html (playwright-core + system Chrome). Writes docs/home.png and docs/journey.png.
 const { chromium } = require('playwright-core');
 const path = require('path'), fs = require('fs');
-const ROOT = path.join(__dirname, '..', '..');
+const ROOT = path.join(__dirname, '..', '..', '..');
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
-const URL = process.env.URL || 'file://' + path.join(__dirname, '..', 'dist', 'index.html');
+const URL = process.env.URL || 'file://' + path.join(__dirname, '..', '..', 'dist', 'legacy.html');
 const PW = process.env.TF_DEMO_PASSWORD || fs.readFileSync(path.join(ROOT, '.demo-password'), 'utf8').trim();
 const results = [];
 const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: detail || '' }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (detail ? ' — ' + detail : '')); };
@@ -13,7 +13,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
-  const raw = fs.readFileSync(path.join(__dirname, '..', 'dist', 'index.html'), 'utf8');
+  const raw = fs.readFileSync(path.join(__dirname, '..', '..', 'dist', 'legacy.html'), 'utf8');
   check('source holds no recording content in plaintext', !/David Okafor|Operaton 2\.2\.0|End_PolicyBlocked|tmf-api\/productOrdering/.test(raw));
   check('source holds no Salesforce credential fields', !/client_secret|SF_PASSWORD|access_token/i.test(raw));
   await page.goto(URL);
