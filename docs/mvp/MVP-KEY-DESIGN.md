@@ -217,7 +217,7 @@ Each decision has a recommended default.
 
 ## 11. Build items (released by LalitC, 30 Oct 2026; built on branch `mvp-build`)
 
-0. Install Docker and Ollama on the demo host (after sign-off).
+0. Install Ollama (after sign-off).
 1. Upgrade ("modify") action on the order Apex add-on [TMF622]: mapping only, no business rules.
 2. Test data in standard objects only: Account, Contact with Account Contact Role, Location with External Reference, Address, Asset at Location. AgenticTelco records only; nothing existing is changed.
 3. L5 BPMN process on Operaton with Python workers: binding policy check, quote, order, fulfilment timer and jeopardy, asset change; business-key idempotency.
