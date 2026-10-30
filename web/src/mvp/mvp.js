@@ -410,7 +410,7 @@
   /* ---------- Salesforce evidence (screenshots of the org, story order) ---------- */
   function renderEvidence() {
     var ev = CFG.evidence || [];
-    $('#v-evidence').innerHTML = '<div class="arch"><h2 style="margin:4px 0">Salesforce evidence</h2><p class="small">Lightning record pages from the Salesforce org before and after the recorded happy-path run, in story order. AgenticTelco demo records only; user details are blurred.</p>' +
+    $('#v-evidence').innerHTML = '<div class="arch"><h2 style="margin:4px 0">Salesforce evidence</h2><p class="small">Lightning record pages from the Salesforce org for the recorded happy-path run, in story order. AgenticTelco demo records only; user details are blurred.</p>' +
       (ev.length ? '<div class="evg">' + ev.map(function (e, i) { return '<figure class="ev"><img loading="lazy" alt="' + esc(e.caption) + '" src="' + e.src + '"><figcaption><b>' + (i + 1) + '.</b> ' + esc(e.caption) + '</figcaption></figure>'; }).join('') + '</div>' : '<p class="small">No screenshots in this build.</p>') + '</div>';
     document.querySelectorAll('.ev img').forEach(function (im) { im.onclick = function () { window.open().document.write('<img style="max-width:100%" src="' + im.src + '">'); }; });
   }

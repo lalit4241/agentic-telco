@@ -4,7 +4,7 @@ The MVP ("Agent upgrades a Business Customer Service (B2B), on existing systems"
 
 ## MVP summary
 
-Latest run: 30 Oct 2026, 18:00–18:11 UK time (GMT), after the "TMF Open APIs only" change: everything above L6 reaches Salesforce only through TM Forum Open APIs (Salesforce's own TMF APIs plus the `AgenticTelco_` Apex facades); no SOQL and no sObject REST.
+Latest run: 30 Oct 2026, 18:00–18:11 UK time (GMT), happy path re-recorded 21:12, after the "TMF Open APIs only" change: everything above L6 reaches Salesforce only through TM Forum Open APIs (Salesforce's own TMF APIs plus the `AgenticTelco_` Apex facades); no SOQL and no sObject REST.
 
 | Suite | Command | Result |
 |---|---|---|
@@ -32,13 +32,14 @@ Qwen3-4B-Instruct-2507 is the only model that called the tools correctly, so it 
 
 | Case | Turn times | Outcome | Salesforce calls | Checked in the org |
 |---|---|---|---|---|
-| 1. Happy path (Sam, Decision Maker), recorded 18:11 UK | 18.3 s, 19.0 s | Offer Fibre 900 £45, contract end 28 August 2027 kept; order 00000172 Activated at £45; Live 31 October 2026; intent fulfilled | 22, all TMF (620, 622, 629, 632, 637, 648, 671) | Fibre 900 Installed, install 31/10/2026, usage end 28/08/2027, £45; Fibre 150 Obsolete with end date 31/10/2026; Upgrade relationship Fibre 150 → Fibre 900; flowCreatedAssets = 0 |
+| 1. Happy path (Sam, Decision Maker), recorded 21:12 UK | 31.1 s, 15.7 s | Offer Fibre 900 £45, contract end 28 August 2027 kept; order 00000173 (MVP-DD97C74D) Activated at £45; Live 31 October 2026; intent fulfilled | 22, all TMF (620, 622, 629, 632, 637, 648, 671) | Fibre 900 Installed (serial AT-MVP-DD97C74D), install 31/10/2026, usage end 28/08/2027, £45; Fibre 150 Obsolete with end date 31/10/2026; Upgrade relationship Fibre 150 → Fibre 900; flowCreatedAssets = 0 |
 | 2. Not authorised (Alex, Business User), 18:00 UK | 16.4 s | Policy says no; agent points to Sam; no order | 7 reads, all TMF | No records written |
 | 3. Overdue balance, 18:00 UK | 18.0 s | Only the overdue reason (£312.40) and the pay link; no order | 6 reads, all TMF | No records written |
 | 4. Order delayed (+2 days), 18:02 UK | 22.8 s, 21.3 s | Sam told first with the revised date 2 November 2026; order 00000171 Activated at £45; Live 2 November 2026; intent atRisk → fulfilled | 22, all TMF | Fibre 900 install date 2026-11-02 = live date; Fibre 150 Obsolete; Upgrade relationship; flowCreatedAssets = 0 |
 
 - Each case resets the seed first, so the org now holds the happy-path end state (recorded last); the delayed run's Fibre 900 is Obsolete again, and the verifier allows for that by comparing recording times.
-- Salesforce evidence screenshots (`web/src/mvp/evidence/`, captured with `scripts/mvp/sf_evidence.js`): 01–03 before the happy run, 04–09 after it.
+- The happy-path recording is the run after the account was renamed to Brightwell Design Ltd (order 00000173, recorded 21:12 UK, regenerated from its stored conversation and audit trail); it is the last write case, so the org holds its end state.
+- Salesforce evidence screenshots (`web/src/mvp/evidence/`, 01–07): account and contact, the quote, then Fibre 150 Obsolete, Fibre 900 Installed (order 00000173), the Upgrade relationship and the Apex facade classes. No 'before' shot of Fibre 150: the org now holds the after state.
 
 ## What is real and what is mocked in the MVP
 

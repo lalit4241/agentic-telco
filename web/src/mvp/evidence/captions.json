@@ -1,11 +1,9 @@
 {
- "01-brightwell-account.jpg": "Brightwell's customer account in Salesforce, with its Martlesham billing address and two contacts: the record every API reads.",
- "02-sam-taylor-contact.jpg": "Sam Taylor, Operations Director, is a named contact on Brightwell's account, so the agent knows who is asking.",
- "03-fibre150-before-upgrade.jpg": "Before: Fibre 150 at site 4471 is Installed at £27.00 until 28/08/2027, the facts the agent starts from.",
- "04-quote.jpg": "Quote 00000127 has one line, Fibre 900 at £45.00 a month, so the agreed offer is on record.",
- "05-order-00000172.jpg": "Order 00000172 for Brightwell is Activated with one line, AgenticTelco Fibre 900 at £45.00, an ordinary Salesforce order the business already knows how to run.",
- "06-fibre150-after-obsolete.jpg": "After: Fibre 150 is now Obsolete, with usage ending 31/10/2026, so the installed base shows one live service.",
- "07-fibre900-installed.jpg": "Fibre 900 is Installed at site 4471 at £45.00 from 31/10/2026, keeping the 28/08/2027 contract end.",
- "08-upgrade-relationship.jpg": "Fibre 150 and Fibre 900 are linked as an Upgrade, so the customer's history shows exactly what replaced what.",
- "09-agentictelco-apex-rest-classes.jpg": "The TMF facade is a handful of small Apex classes inside Salesforce itself, with no separate integration tier."
+ "01-brightwell-account.jpg": "Brightwell Design Ltd's customer account in Salesforce, account number AT-B-BRIGHTWELL, with its Martlesham billing address and its legacy billing account BIL-B-0077812 noted on the record.",
+ "02-sam-taylor-contact.jpg": "Sam Taylor, Operations Director, is a named contact on Brightwell Design Ltd's account, so the agent knows who is asking.",
+ "03-quote.jpg": "Quote 00000127 has one line, Fibre 900 at £45.00 a month, so the agreed offer is on record.",
+ "04-fibre150-after-obsolete.jpg": "After: Fibre 150 at site 4471 (serial AT-PI-B4471, installed 28/08/2025, £27.00) is now Obsolete, with usage ending 31/10/2026.",
+ "05-fibre900-installed.jpg": "Fibre 900 at site 4471 is Installed at £45.00 from 31/10/2026, keeping the 28/08/2027 contract end; the record says it replaced Fibre 150 through order 00000173.",
+ "06-upgrade-relationship.jpg": "Fibre 150 and Fibre 900 are linked as an Upgrade, so the customer's history shows exactly what replaced what.",
+ "07-agentictelco-apex-rest-classes.jpg": "The TMF facade is a handful of small Apex classes inside Salesforce itself, with no separate integration tier."
 }

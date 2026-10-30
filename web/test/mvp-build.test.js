@@ -90,6 +90,14 @@ test('Salesforce evidence gallery in story order', () => {
   assert.deepStrictEqual(CFG.evidence.map((e) => e.file), CFG.evidence.map((e) => e.file).slice().sort());
   assert.ok(CFG.evidence.every((e) => /^data:image\//.test(e.src) && e.caption));
 });
+test('evidence gallery tells the recorded happy-path story (same order, numbered 01..N)', () => {
+  const H = CFG.recordings.happy.state, num = H.links.orderNumber, ext = H.state.orderExternalId;
+  assert.match(num, /^\d{8}$/);
+  CFG.evidence.forEach((e, i) => assert.ok(e.file.startsWith(String(i + 1).padStart(2, '0') + '-'), e.file));
+  const cited = CFG.evidence.flatMap((e) => (e.caption.match(/order \d{8}/gi) || []).map((m) => m.slice(-8)).concat((e.file.match(/order-(\d{8})/) || []).slice(1)));
+  assert.ok(cited.length >= 1 && cited.every((n) => n === num), cited.join(',') + ' vs ' + num);
+  assert.ok(!CFG.evidence.some((e) => /MVP-[0-9A-F]{8}/.test(e.caption) && !e.caption.includes(ext)));
+});
 test('no secrets in the page', () => {
   const s = html + JSON.stringify(app);
   assert.doesNotMatch(s, /client_secret|access_token|refresh_token|ZG_OPERATON_|00D[A-Za-z0-9]{12,15}![A-Za-z0-9._]{20,}|sk-[A-Za-z0-9]{20,}/);

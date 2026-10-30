@@ -1,5 +1,5 @@
 {
- "at": "2026-10-30T21:13:08.455Z",
+ "at": "2026-10-30T21:21:42.846Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -229,7 +229,7 @@
   {
    "name": "Salesforce evidence gallery (story order)",
    "ok": true,
-   "detail": "9"
+   "detail": "7"
   },
   {
    "name": "presenter mode toggles",
