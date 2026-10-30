@@ -6,6 +6,11 @@
  *   GET   /agentictelco/tmf622/productOrder[/{id}]   ?state=acknowledged&limit=20&scope=all
  *   POST  /agentictelco/tmf622/productOrder          (idempotent on externalId)
  *   PATCH /agentictelco/tmf622/productOrder/{id}     {"state":"inProgress"|"cancelled"}  – AgenticTelco orders only
+ *
+ * Upgrade (MVP build item 1): a productOrderItem may carry "action":"modify" with "product":{"id":<installed Asset id>}.
+ * Mapping only, no business rules: the action and the installed product it modifies are recorded on the OrderItem
+ * and returned in TMF622 shape. Whether the upgrade is allowed is decided outside Salesforce (OPA), and the asset
+ * change is done by the L5 workflow through standard sObject REST.
  */
 @RestResource(urlMapping='/agentictelco/tmf622/*')
 global with sharing class AgenticTelco_TMF622 {
@@ -53,6 +58,16 @@ global with sharing class AgenticTelco_TMF622 {
             if (oid != null) offerIds.add(Id.valueOf(oid));
         }
         Map<Id, List<PricebookEntry>> prices = AgenticTelco_Tmf.pricesFor(offerIds, pb);
+        for (Object it : items) {
+            Map<String, Object> m = AgenticTelco_Tmf.toMap(it);
+            String act = actionOf(m);
+            if (act != 'add' && act != 'modify') { AgenticTelco_Tmf.error(400, 'BAD_ACTION', 'action must be add or modify'); return; }
+            if (act == 'modify') {
+                String pid = AgenticTelco_Tmf.str(AgenticTelco_Tmf.toMap(m.get('product')).get('id'));
+                List<Asset> cur = String.isBlank(pid) ? new List<Asset>() : findAsset(pid, acc.Id);
+                if (cur.isEmpty()) { AgenticTelco_Tmf.error(400, 'MODIFY_NEEDS_PRODUCT', 'action modify needs product.id of an AgenticTelco Asset on this customer'); return; }
+            }
+        }
         Savepoint sp = Database.setSavepoint();
         try {
             List<String> notes = new List<String>();
@@ -71,7 +86,7 @@ global with sharing class AgenticTelco_TMF622 {
                 Decimal qty = m.get('quantity') == null ? 1 : Decimal.valueOf(String.valueOf(m.get('quantity')));
                 OrderItem oi = new OrderItem(OrderId = o.Id, PricebookEntryId = e.Id, Product2Id = e.Product2Id, Quantity = qty,
                                              UnitPrice = e.UnitPrice, 
-                                             Description = ('AgenticTelco item ' + m.get('id') + ' ' + JSON.serialize(ch)).left(255));
+                                             Description = ('AgenticTelco item ' + m.get('id') + marker(m) + ' ' + JSON.serialize(ch)).left(255));
                 if (e.ProductSellingModel != null && e.ProductSellingModel.SellingModelType != 'OneTime') {
                     oi.ServiceDate = Date.today();
                     oi.PeriodBoundary = 'Anniversary';
@@ -142,7 +157,7 @@ global with sharing class AgenticTelco_TMF622 {
                                    ProductSellingModel.Name, Description FROM OrderItem WHERE OrderId IN :ids ORDER BY CreatedDate]) {
             if (!items.containsKey(i.OrderId)) items.put(i.OrderId, new List<Object>());
             items.get(i.OrderId).add(new Map<String, Object>{
-                'id' => i.Id, 'action' => 'add', 'quantity' => i.Quantity, 'state' => 'acknowledged',
+                'id' => i.Id, 'action' => itemAction(i.Description), 'product' => itemProduct(i.Description), 'quantity' => i.Quantity, 'state' => 'acknowledged',
                 'productOffering' => AgenticTelco_Tmf.ref(i.Product2Id, i.Product2.Name, 'ProductOffering',
                     AgenticTelco_Tmf.href('tmf620', 'productOffering', i.Product2Id)),
                 'productOfferingPrice' => AgenticTelco_Tmf.ref(i.PricebookEntryId, i.ProductSellingModel == null ? null : i.ProductSellingModel.Name,
@@ -165,6 +180,36 @@ global with sharing class AgenticTelco_TMF622 {
                 'x-runtime' => AgenticTelco_Tmf.SOR_LABEL, '@type' => 'ProductOrder' });
         }
         return out;
+    }
+
+    static final String MODIFY_MARK = ' action=modify product=';
+
+    static String actionOf(Map<String, Object> m) {
+        String a = AgenticTelco_Tmf.str(m.get('action'));
+        return String.isBlank(a) ? 'add' : a;
+    }
+
+    static List<Asset> findAsset(String pid, Id accountId) {
+        try {
+            return [SELECT Id FROM Asset WHERE Id = :pid AND AccountId = :accountId AND Name LIKE 'AgenticTelco%' LIMIT 1];
+        } catch (Exception e) {
+            return new List<Asset>();
+        }
+    }
+
+    static String marker(Map<String, Object> m) {
+        if (actionOf(m) != 'modify') return '';
+        return MODIFY_MARK + AgenticTelco_Tmf.str(AgenticTelco_Tmf.toMap(m.get('product')).get('id'));
+    }
+
+    public static String itemAction(String description) {
+        return description != null && description.contains(MODIFY_MARK) ? 'modify' : 'add';
+    }
+
+    public static Map<String, Object> itemProduct(String description) {
+        if (itemAction(description) != 'modify') return null;
+        String pid = description.substringAfter(MODIFY_MARK).substringBefore(' ');
+        return AgenticTelco_Tmf.ref(pid, null, 'Product', '/services/data/v68.0/connect/comms/productinventorymanagement/v5/productinventory/' + pid);
     }
 
     public class TmfException extends Exception {}

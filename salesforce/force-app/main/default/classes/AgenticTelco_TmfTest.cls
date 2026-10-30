@@ -260,6 +260,44 @@ private class AgenticTelco_TmfTest {
     }
 
     @IsTest
+    static void tmf622Modify() {
+        Asset cur = new Asset(Name = 'AgenticTelco Fibre 150 T', AccountId = accId(), Status = 'Installed', Quantity = 1);
+        Asset foreign = new Asset(Name = 'Other asset', AccountId = accId(), Status = 'Installed', Quantity = 1);
+        insert new List<Asset>{ cur, foreign };
+        Test.startTest();
+        Map<String, Object> b = orderBody('M-1', '24');
+        Map<String, Object> it = (Map<String, Object>) ((List<Object>) b.get('productOrderItem'))[0];
+        it.put('action', 'modify');
+        it.put('product', new Map<String, Object>{ 'id' => cur.Id });
+        req('POST', '/agentictelco/tmf622/productOrder', null, b);
+        AgenticTelco_TMF622.doPost();
+        Integer sc = RestContext.response.statusCode;
+        System.assert(sc == 201 || sc == 422, RestContext.response.responseBody.toString());
+        if (sc == 201) {
+            Map<String, Object> o = (Map<String, Object>) resp();
+            Map<String, Object> item = (Map<String, Object>) ((List<Object>) o.get('productOrderItem'))[0];
+            System.assertEquals('modify', item.get('action'));
+            System.assertEquals(String.valueOf(cur.Id), ((Map<String, Object>) item.get('product')).get('id'));
+        }
+        it.put('product', new Map<String, Object>{ 'id' => foreign.Id });
+        b.put('externalId', 'M-2');
+        req('POST', '/agentictelco/tmf622/productOrder', null, b);
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(400, RestContext.response.statusCode);
+        it.remove('product');
+        req('POST', '/agentictelco/tmf622/productOrder', null, b);
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(400, RestContext.response.statusCode);
+        it.put('action', 'delete');
+        req('POST', '/agentictelco/tmf622/productOrder', null, b);
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(400, RestContext.response.statusCode);
+        System.assertEquals('add', AgenticTelco_TMF622.itemAction(null));
+        System.assertEquals(null, AgenticTelco_TMF622.itemProduct('AgenticTelco item 1'));
+        Test.stopTest();
+    }
+
+    @IsTest
     static void tmf622Errors() {
         Test.startTest();
         req('POST', '/agentictelco/tmf622/productOrder', null, new Map<String, Object>{});
