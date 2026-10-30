@@ -90,8 +90,8 @@ It stores the conversation, the decisions, the intent and its reports, the delay
 Business terms such as "authorised contact" and "available at site" are defined once, with their source. For Sam's request, the context service builds one context pack, with every fact tagged with where it came from. The same policy then runs twice: first as an advisory check before the agent makes an offer, then as the binding check in the workflow before anything is written. It checks four things: Sam is an authorised contact, there is no overdue balance, Fibre 900 is available at the site, and mid-contract changes are upgrades only.
 
 - **Why it matters:** rules live in one visible, versioned, tested place, not inside the model and not buried in a system of record.
-- **What you'll see:** the context pack with source chips ("Salesforce" or "Legacy stand-in (mocked)"), the policy decision and the rule that applied.
-- **Today vs agentic:** in our own demo org, the "Custom Assetize Order" flow silently required a usage record on each order. Nothing documented it. That is an org customisation, not a Salesforce flaw. Here the same kind of rule is one visible policy.
+- **What you'll see:** the context pack with source chips ("TMF Open API (Salesforce)" with the API name, or "Legacy stand-in (mocked)"), the policy decision and the rule that applied.
+- **Today vs agentic:** in our own demo org, the "Custom Assetize Order" flow silently required a usage record on each order. Nothing documented it. That is an org customisation, not a Salesforce flaw. Here the same kind of rule is one visible policy, and the usage record is created inside the TMF622 order itself, not as a separate call.
 - **Tags:** none (policy engine: OPA)
 
 ## L5 Execution
@@ -109,16 +109,16 @@ One business process takes Sam's acceptance through to "live". It runs the bindi
 ## L6 Systems of record
 
 **Question**: Where is the truth recorded?
-**Tech**: Salesforce as the system of record, exposed only through TM Forum Open APIs: Salesforce's own TMF APIs plus a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind TMF-shaped adapters
+**Tech**: Salesforce as the system of record, exposed only through TM Forum Open APIs: TMF629 and TMF637 get-by-id out of the box from Salesforce; TMF632, TMF637 list/create/update/relationship, TMF620, TMF648, TMF622 and TMF671 from a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind TMF-shaped adapters
 **Status**: Salesforce real; legacy billing, availability, inventory and OSS mocked
-**Label**: TM Forum Open APIs, exposed by Salesforce through a thin TMF facade layer within Salesforce
+**Label**: TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce
 **Chip**: TMF Open APIs (Salesforce)
 
-Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Everything above this layer reaches it only through TM Forum Open APIs, never through Salesforce-specific APIs. Salesforce provides TM Forum APIs for customers, parties and installed services. A thin TMF facade layer within Salesforce (Apex) adds catalogue, quote, order and promotion, plus the few lookups and installed-service updates that Salesforce's own TMF APIs don't cover. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same TM Forum API shapes. The APIs are TMF-aligned, not certified as conformant.
+Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Everything above this layer reaches it only through TM Forum Open APIs, never through Salesforce-specific APIs. Out of the box, Salesforce provides two of them: the customer record (TMF629) and reading one installed service by its ID (TMF637). A thin TMF facade layer within Salesforce (Apex) provides the rest: the organisation and its contact roles (TMF632), listing, creating and updating installed services and linking them as an upgrade (TMF637), catalogue (TMF620), quote (TMF648), order (TMF622) and promotion (TMF671). It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The usage record that our demo org expects on each order is created inside the TMF622 order itself, not as a separate call. The legacy billing, availability, network inventory and network fulfilment systems sit behind adapters with the same TM Forum API shapes. The overdue-balance payment link is a mocked stand-in and is not a TMF API. The APIs are TMF-aligned.
 
 - **Why it matters:** Salesforce and the legacy estate stay in place, keep the records and nothing else, and can be replaced one at a time behind the same APIs.
 - **What you'll see:** each call, shown by its TM Forum API number and name (for example "TMF622 Product Order") and labelled "TMF Open API (Salesforce)" or "Legacy stand-in (mocked)", with links to the Salesforce records behind it.
-- **Tags:** TMF Open APIs exposed by Salesforce [TMF629] [TMF632] [TMF637] [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666] [TMF679] [TMF641] (shape only)
+- **Tags:** TMF Open API (Salesforce), out of the box [TMF629] [TMF637 get-by-id] · TMF Open API (Salesforce), TMF facade [TMF632] [TMF637 list/create/update/relationship] [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666 billing] [TMF679 availability] [TMF639 network inventory] [TMF641 network fulfilment] (shape only) · payment link (mocked, not a TMF API)
 
 ## L7 Digital Core
 
@@ -146,7 +146,7 @@ It builds a step timeline for Sam's request from the audit log. It shows each st
 
 ## Glossary
 
-**Intent**: A customer need written as an outcome, not a product, such as "support 15 more staff and cloud video at this site". Here it follows the shape of the TM Forum intent API (TMF921) but is not conformance-tested.
+**Intent**: A customer need written as an outcome, not a product, such as "support 15 more staff and cloud video at this site". Here it follows the shape of the TM Forum intent API (TMF921) and is TMF-aligned.
 **Intent report**: A progress update on an intent, such as "at risk, revised date" or "fulfilled". The workflow sends these reports.
 **Agent**: Software that uses a language model to understand a request, gather facts and propose an action. In this demo it proposes only and cannot write to any system of record.
 **MCP**: Model Context Protocol, an open protocol that lets an agent call tools. Here it connects the agent to our own three tools only: get context, request upgrade and order status.
@@ -163,13 +163,13 @@ It builds a step timeline for Sam's request from the audit log. It shows each st
 **BPMN**: Business Process Model and Notation, a standard way to draw and run business processes. The demo's workflow is a BPMN process running on Operaton.
 **Business key**: A unique ID, here the order ID, that the workflow uses so that running a step again does not create a second order.
 **System of record**: The system that holds the official version of a piece of data. Here Salesforce holds customers, quotes, orders and installed services; legacy systems hold billing and network data.
-**TMF facade**: A thin layer within Salesforce, written in Apex, that exposes Salesforce's records as TM Forum Open APIs where Salesforce's own TMF APIs don't cover the need: catalogue, quote, order, promotion, and the installed-service updates. It lives in the Salesforce org, not in a separate integration tier, and only translates data.
-**Legacy stand-in**: A mocked version of an older system, such as billing or network fulfilment, built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen.
+**TMF facade**: A thin layer within Salesforce, written in Apex, that exposes Salesforce's records as TM Forum Open APIs where Salesforce's out-of-the-box TMF APIs (TMF629 and TMF637 get-by-id) don't cover the need: TMF632 contact roles, TMF637 list, create, update and relationship, TMF620 catalogue, TMF648 quote, TMF622 order (including the usage record, created inside the order) and TMF671 promotion. It lives in the Salesforce org, not in a separate integration tier, and only translates data.
+**Legacy stand-in**: A mocked version of an older system, such as billing (TMF666 shape), availability (TMF679), network inventory (TMF639) or network fulfilment (TMF641), built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen.
 **Adapter**: A small piece of software in front of a legacy system that gives it a standard API, so the rest of the architecture never deals with its quirks.
 **Cross-reference**: A maintained table linking one customer's IDs across systems, such as the Salesforce account, billing ID and network site. If a link is not verified, the workflow stops for human review.
 **Jeopardy**: A warning that an order is at risk of missing its date. Here the legacy network system reports no free exchange port, the date moves by two days and the order stays in progress.
-**Hidden rule**: A business rule buried inside a system's configuration or code, often undocumented. In our demo org, a custom flow silently required a usage record on each order.
-**TM Forum Open APIs**: Industry-standard telco APIs published by TM Forum, each with a number, such as TMF622 for product orders. The demo is aligned with them, not certified.
-**ODA**: Open Digital Architecture, TM Forum's reference architecture for telco IT, built from functional blocks. The demo is aligned to ODA functional blocks and uses TMF Open API contracts; it is not ODA-certified.
+**Hidden rule**: A business rule buried inside a system's configuration or code, often undocumented. In our demo org, a custom flow silently required a usage record on each order; the demo now creates it inside the TMF622 order.
+**TM Forum Open APIs**: Industry-standard telco APIs published by TM Forum, each with a number, such as TMF622 for product orders. The demo is TMF-aligned.
+**ODA**: Open Digital Architecture, TM Forum's reference architecture for telco IT, built from functional blocks. The demo is aligned to ODA functional blocks and uses TMF Open API contracts.
 **Digital core**: The operator's network and the platform that runs its software. In the demo it is a labelled illustration; the MVP itself runs on one Docker Compose host.
 **Audit timeline**: The step-by-step record of one request, built from the audit log: each step, its timing, both policy decisions and the model's token use.
