@@ -11,6 +11,8 @@ The agent service reads the same generated file, so wording changes here need no
   - `**Question**: ...` the question the layer answers
   - `**Tech**: ...` technology and licence
   - `**Status**: ...` real / mocked label shown on the card
+  - `**Label**: ...` optional one-line label for the architecture view card (defaults to Tech)
+  - `**Chip**: ...` optional short label for the layer chip (defaults to the layer name)
 - Every other paragraph or bullet under the heading is the panel body (Markdown, shown as written).
 - One `## Glossary` section of lines in the form `**Term**: definition`.
 - Anything under other `##` headings (like this one) is ignored by the parser.
@@ -109,6 +111,8 @@ One business process takes Sam's acceptance through to "live". It runs the bindi
 **Question**: Where is the truth recorded?
 **Tech**: Salesforce, with its native APIs and a thin TMF facade layer inside Salesforce (Apex); legacy stand-ins behind adapters
 **Status**: Salesforce real; legacy billing, availability, inventory and OSS mocked
+**Label**: Salesforce native APIs plus a thin TMF facade layer within Salesforce
+**Chip**: Salesforce APIs + TMF facade (in Salesforce)
 
 Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Every call uses a standard telco API. Salesforce's native APIs cover customers, contacts and installed services. A thin TMF facade layer inside Salesforce (Apex) covers catalogue, quote, order and promotion. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same kind of standard API.
 

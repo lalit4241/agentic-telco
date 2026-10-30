@@ -1,0 +1,24 @@
+{
+ "accountId": "001QH00002La125YAB",
+ "accountNumber": "AT-B-BRIGHTWELL",
+ "billingAccount": "BIL-B-0077812",
+ "site": "4471",
+ "addressKey": "A00000001975",
+ "locationId": "131QH000001CX9JYAW",
+ "addressId": "130QH00000AFmubYAD",
+ "assetId": "02iQH000003GH4nYAG",
+ "contacts": {
+  "sam": {
+   "contactId": "003QH00000TU8kDYAT",
+   "role": "Decision Maker",
+   "roleId": "02ZQH000001jfxh2AA",
+   "name": "Sam Taylor"
+  },
+  "alex": {
+   "contactId": "003QH00000TTvZJYA1",
+   "role": "Business User",
+   "roleId": "02ZQH000001jfzJ2AQ",
+   "name": "Alex Reed"
+  }
+ }
+}

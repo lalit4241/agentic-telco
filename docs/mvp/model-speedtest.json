@@ -1,0 +1,48 @@
+{
+ "at": "2026-10-30 15:53 GMT",
+ "host": "8 vCPU, 15 GB RAM, CPU only, Ollama, think=false, temp 0, num_ctx 4096",
+ "results": [
+  {
+   "model": "qwen3-4b-instruct-2507",
+   "load_s": 11.4,
+   "median_s": 4.26,
+   "p90_s": 5.91,
+   "max_s": 5.94,
+   "tool_correct": "8/8",
+   "notes": [
+    "ask\u2192get_context: OK calls=['get_context'] text=''",
+    "context\u2192recommend: OK calls=[] text='I recommend upgrading to Fibre 900 for better performance. Sam is authorised to make this '",
+    "agree\u2192request_upgrade: OK calls=['request_upgrade'] text=''",
+    "status\u2192order_status: OK calls=['order_status'] text=''"
+   ]
+  },
+  {
+   "model": "phi4-mini-instruct",
+   "load_s": 9.4,
+   "median_s": 3.2,
+   "p90_s": 5.79,
+   "max_s": 8.32,
+   "tool_correct": "2/8",
+   "notes": [
+    "ask\u2192get_context: MISS calls=[] text='[{\"name\": \"get_context\", \"arguments\": {\"need\": \"The customer\\'s need in their words.\"}}]'",
+    "context\u2192recommend: OK calls=[] text=\"We understand you're experiencing slower speeds due to increased usage. We can offer you a\"",
+    "agree\u2192request_upgrade: MISS calls=[] text='request_upgrade({\"offering\":\"fibre-900\"})'",
+    "status\u2192order_status: MISS calls=[] text='[{\"name\":\"order_status\",\"function\":{\"parameters\":{}}}]'"
+   ]
+  },
+  {
+   "model": "granite3.3-2b",
+   "load_s": 7.6,
+   "median_s": 2.95,
+   "p90_s": 6.98,
+   "max_s": 7.93,
+   "tool_correct": "2/8",
+   "notes": [
+    "ask\u2192get_context: MISS calls=[] text=\"To address your needs, let's first gather some details. Could you please provide your curr\"",
+    "context\u2192recommend: OK calls=[] text='It seems your current line is a Fibre 150 with a download speed of 150 Mbps, costing \u00a327 p'",
+    "agree\u2192request_upgrade: MISS calls=[] text=\"Great, upgrading your line to Fibre 900 at \u00a345 a month. I'll confirm this with the order_s\"",
+    "status\u2192order_status: MISS calls=[] text='Your upgrade order status can be checked using the `order_status` function. Please provide'"
+   ]
+  }
+ ]
+}
