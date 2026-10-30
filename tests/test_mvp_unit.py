@@ -12,7 +12,7 @@ def test_copy_json_has_8_layers_and_27_terms():
     c = json.loads((ROOT / "web" / "src" / "mvp" / "copy.json").read_text())
     assert [l["id"] for l in c["layers"]] == [f"L{i}" for i in range(1, 9)]
     assert len(c["glossary"]) == 27
-    assert "TM Forum Open APIs, exposed by Salesforce through a thin TMF facade layer within Salesforce" in json.dumps(c)
+    assert "TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce" in json.dumps(c)
     assert "native Salesforce API" not in json.dumps(c)
 
 

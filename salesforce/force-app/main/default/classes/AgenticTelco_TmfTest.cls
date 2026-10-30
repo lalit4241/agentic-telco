@@ -3,7 +3,7 @@ private class AgenticTelco_TmfTest {
 
     @TestSetup
     static void setup() {
-        Account a = new Account(Name = 'AgenticTelco Test Customer');
+        Account a = new Account(Name = 'AgenticTelco Test Customer', AccountNumber = 'AT-T-TEST');
         insert a;
         ProductSellingModel ever = new ProductSellingModel(Name = 'AgenticTelco T Evergreen', SellingModelType = 'Evergreen',
             PricingTerm = 1, PricingTermUnit = 'Months', Status = 'Active');

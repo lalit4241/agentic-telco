@@ -4,10 +4,10 @@
 Standard objects only, via OOTB sObject REST through the Salesforce CLI (no token handled):
   Account · 2 Contacts · 2 AccountContactRole (Sam = Decision Maker, Alex = Business User) · Location (site 4471,
   ExternalReference = address key A00000001975) · Address · Fibre 150 Asset at that Location.
-Every record carries the AgenticTelco prefix; existing records are reused, never deleted. Data is synthetic.
+Every record except the Account (named Brightwell Design Ltd, keyed by AccountNumber AT-B-BRIGHTWELL) carries the AgenticTelco prefix; existing records are reused, never deleted. Data is synthetic.
   --reset   put the demo back to the baseline before a recorded run: the seeded Fibre 150 Asset → Installed (contract end
             date restored) and Assets created by earlier MVP runs on this Account → Obsolete. Only AgenticTelco Assets on the
-            AgenticTelco Brightwell Account are touched; nothing is deleted.
+            Brightwell Account (AccountNumber AT-B-BRIGHTWELL) are touched; nothing is deleted.
 Writes seed/customers/brightwell.json (ids only)."""
 import json, os, sys
 from urllib.parse import quote
@@ -46,8 +46,8 @@ def main():
         raise SystemExit("run seed/epc/seed_epc.py first (AT-FIBRE-150 missing)")
     fib150 = fib150[0]["Id"]
     log = []
-    acc, n = ensure("Account", f"AccountNumber='{ACC_NO}' AND Name LIKE 'AgenticTelco%'", dict(
-        Name="AgenticTelco – Brightwell Design Ltd", AccountNumber=ACC_NO, Type="Customer", Industry="Media",
+    acc, n = ensure("Account", f"AccountNumber='{ACC_NO}'", dict(
+        Name="Brightwell Design Ltd", AccountNumber=ACC_NO, Type="Customer", Industry="Media",
         BillingStreet="1 Fibre Way, Martlesham", BillingCity="Ipswich", BillingPostalCode="IP5 3RE", BillingCountry="United Kingdom",
         Description="AgenticTelco MVP B2B demo customer (synthetic). Legacy billing account BIL-B-0077812."))
     log.append(("Account", acc, n))

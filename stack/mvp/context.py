@@ -152,7 +152,7 @@ def build_pack(trace, contact_id, account_id, parent=None):
         "requester": {"name": me.get("x-givenName") or me.get("name"), "fullName": me.get("name"),
                       "contactId": contact_id, "authorisedContact": role == AUTH_ROLE, "role": role,
                       "src": "salesforce:TMF632 Party (contact role)"},
-        "customer": {"name": (res["customer"] or {}).get("name", "").replace("AgenticTelco – ", ""), "salesforceAccount": account_id, "src": "salesforce:TMF629 Customer"},
+        "customer": {"name": (res["customer"] or {}).get("name", ""), "salesforceAccount": account_id, "src": "salesforce:TMF629 Customer"},
         "identity": {"salesforceAccount": account_id, "billingCustomer": L["billingCustomer"]["external_id"], "inventorySite": L["inventorySite"]["external_id"],
                      "verified": ident["verified"], "src": "L3 identity_xref (verified)"},
         "site": {"addressKey": ((place.get("externalIdentifier") or [{}])[0]).get("id"), "name": place.get("name"), "street": adr.get("streetName"),
