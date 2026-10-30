@@ -129,7 +129,7 @@ Salesforce holds Brightwell's customer record, contacts, site, quote, order and 
 It shows the operator's network at site 4471: the exchange, the fibre path to Martlesham and the access port. The port changes from 150 to 900 when the network fulfilment step completes. One line underneath lists the platform services an operator would provide.
 
 - **Why it matters:** it shows where the order meets the network and what a production platform needs, without claiming the MVP has it.
-- **What you'll see:** the network view for site 4471, labelled "network view is our illustration"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus, UK hosting); and the line "MVP runs on a single Docker Compose host".
+- **What you'll see:** the network view for site 4471, labelled "network view is our illustration"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus, regional hosting); and the line "MVP runs on a single Docker Compose host".
 - **Tags:** none
 
 ## L8 Observability
