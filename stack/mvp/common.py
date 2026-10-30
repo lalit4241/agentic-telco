@@ -1,7 +1,7 @@
 """AgenticTelco MVP shared helpers: config, L3 Postgres access, OpenTelemetry-shaped audit spans, Salesforce calls.
 
 Salesforce is reached only server-side through the Salesforce CLI (stack.zg_common.sf_session): no token is handled here."""
-import contextlib, json, os, secrets, time
+import contextlib, json, os, re, secrets, time
 from datetime import datetime, timezone
 from pathlib import Path
 import psycopg
@@ -108,7 +108,7 @@ def audit(trace_id, layer, component, step, **kw):
 from stack.zg_common.sf_session import request as _sf_request, API_V   # noqa: E402
 SF_DATA = f"/services/data/{API_V}"
 NATIVE = "native Salesforce API"
-FACADE = "TMF facade inside Salesforce (Apex)"
+FACADE = "TMF facade within Salesforce (Apex)"
 STANDIN = "Legacy stand-in (mocked)"
 
 def sf(trace_id, step, method, path, body=None, runtime=NATIVE, api=None, layer="L6", component="Salesforce", parent=None):
@@ -116,6 +116,45 @@ def sf(trace_id, step, method, path, body=None, runtime=NATIVE, api=None, layer=
         r = _sf_request(method, path, body)
         sp.status, sp.response = r.status_code, r.json()
         return r
+
+_SFID = re.compile(r"[A-Za-z0-9]{15}(?:[A-Za-z0-9]{3})?")
+_SFID_SUFFIX = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
+
+
+def sf_id(value, field="id"):
+    """Return value if it is a valid 15- or 18-character Salesforce ID, else raise ValueError.
+    Every ID that goes into a SOQL string passes through here first, so a crafted value can't change the query.
+    For 18-character IDs the 3-character case-safe suffix is checked too."""
+    if not isinstance(value, str) or not _SFID.fullmatch(value):
+        raise ValueError(f"{field}: not a valid Salesforce ID")
+    if len(value) == 18:
+        suffix = ""
+        for i in range(3):
+            chunk = value[i * 5:(i + 1) * 5]
+            suffix += _SFID_SUFFIX[sum(1 << j for j, ch in enumerate(chunk) if ch.isupper())]
+        if value[15:] != suffix:
+            raise ValueError(f"{field}: not a valid Salesforce ID (checksum)")
+    return value
+
+
+_SAFE_KEY = re.compile(r"[A-Za-z0-9-]{1,64}")
+_SOQL_DT = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
+
+
+def safe_key(value, field="key"):
+    """Business keys we generate ourselves (e.g. MVP-60744BC6): letters, digits and hyphens only."""
+    if not isinstance(value, str) or not _SAFE_KEY.fullmatch(value):
+        raise ValueError(f"{field}: not a valid business key")
+    return value
+
+
+def soql_datetime(value, field="datetime"):
+    """ISO date-time cut to seconds, for a SOQL literal (YYYY-MM-DDTHH:MM:SS)."""
+    v = (value or "")[:19]
+    if not _SOQL_DT.fullmatch(v):
+        raise ValueError(f"{field}: not an ISO date-time")
+    return v
+
 
 def soql(trace_id, step, query, api=None):
     from urllib.parse import quote

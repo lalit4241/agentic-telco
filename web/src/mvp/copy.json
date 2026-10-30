@@ -145,7 +145,7 @@
    "n": 6,
    "name": "Systems of record",
    "body": [
-    "Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Every call uses a standard telco API. Salesforce's native APIs cover customers, contacts and installed services. A thin TMF facade layer inside Salesforce (Apex) covers catalogue, quote, order and promotion. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same kind of standard API."
+    "Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Every call uses a standard telco API. Salesforce's native APIs cover customers, contacts and installed services. A thin TMF facade layer within Salesforce (Apex) covers catalogue, quote, order and promotion. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same kind of standard API."
    ],
    "bullets": [
     {
@@ -154,15 +154,15 @@
     },
     {
      "key": "What you'll see",
-     "text": "each call, labelled \"native Salesforce API\", \"TMF facade inside Salesforce (Apex)\" or \"Legacy stand-in (mocked)\", with links to the Salesforce records."
+     "text": "each call, labelled \"native Salesforce API\", \"TMF facade within Salesforce (Apex)\" or \"Legacy stand-in (mocked)\", with links to the Salesforce records."
     },
     {
      "key": "Tags",
-     "text": "Salesforce native APIs [TMF629] [TMF632] [TMF637] · TMF facade layer inside Salesforce (Apex) [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666] [TMF679] [TMF641] (shape only)"
+     "text": "Salesforce native APIs [TMF629] [TMF632] [TMF637] · TMF facade layer within Salesforce (Apex) [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666] [TMF679] [TMF641] (shape only)"
     }
    ],
    "question": "Where is the truth recorded?",
-   "tech": "Salesforce, with its native APIs and a thin TMF facade layer inside Salesforce (Apex); legacy stand-ins behind adapters",
+   "tech": "Salesforce, with its native APIs and a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind adapters",
    "status": "Salesforce real; legacy billing, availability, inventory and OSS mocked",
    "label": "Salesforce native APIs plus a thin TMF facade layer within Salesforce",
    "chip": "Salesforce APIs + TMF facade (in Salesforce)"
@@ -293,7 +293,7 @@
   },
   {
    "term": "TMF facade",
-   "definition": "A thin layer inside Salesforce, written in Apex, that offers TM Forum APIs for catalogue, quote, order and promotion where Salesforce has no native one. It lives in the Salesforce org, not in a separate integration tier, and only translates data."
+   "definition": "A thin layer within Salesforce, written in Apex, that offers TM Forum APIs for catalogue, quote, order and promotion where Salesforce has no native one. It lives in the Salesforce org, not in a separate integration tier, and only translates data."
   },
   {
    "term": "Legacy stand-in",

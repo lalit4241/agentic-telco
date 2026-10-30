@@ -8,7 +8,7 @@ The MVP ("Agent upgrades a Business Customer Service (B2B), on existing systems"
 |---|---|---|
 | Apex tests (TMF620/622/648/671 facades in Salesforce) | `sf apex run test -o sfcomms --class-names AgenticTelco_TmfTest --code-coverage` | **8/8 passed, 97% run coverage** (TMF620 95%, TMF622 97%, TMF648 97%, TMF671 100%, shared Tmf 99%) |
 | OPA policy tests (MVP rule `mvp-2026-10-30.1`) | `.tools/bin/opa test stack/mvp/policy` | **10/10 passed** (22/22 with the legacy policies) |
-| Python unit tests | `.venv/bin/python -m pytest -q tests/test_unit.py tests/test_mvp_unit.py` | **32/32 passed** (25 existing + 7 MVP: copy, BPMN steps, traceparent, contract months, semantic terms, policy codes, intent schema) |
+| Python unit tests | `.venv/bin/python -m pytest -q tests/test_unit.py tests/test_mvp_unit.py` | **48/48 passed** (25 existing + 23 MVP: copy, BPMN steps, traceparent, contract months, semantic terms, policy codes, intent schema, and the Salesforce ID checks before SOQL: valid 15/18-char IDs accepted, bad checksum, wrong length and injection attempts rejected, context service returns 400) |
 | Web build tests (MVP) | `cd web && npm test` | **11/11 passed** (8 layers and 27 glossary terms from `docs/mvp/layer-panels.md`, four "recorded run" journeys, L6 wording, footer, hosting wording, AES-256-GCM gate, no secrets) |
 | Legacy web build tests | `cd web && npm run test:legacy` | **10/10 passed** |
 | Playwright e2e (MVP) | `cd web && npm run e2e` | **36/36 passed** (password gate, 8 layer cards, all 8 drawers, 4 cases, delayed chevron, architecture tab with 27 terms, presenter mode, no console errors) |
@@ -61,7 +61,7 @@ All results below come from runs on 26 Oct 2026. The stack ran in real-org mode:
 |---|---|---|
 | Python unit (policy client, router, PII redaction, ledger, adapter labelling, …) | `.venv/bin/python -m pytest -q tests/test_unit.py` | **25 passed** |
 | OPA policy tests (Rego) | `.tools/bin/opa test stack/l4_context/policy stack/inference/policy` | **12/12 passed** |
-| Apex tests in `sfcomms` (deploy `0AfQH00000Q1p370AB`) | `sf project deploy start … --tests AgenticTelco_TmfTest` | **6/6 passed, 97.3% coverage** of the AgenticTelco_ classes (gate: 85%) |
+| Apex tests in `sfcomms` (deploy `0AfQH00000Q1p370AB`) | `sf project deploy start … --tests AgenticTelco_TmfTest` | **8/8 passed, 97% coverage** of the AgenticTelco_ classes (gate: 85%; re-run 30 Oct 2026) |
 | Stack integration against the real org | `pytest tests/test_stack.py` | see [Stack integration](#stack-integration) |
 | Real-org journeys (recorded) | `ZG_SOR_MODE=commscloud ./run.sh journeys` | **9/9 expected outcomes**, 0 inference stub calls |
 | Web build tests (recording shape, encryption, labels) | `cd web && npm test` | **10/10 passed** |

@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 import httpx, jsonschema, yaml
 from fastapi import FastAPI, HTTPException, Request
-from stack.mvp.common import (q, q1, J, Span, sf, soql, SF_DATA, NATIVE, FACADE, STANDIN, OPA_URL, url, traceparent, parse_traceparent,
+from stack.mvp.common import (sf_id, q, q1, J, Span, sf, soql, SF_DATA, NATIVE, FACADE, STANDIN, OPA_URL, url, traceparent, parse_traceparent,
                               brightwell, copy_json, init_schema)
 
 app = FastAPI(title="AgenticTelco MVP L4 context service")
@@ -98,7 +98,19 @@ def opa(trace, mode, ctx, to, parent=None, component="L4 context service"):
     q("insert into mvp.decision(trace_id, mode, policy_version, input, result) values (%s,%s,%s,%s,%s)", trace, mode, d["policyVersion"], J(inp), J(d))
     return d
 
+def ids_or_400(**ids):
+    """Check every Salesforce ID before it goes into a SOQL string; reject anything else with 400."""
+    try:
+        return [sf_id(v, k) for k, v in ids.items()]
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+AUTH_ROLE = SEM["terms"]["authorisedContact"]["rule"].split('"')[1]   # the authorised role comes from semantic/model.yaml, not code
+
+
 def build_pack(trace, contact_id, account_id, parent=None):
+    contact_id, account_id = ids_or_400(contactId=contact_id, accountId=account_id)
     def hdr():
         return {"traceparent": traceparent(trace, parent or "0" * 16)}
     ident = resolve_identity(account_id)
@@ -139,7 +151,7 @@ def build_pack(trace, contact_id, account_id, parent=None):
     adr = loc.get("VisitorAddress") or {}
     pack = {
         "requester": {"name": (acr.get("Contact") or {}).get("FirstName") or (acr.get("Contact") or {}).get("Name"), "fullName": (acr.get("Contact") or {}).get("Name"),
-                      "contactId": contact_id, "authorisedContact": role == SEM["terms"]["authorisedContact"]["rule"].split('"')[1], "role": role,
+                      "contactId": contact_id, "authorisedContact": role == AUTH_ROLE, "role": role,
                       "src": "salesforce:AccountContactRole"},
         "customer": {"name": (res["customer"] or {}).get("name", "").replace("AgenticTelco – ", ""), "salesforceAccount": account_id, "src": "salesforce:TMF629 customer"},
         "identity": {"salesforceAccount": account_id, "billingCustomer": L["billingCustomer"]["external_id"], "inventorySite": L["inventorySite"]["external_id"],
@@ -186,7 +198,7 @@ async def context(request: Request):
                                             headers={"traceparent": traceparent(trace, sp.span_id)}).json()
         if "not_authorised" in denied:
             dm = soql(trace, "Who can order for this business", "SELECT Contact.Name FROM AccountContactRole WHERE AccountId='"
-                      + b["accountId"] + "' AND Role='Decision Maker' LIMIT 1", api="TMF632 (sObject)")
+                      + ids_or_400(accountId=b.get("accountId"))[0] + "' AND Role='" + AUTH_ROLE + "' LIMIT 1", api="TMF632 (sObject)")
             out["decisionMaker"] = (dm[0]["Contact"]["Name"] if dm else None)
         sp.status, sp.response = 200, {"allowed": [o["name"] for o in allowed], "denied": denied}
         sp.attrs.update(allowed=[o["name"] for o in allowed], denied=denied)
@@ -207,9 +219,10 @@ async def authorised_contact(request: Request):
     """Used by the L1 intent service: same policy, only the authorised-contact outcome is read (no copy of the rule)."""
     b = await request.json()
     trace, parent = parse_traceparent(request.headers.get("traceparent"))
-    acr = soql(trace, "Contact role on the account", "SELECT Role FROM AccountContactRole WHERE ContactId='" + b["contactId"]
-               + "' AND AccountId='" + b["accountId"] + "' AND Account.Name LIKE 'AgenticTelco%'", api="TMF632 (sObject)")
-    ctx = {"requester": {"authorisedContact": bool(acr) and acr[0]["Role"] == "Decision Maker"}}
+    contact_id, account_id = ids_or_400(contactId=b.get("contactId"), accountId=b.get("accountId"))
+    acr = soql(trace, "Contact role on the account", "SELECT Role FROM AccountContactRole WHERE ContactId='" + contact_id
+               + "' AND AccountId='" + account_id + "' AND Account.Name LIKE 'AgenticTelco%'", api="TMF632 (sObject)")
+    ctx = {"requester": {"authorisedContact": bool(acr) and acr[0]["Role"] == AUTH_ROLE}}
     with Span(trace, "L1", "Intent service", "Policy check: authorised contact", runtime="OPA (Rego) · agentictelco.upgrade", api="OPA",
               method="POST", path="/v1/data/agentictelco/upgrade/deny", parent=parent) as sp:
         r = httpx.post(f"{OPA_URL}/v1/data/agentictelco/upgrade/deny", json={"input": {"mode": "intent-validation", "context": ctx, "proposal": {}}}, timeout=10)

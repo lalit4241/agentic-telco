@@ -38,7 +38,7 @@ terms:
     label: Offer
     meaning: A broadband product the business can buy, with its term price and download speed.
     type: object
-    source: {system: Salesforce, object: "Product2 + PricebookEntry", api: "TMF620 (TMF facade inside Salesforce)"}
+    source: {system: Salesforce, object: "Product2 + PricebookEntry", api: "TMF620 (TMF facade within Salesforce)"}
   identity:
     label: Same customer in every system
     meaning: The verified links between the Salesforce account, the billing customer and the inventory site.

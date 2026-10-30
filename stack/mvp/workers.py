@@ -6,7 +6,7 @@ so a rerun after a crash replays instead of writing twice."""
 import json, os, sys, time, traceback
 from datetime import date, datetime, timezone
 import httpx
-from stack.mvp.common import (q, q1, J, Span, sf, soql, SF_DATA, NATIVE, FACADE, url, traceparent, init_schema, OPERATON_URL)
+from stack.mvp.common import (sf_id, safe_key, soql_datetime, q, q1, J, Span, sf, soql, SF_DATA, NATIVE, FACADE, url, traceparent, init_schema, OPERATON_URL)
 from stack.l5_orchestrator.engine import creds
 
 WORKER_ID = f"mvp-l5-worker-{os.getpid()}"
@@ -128,6 +128,7 @@ def ensure_usage_record(v, sp, oid):
     Salesforce only accepts that record while the order is still Draft, so we add it right after creating the order, through the
     native sObject API. The flow then takes its 'record exists' branch. The flow itself is untouched."""
     t = v["traceId"]
+    oid = sf_id(oid, "orderId")
     have = soql(t, "Check usage record (hidden rule in Custom Assetize Order)", "SELECT Id FROM AppUsageAssignment WHERE RecordId='" + oid
                 + "' AND AppUsageType='SubscriptionManagement'", api="sObject")
     if have:
@@ -144,14 +145,15 @@ def activate(v, sp):
     return {"activatedAt": datetime.now(timezone.utc).isoformat()}
 
 def asset_change(v, sp):
-    t, key = v["traceId"], v["orderExternalId"]
+    t, key = v["traceId"], safe_key(v["orderExternalId"], "orderExternalId")
     serial = "AT-" + key
+    cur, acct = sf_id(v["currentAssetId"], "currentAssetId"), sf_id(v["accountId"], "accountId")   # checked before any SOQL below
     ex = soql(t, "Find new installed service (idempotent)", f"SELECT Id FROM Asset WHERE SerialNumber='{serial}' AND Name LIKE 'AgenticTelco%' LIMIT 1", api="sObject")
-    old = soql(t, "Read current installed service", f"SELECT Id, Name, ContactId, LocationId, UsageEndDate FROM Asset WHERE Id='{v['currentAssetId']}'", api="sObject")[0]
+    old = soql(t, "Read current installed service", f"SELECT Id, Name, ContactId, LocationId, UsageEndDate FROM Asset WHERE Id='{cur}'", api="sObject")[0]
     live = (v.get("liveDate") or date.today().isoformat())[:10]          # billed at the new price from the upgrade (go-live) date
     keep_end = v.get("contractEnd") or old.get("UsageEndDate")            # decision: the existing contract end date is kept
     if ex:
-        new_id = ex[0]["Id"]
+        new_id = sf_id(ex[0]["Id"], "newAssetId")
     else:
         new_id = ok(sf(t, "Create Fibre 900 Installed at the same Location", "POST", f"{SF_DATA}/sobjects/Asset",
                        {"Name": f"{v['toName']} – Brightwell site {v['site']}", "AccountId": v["accountId"], "ContactId": old.get("ContactId"),
@@ -160,18 +162,19 @@ def asset_change(v, sp):
                         "Description": f"AgenticTelco MVP: upgraded from Fibre 150 by order {v.get('orderNumber')} ({key}). "
                                        f"£{v['toPrice']} a month from {live}; contract end {keep_end} unchanged."},
                        api="TMF637 (sObject write)", parent=sp.span_id), "Asset create")["id"]
+        new_id = sf_id(new_id, "newAssetId")
     r = sf(t, "Fibre 150 to Obsolete with an end date", "PATCH", f"{SF_DATA}/sobjects/Asset/{v['currentAssetId']}",
            {"Status": "Obsolete", "UsageEndDate": live}, api="TMF637 (sObject write)", parent=sp.span_id)
     if r.status_code != 204:
         raise RuntimeError(f"Asset obsolete → {r.status_code} {r.text[:200]}")
-    rel = soql(t, "Find Upgrade link (idempotent)", f"SELECT Id FROM AssetRelationship WHERE AssetId='{v['currentAssetId']}' AND RelatedAssetId='{new_id}'", api="sObject")
+    rel = soql(t, "Find Upgrade link (idempotent)", f"SELECT Id FROM AssetRelationship WHERE AssetId='{cur}' AND RelatedAssetId='{new_id}'", api="sObject")
     rel_id = rel[0]["Id"] if rel else ok(sf(t, "Link old and new: AssetRelationship Upgrade", "POST", f"{SF_DATA}/sobjects/AssetRelationship",
                                            {"AssetId": v["currentAssetId"], "RelatedAssetId": new_id, "RelationshipType": "Upgrade",
                                             "FromDate": datetime.now(timezone.utc).isoformat()}, api="sObject", parent=sp.span_id), "AssetRelationship")["id"]
     # Live check of the hidden rule: the flow must NOT have created its own Asset for this order.
     time.sleep(3)
-    flow_assets = soql(t, "Check: Custom Assetize Order created no Asset", f"SELECT Id, Name FROM Asset WHERE AccountId='{v['accountId']}' "
-                       f"AND CreatedDate >= {v['activatedAt'][:19]}Z AND Id != '{new_id}'", api="sObject")
+    flow_assets = soql(t, "Check: Custom Assetize Order created no Asset", f"SELECT Id, Name FROM Asset WHERE AccountId='{acct}' "
+                       f"AND CreatedDate >= {soql_datetime(v['activatedAt'], 'activatedAt')}Z AND Id != '{new_id}'", api="sObject")
     sp.attrs.update(newAssetId=new_id, oldAssetId=v["currentAssetId"], relationshipId=rel_id, assetizeFlowAssets=len(flow_assets))
     milestone(key, "AssetChanged", {"old": v["currentAssetId"], "new": new_id, "relationship": rel_id, "flowCreatedAssets": len(flow_assets)})
     return {"newAssetId": new_id, "relationshipId": rel_id, "flowCreatedAssets": str(len(flow_assets))}

@@ -17,7 +17,7 @@ def nice_date(d):
     from datetime import date
     return f"{date.fromisoformat(d).day} {date.fromisoformat(d):%B %Y}" if d else None
 
-VIDEO_MBPS_PER_USER = 25   # sizing guide for the recommendation (advice, not a business rule)
+VIDEO_MBPS_PER_USER = 25   # our sizing assumption: 25 Mbps per video user (advice for the recommendation, not a business rule)
 
 def conv(cid):
     c = q1("select id, trace_id, contact_id, state from mvp.conversation where id=%s", cid)

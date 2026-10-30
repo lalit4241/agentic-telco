@@ -54,7 +54,11 @@ test('L6 wording, footer, hosting wording, branding', () => {
   assert.match(JSON.stringify(l6), /Salesforce native APIs plus a thin TMF facade layer within Salesforce/);
   assert.match(app.js, /Salesforce APIs \+ TMF facade \(in Salesforce\)/);
   assert.ok(html.includes(FOOT) && (app.html + app.js).includes(FOOT));
-  assert.match(app.js, /Salesforce runs on instance GBR58 \(REPORTED; UK region to be confirmed\)/);
+  assert.match(app.js, /The agent, model, policy and workflow run locally on our demo host\. Salesforce is a hosted Salesforce trial org\./);
+  assert.doesNotMatch(app.js, /GBR58|UK region to be confirmed/);
+  assert.match(app.js, /event bus · regional hosting'/);   // platform line in mvp.js (layer-panels.md copy is owned by TMForumCTO)
+  assert.match(app.js, /TMF facade within Salesforce \(Apex\)/);
+  assert.doesNotMatch(app.js, /facade inside Salesforce/);
   assert.doesNotMatch(html + app.html + app.js, /<img|LC monogram/i);
 });
 test('no secrets in the page', () => {

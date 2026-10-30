@@ -15,8 +15,8 @@
     { id: 'overdue', t: 'Overdue balance', s: 'Policy says no' },
     { id: 'delayed', t: 'Order delayed', s: '+2 days, Sam told first' }];
   var OPENING = "We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. Our broadband already struggles. What do you suggest?";
-  var HOSTING = 'The agent and model run locally in our stack. Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed).';
-  var PLATFORM = 'Kubernetes · secrets vault · network zones · API gateway · agent and workload identity · event bus · UK hosting';
+  var HOSTING = 'The agent, model, policy and workflow run locally on our demo host. Salesforce is a hosted Salesforce trial org.';
+  var PLATFORM = 'Kubernetes · secrets vault · network zones · API gateway · agent and workload identity · event bus · regional hosting';
   var S = { tab: 'demo', caseId: null, cid: null, full: null, t: Infinity, busy: false, open: null, presenter: false, follow: false, play: null, speed: 1, rec: null };
   var layerCopy = {}; (COPY.layers || []).forEach(function (l) { layerCopy[l.id] = l; });
 
@@ -212,7 +212,7 @@
   }
   function spanRows(list, cols) { return '<table class="t"><tr>' + cols.map(function (c) { return '<th>' + c[0] + '</th>'; }).join('') + '</tr>' + list.map(function (s) { return '<tr>' + cols.map(function (c) { return '<td>' + c[1](s) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; }
   function ms(s) { return s.running ? '<span class="warn">running…</span>' : (s.duration_ms >= 1000 ? (s.duration_ms / 1000).toFixed(1) + ' s' : Math.round(s.duration_ms) + ' ms'); }
-  function rtChip(s) { var r = s.runtime || ''; if (/facade/i.test(r)) return '<span class="chip fac">TMF facade inside Salesforce (Apex)</span>'; if (/native Salesforce/i.test(r)) return '<span class="chip sf">native Salesforce API</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">legacy stand-in (mocked)</span>'; return '<span class="chip ours">' + esc(r) + '</span>'; }
+  function rtChip(s) { var r = s.runtime || ''; if (/facade/i.test(r)) return '<span class="chip fac">TMF facade within Salesforce (Apex)</span>'; if (/native Salesforce/i.test(r)) return '<span class="chip sf">native Salesforce API</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">legacy stand-in (mocked)</span>'; return '<span class="chip ours">' + esc(r) + '</span>'; }
   function linkFor(s, v) {
     var L = v.links || {}, ms_ = v.milestones || [], has = function (n) { return ms_.some(function (m) { return m.name === n; }); }, a = function (u, t) { return u ? '<a class="link" target="_blank" rel="noopener" href="' + esc(u) + '">' + t + '</a>' : ''; };
     if (/Create quote/.test(s.step) && has('QuoteCreated')) return a(L.quote, 'Quote');
@@ -261,7 +261,7 @@
           if (k === 'currentBroadband') val = (x.product || x.name) + ' · £' + x.monthlyPriceGBP + '/month';
           if (k === 'promotions') val = (x.applicable && x.applicable.length ? x.applicable.join(', ') : 'none applicable') + ' · ' + (typeof x.activeInOrg === 'number' ? x.activeInOrg : (x.activeInOrg || []).length) + ' active in org';
           if (k === 'contractMonthsLeft') val = x.value + ' months left · ends ' + x.contractEnd;
-          if (k === 'sizing') val = x.staffOnVideoCalls + ' people × ' + x.mbpsPerPerson + ' Mbps = ' + x.neededMbps + ' Mbps → ' + x.bestFitName;
+          if (k === 'sizing') val = x.staffOnVideoCalls + ' people × ' + x.mbpsPerPerson + ' Mbps = ' + x.neededMbps + ' Mbps → ' + x.bestFitName + ' (' + x.mbpsPerPerson + ' Mbps per video user is our sizing assumption)';
           if (Array.isArray(val)) val = val.map(function (y) { return typeof y === 'object' ? (y.name || JSON.stringify(y)) : y; }).join(', ');
           if (typeof val === 'object') val = JSON.stringify(val);
           if (typeof val === 'boolean') val = val ? 'yes' : 'no';
@@ -291,7 +291,7 @@
     },
     L6: function (b, v) {
       var calls = v.spans.filter(function (s) { return s.layer === 'L6'; });
-      b.innerHTML = '<p><span class="chip sf">native Salesforce API</span><span class="chip fac">TMF facade inside Salesforce (Apex)</span><span class="chip st">legacy stand-in (mocked)</span></p>' +
+      b.innerHTML = '<p><span class="chip sf">native Salesforce API</span><span class="chip fac">TMF facade within Salesforce (Apex)</span><span class="chip st">legacy stand-in (mocked)</span></p>' +
         spanRows(calls, [['Time', function (s) { return hm(T(s.start_ts)); }], ['Call', function (s) { return esc(s.step) + '<div class="small">' + esc(s.component) + '</div>'; }], ['API', function (s) { return '<span class="mono">' + esc(s.api) + '</span>'; }], ['Runs as', rtChip], ['Status', function (s) { return s.running ? '…' : esc(s.status); }], ['Record', function (s) { return linkFor(s, v); }]]) +
         '<p class="small">Only the L5 workflow writes (quote, order, asset change). Custom Assetize Order flow is left as is; the run checks it created no Asset.</p>';
     },

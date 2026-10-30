@@ -56,3 +56,54 @@ def test_policy_version_and_deny_codes():
 def test_intent_schema_is_tmf921_shaped():
     s = json.loads((MVP / "intent.schema.json").read_text())
     assert "expression" in json.dumps(s)
+
+
+# ---- Salesforce IDs are checked before they go into a SOQL string (review item 4) ----
+from stack.mvp.common import sf_id, safe_key, soql_datetime
+
+
+@pytest.mark.parametrize("good", ["001QH00002La125YAB", "001QH00002La125", "02iQH000003GH4nYAG", "801QH00002LZvb2YAD"])
+def test_sf_id_accepts_real_15_and_18_char_ids(good):
+    assert sf_id(good) == good
+
+
+@pytest.mark.parametrize("bad", [
+    "001QH00002La125YAC",            # 18 chars, wrong case-safe checksum
+    "001QH00002La12",                # 14 chars
+    "001QH00002La125YA",             # 17 chars
+    "001QH00002La125YABX",           # 19 chars
+    "001QH00002La1' OR Name!='x",    # SOQL injection attempt
+    "001QH00002La125YAB'--",
+    "", None, 123,
+])
+def test_sf_id_rejects_anything_else(bad):
+    with pytest.raises(ValueError):
+        sf_id(bad)
+
+
+def test_business_key_and_datetime_guards():
+    assert safe_key("MVP-60744BC6") == "MVP-60744BC6"
+    assert soql_datetime("2026-10-30T17:05:08.123+00:00") == "2026-10-30T17:05:08"
+    for bad in ["MVP-1' OR 'a'='a", "", "x" * 65]:
+        with pytest.raises(ValueError):
+            safe_key(bad)
+    with pytest.raises(ValueError):
+        soql_datetime("2026-10-30 OR Id != null")
+
+
+def test_context_service_returns_400_for_a_bad_id():
+    from fastapi import HTTPException
+    from stack.mvp.context import ids_or_400, AUTH_ROLE
+    assert AUTH_ROLE == "Decision Maker"     # read from semantic/model.yaml
+    with pytest.raises(HTTPException) as e:
+        ids_or_400(accountId="001' OR Id!='")
+    assert e.value.status_code == 400
+
+
+def test_no_soql_string_takes_an_unchecked_id():
+    import re as _re
+    ctx = (MVP / "context.py").read_text()
+    wk = (MVP / "workers.py").read_text()
+    assert "Role == 'Decision Maker'" not in ctx and "Role='Decision Maker'" not in ctx and '== "Decision Maker"' not in ctx
+    assert not _re.search(r"WHERE[^\"]*'\{v\[", wk), "workers.py puts a raw variable into SOQL"
+    assert not _re.search(r"\+ b\[\"(accountId|contactId)\"\]", ctx), "context.py puts a raw request field into SOQL"

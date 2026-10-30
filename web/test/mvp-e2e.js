@@ -35,7 +35,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('8 layer cards render', (await page.$$('.ly')).length === 8);
   check('L6 chip wording', (await page.textContent('.ly[data-layer="L6"]')).includes('Salesforce APIs + TMF facade (in Salesforce)'));
   check('4 cases', (await page.$$('.case')).length === 4);
-  check('footer and hosting wording', (await page.textContent('body')).includes(FOOT) && (await page.textContent('body')).includes('Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed)'));
+  check('footer and hosting wording', (await page.textContent('body')).includes(FOOT) && (await page.textContent('body')).includes('The agent, model, policy and workflow run locally on our demo host. Salesforce is a hosted Salesforce trial org.'));
   const end = async () => { await page.click('#b-end'); await page.waitForTimeout(400); };
   const chev = () => page.$$eval('#chev .cv', (a) => a.map((x) => x.className.replace('cv ', '').trim()));
   const chat = () => page.textContent('#chat');
@@ -51,7 +51,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   for (const L of ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8']) {
     await page.click(`.ly[data-layer="${L}"]`); await page.waitForTimeout(L === 'L5' ? 1500 : 300);
     const d = await page.textContent('#drawer');
-    const want = { L1: /intent/i, L2: /token|model/i, L3: /001QH00002La125YAB/, L4: /policy|authorised/i, L5: /Operaton|BPMN/i, L6: /TMF facade inside Salesforce|native Salesforce API/, L7: /900/, L8: /trace/i }[L];
+    const want = { L1: /intent/i, L2: /token|model/i, L3: /001QH00002La125YAB/, L4: /policy|authorised/i, L5: /Operaton|BPMN/i, L6: /TMF facade within Salesforce \(Apex\)|native Salesforce API/, L7: /900/, L8: /trace/i }[L];
     check(`happy: ${L} drawer opens with run data`, (await page.isVisible('#drawer')) && want.test(d));
     if (L === 'L4') { check('L4: context pack with source chips and the rule', (await page.$$('#drawer .chip')).length > 5 && /package agentictelco|deny/.test(d)); await shot('2-L4-context-policy.png'); }
     if (L === 'L5') { check('L5: BPMN diagram rendered with markers', !!(await page.$('#drawer .djs-container')) && (await page.$$('#drawer .djs-element.done, #drawer .done')).length > 0); await shot('3-L5-bpmn.png'); }
