@@ -123,7 +123,7 @@ Salesforce holds Brightwell's customer record, contacts, site, quote, order and 
 ## L7 Digital Core
 
 **Question**: What does it run on, and where does the order reach the network?
-**Tech**: Network view (mocked); MVP runs on a single host
+**Tech**: Network view (mocked)
 **Status**: Mocked, our illustration
 
 It shows the operator's network at site 4471: the exchange, the fibre path to Martlesham and the access port. The port changes from 150 to 900 when the network fulfilment step completes. One line underneath lists the platform services an operator would provide.
