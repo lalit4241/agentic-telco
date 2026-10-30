@@ -109,16 +109,16 @@ One business process takes Sam's acceptance through to "live". It runs the bindi
 ## L6 Systems of record
 
 **Question**: Where is the truth recorded?
-**Tech**: Salesforce, with its native APIs and a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind adapters
+**Tech**: Salesforce as the system of record, exposed only through TM Forum Open APIs via a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind TMF-shaped adapters
 **Status**: Salesforce real; legacy billing, availability, inventory and OSS mocked
-**Label**: Salesforce native APIs plus a thin TMF facade layer within Salesforce
-**Chip**: Salesforce APIs + TMF facade (in Salesforce)
+**Label**: TM Forum Open APIs, exposed by Salesforce through a thin TMF facade layer within Salesforce
+**Chip**: TMF Open APIs (Salesforce)
 
-Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Every call uses a standard telco API. Salesforce's native APIs cover customers, contacts and installed services. A thin TMF facade layer within Salesforce (Apex) covers catalogue, quote, order and promotion. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same kind of standard API.
+Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Everything above this layer reaches it only through TM Forum Open APIs, never through Salesforce-specific APIs. A thin TMF facade layer within Salesforce (Apex) offers all seven: customer, party, installed services, catalogue, quote, order and promotion. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same TM Forum API shapes. The APIs are TMF-aligned, not certified as conformant.
 
 - **Why it matters:** Salesforce and the legacy estate stay in place, keep the records and nothing else, and can be replaced one at a time behind the same APIs.
-- **What you'll see:** each call, labelled "native Salesforce API", "TMF facade within Salesforce (Apex)" or "Legacy stand-in (mocked)", with links to the Salesforce records.
-- **Tags:** Salesforce native APIs [TMF629] [TMF632] [TMF637] · TMF facade layer within Salesforce (Apex) [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666] [TMF679] [TMF641] (shape only)
+- **What you'll see:** each call, shown by its TM Forum API number and name (for example "TMF622 Product Order") and labelled "TMF Open API (Salesforce)" or "Legacy stand-in (mocked)", with links to the Salesforce records behind it.
+- **Tags:** TMF Open APIs exposed by Salesforce [TMF629] [TMF632] [TMF637] [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666] [TMF679] [TMF641] (shape only)
 
 ## L7 Digital Core
 
@@ -163,7 +163,7 @@ It builds a step timeline for Sam's request from the audit log. It shows each st
 **BPMN**: Business Process Model and Notation, a standard way to draw and run business processes. The demo's workflow is a BPMN process running on Operaton.
 **Business key**: A unique ID, here the order ID, that the workflow uses so that running a step again does not create a second order.
 **System of record**: The system that holds the official version of a piece of data. Here Salesforce holds customers, quotes, orders and installed services; legacy systems hold billing and network data.
-**TMF facade**: A thin layer within Salesforce, written in Apex, that offers TM Forum APIs for catalogue, quote, order and promotion where Salesforce has no native one. It lives in the Salesforce org, not in a separate integration tier, and only translates data.
+**TMF facade**: A thin layer within Salesforce, written in Apex, that exposes Salesforce's records only as TM Forum Open APIs (customer, party, installed services, catalogue, quote, order and promotion). It lives in the Salesforce org, not in a separate integration tier, and only translates data.
 **Legacy stand-in**: A mocked version of an older system, such as billing or network fulfilment, built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen.
 **Adapter**: A small piece of software in front of a legacy system that gives it a standard API, so the rest of the architecture never deals with its quirks.
 **Cross-reference**: A maintained table linking one customer's IDs across systems, such as the Salesforce account, billing ID and network site. If a link is not verified, the workflow stops for human review.
