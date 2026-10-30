@@ -1,6 +1,6 @@
 # AgenticTelco MVP: key design
 
-**Status: DRAFT v0.1 for agreement — LalitC [ ] (pending) DevBot [x] (agreed subject to the decision 6 edit, 27 Oct 2026) TMForumCTO [x] (agreed)**
+**Status: AGREED v1.0 — LalitC [x] (signed off 30 Oct 2026: "This is the approach it has been agreed for MVP - let's go ahead and build it") DevBot [x] (agreed subject to the decision 6 edit, 27 Oct 2026) TMForumCTO [x] (agreed)**
 
 27 Oct 2026. This is the one document all three must agree before any development starts. It consolidates [MVP-design.md](MVP-design.md) and [layer-walkthrough.md](layer-walkthrough.md). The walkthrough stays as the detailed appendix. Where they differ, this document wins once agreed.
 
@@ -49,7 +49,7 @@ The same business customer exists under three IDs. All IDs are examples.
 9. Fulfilment starts in the legacy OSS. Its overnight batch reports that no exchange port is free yet, and the date moves by two days. The order stays in progress.
 10. The agent tells Sam the new date proactively.
 11. The port is reserved and the service is activated. The order is completed.
-12. **End state:** the Fibre 150 installed service is closed or inactive. One Fibre 900 installed service is active at the same location and linked to the old one (decision 6). Sam is told it is live.
+12. **End state:** the Fibre 150 installed service is set to Obsolete with an end date. One Fibre 900 installed service is active at the same location and linked to the old one (decision 6). Sam is told it is live.
 
 **Cases:**
 
@@ -71,7 +71,7 @@ The same business customer exists under three IDs. All IDs are examples.
 | L3 Data Foundation | What do we remember? | Conversation, decisions, consent, workflow and jeopardy history, audit; identity cross-reference | PostgreSQL (PostgreSQL Licence) | Cross-reference rows, audit rows | Real; IDs are examples |
 | L4 Enterprise Context | What do we know, and is it allowed? | Semantic definitions, context pack with sources, policy decision | Context service (ours), OPA (Apache-2.0) | Context pack, policy decision and rule | Real; balance and availability are stand-ins |
 | L5 Deterministic Execution | Who actually does the work? | One BPMN process: binding check, quote, order, fulfilment wait, jeopardy, asset change; idempotent; absorbs slow and batch legacy | Operaton (Apache-2.0), Python workers (ours) | BPMN diagram, current step highlighted | Real; OSS is a stand-in |
-| L6 Agent-Ready SoR | Where is the truth recorded? | Salesforce, plus legacy stand-ins, each behind a standard API | Salesforce (commercial), Apex add-ons (ours) | Each call, labelled native or Apex add-on, with record links | Salesforce real |
+| L6 Agent-Ready SoR | Where is the truth recorded? | Salesforce, plus legacy stand-ins, each behind a standard API | Salesforce (commercial), with a thin TMF facade layer within Salesforce (Apex, ours) | Each call, labelled "native Salesforce API" or "TMF facade inside Salesforce (Apex)", with record links | Salesforce real |
 | L7 Digital Core | What does it run on, and where does the order reach the network? | Mocked network view of Brightwell's site (exchange, fibre path, access port changing from 150 to 900) plus the platform in one line; the MVP itself runs on one host | Mock panel; Docker Compose as plumbing (Apache-2.0) | Network view for site 4471, platform line, "MVP runs on a single Docker Compose host" | Target state mocked, labelled; plumbing real |
 | L8 Observability & Governance | How do we prove what happened? | Step timeline per request across all layers (agreed by LalitC, 27 Oct 2026) | Built from the L3 audit log | Step timeline | Real data from each run |
 
@@ -87,7 +87,7 @@ TMF921 is designed mainly for intent handover between autonomous-network layers 
 
 **L5.** One BPMN process on Operaton (decision 4) does every system-of-record write. It runs the binding policy check, quote, upgrade order and the fulfilment wait. A timer raises the delay and the revised date. The process decides each Intent state change: at risk = `icm:StateDegrades`, fulfilled = `icm:StateComplies` (INFERRED mapping). It posts these as IntentReports to the intent service. It then makes the asset change. The order external ID is the business key, so reruns can't double-write. Python workers absorb slow and batch legacy systems.
 
-**L6.** Salesforce keeps the records and nothing else. Calls use native Salesforce APIs where the org has them: customer and contacts [TMF629/632] and installed services [TMF637]. Otherwise they use thin, mapping-only Apex add-ons: catalogue [TMF620], quote [TMF648] and order [TMF622] (ADR amendment 001, approved by LalitC). The Intent [TMF921] is not in Salesforce (decision 8). Every legacy system sits behind an adapter speaking a standard API. A system that can't be adapted is wrapped, and systems are replaced one at a time.
+**L6.** Salesforce keeps the records and nothing else. Calls use native Salesforce APIs where the org has them: customer and contacts [TMF629/632] and installed services [TMF637]. Otherwise they use a thin, mapping-only TMF facade layer within Salesforce (Apex): catalogue [TMF620], quote [TMF648], order [TMF622] and promotion [TMF671] (ADR amendment 001, approved by LalitC). The facades live in the Salesforce org, not in a separate integration tier, and hold no business rules. The Intent [TMF921] is not in Salesforce (decision 8). Every legacy system sits behind an adapter speaking a standard API. A system that can't be adapted is wrapped, and systems are replaced one at a time.
 
 **L7.** Mocked in the MVP (decision 9). The L7 card leads with a network view of Brightwell's site, labelled "mocked, operator's digital core (network and edge)": the exchange, the fibre path to Martlesham and the access port, whose capacity changes from 150 to 900 at the moment the OSS step completes. It uses the same site ID 4471 as the L6 inventory stand-in. The records about the network (inventory, site, OSS order) stay in L6; L7 is the network and platform itself. A note says "network view is our illustration": the Zero Gravity report (p. 17) names network virtualisation and edge in L7 but does not place physical assets (INFERRED). Underneath, one line lists the platform target state: Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus, UK hosting. It adds one plain line: "MVP runs on a single Docker Compose host". That plumbing is real but not presented as a feature: one Compose stack, one private network, and Salesforce credentials kept server-side.
 
@@ -130,7 +130,7 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 4. **Real vs mocked, and MVP to scale (3 min).** Show what is a stand-in, and the path from MVP to pilot to scale.
 
 **Layer view (proposal, DevBot to build after agreement).**
-- **Split screen:** Sam's chat on the left. On the right, all eight layers light up as the request passes through them. Clicking a layer shows what it did for this request, with real data. The L3 card shows the cross-reference. The L4 card shows the context pack with source chips, the decision and the rule. The L5 card shows the BPMN diagram with the current step highlighted. The L6 card shows each call labelled "native Salesforce API" or "custom Apex facade on Salesforce", with record links.
+- **Split screen:** Sam's chat on the left. On the right, all eight layers light up as the request passes through them. Clicking a layer shows what it did for this request, with real data. The L3 card shows the cross-reference. The L4 card shows the context pack with source chips, the decision and the rule. The L5 card shows the BPMN diagram with the current step highlighted. The L6 card shows each call labelled "native Salesforce API" or "TMF facade inside Salesforce (Apex)", with record links.
 - **Presenter mode:** a Step button pauses after each layer. The layer text is written by us, not generated.
 - **Architecture tab:** one card per layer: purpose, open-source tech and licence, contract with its neighbours, real or mocked.
 - **Scenario buttons:**
@@ -146,9 +146,9 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 |---|---|---|---|
 | 1 | Do we replace Salesforce or our BSS? | No. Salesforce stays the system of record for SME. The rest of the estate stays, behind adapters | L6 |
 | 2 | Who is in control? | The agent proposes, policy decides, the workflow writes | Not authorised button |
-| 3 | Lock-in? | Standard telco APIs between layers; open source outside Salesforce; the Apex add-ons only translate. Aligned with industry standards, not certified | Architecture tab, L6 labels |
+| 3 | Lock-in? | Standard telco APIs between layers; open source outside Salesforce; the TMF facade layer within Salesforce only translates. Aligned with industry standards, not certified | Architecture tab, L6 labels |
 | 4 | Safe and compliant? | Every decision is recorded in the audit timeline. Data residency: see decision 2; no UK-only claim yet | L8, L4, L3 |
-| 5 | Run cost? | Real model calls and token usage from the run's audit timeline; OpenTelemetry is on the roadmap (pending the L8 decision). An agent makes several calls per request. No figures until measured | L2, L8 |
+| 5 | Run cost? | Real model calls and token usage from the run's audit timeline; OpenTelemetry is on the roadmap (L8 agreed: audit-log step timeline). An agent makes several calls per request. No figures until measured | L2, L8 |
 | 6 | Path to production? | MVP, then pilot, then scale. What changes: runtime platform, real availability, real billing, real fulfilment, more BPMN processes | Architecture tab |
 | 7 | Fit with the industry reference architecture? | It adds to the estate and rips nothing out; mapping in Appendix B | Architecture tab |
 | 8 | Pilot business case? | Measure order cycle time, right-first-time orders, cost per upgrade and "where's my order?" calls avoided, against the operator's own baseline. No figures before a pilot | Happy path, timeline timings |
@@ -179,8 +179,8 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 
 Each decision has a recommended default.
 
-1. **Contract effect of a mid-contract upgrade.** Default: keep the current end date (10 months left), no re-contract, new price from the upgrade date. The seeded term price is £45.00 a month for Fibre 900, against £27.00 for Fibre 150 (CONFIRMED in the seed catalogue; read from Salesforce at run time). DevBot agrees with this default (still awaiting LalitC).
-2. **Hosting wording.** Default: "The agent and model run locally in our stack. Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed)." Make no UK-only claim yet. The GitHub Pages replay, the org region and model hosting are unverified. DevBot agrees with this default (still awaiting LalitC).
+1. **Contract effect of a mid-contract upgrade.** Default: keep the current end date (10 months left), no re-contract, new price from the upgrade date. The seeded term price is £45.00 a month for Fibre 900, against £27.00 for Fibre 150 (CONFIRMED in the seed catalogue; read from Salesforce at run time). DevBot agrees with this default; accepted by LalitC (30 Oct 2026).
+2. **Hosting wording.** Default: "The agent and model run locally in our stack. Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed)." Make no UK-only claim yet. The GitHub Pages replay, the org region and model hosting are unverified. DevBot agrees with this default; accepted by LalitC (30 Oct 2026).
 3. **Model.** Qwen3-4B-Instruct-2507 via Ollama (Apache 2.0, non-thinking variant), agreed by LalitC on 27 Oct 2026. It replaces Qwen2.5 3B, whose Qwen Research License allows non-commercial use only (CONFIRMED, Hugging Face licence file), which rules it out for client demos. Backups: Phi-4-mini-instruct (MIT), then Granite 3.3 2B (Apache 2.0). Build step 0 speed-tests all three on the CPU-only host against the 5-second-per-turn target and picks the fastest that calls the tools correctly. 7B is not used in the MVP. Memory to be re-measured on the 15 GB host (Qwen2.5 3B stack was about 5 GB, CONFIRMED by DevBot).
    - **Narrow tasks only:** the model understands the need, fills the Intent, chooses from the allowed offers in the context pack and phrases the reply.
    - **Explanations:** concept explanations come from the layer panels, the context pack and the glossary, not from the model, so they are always correct.
@@ -201,7 +201,7 @@ Each decision has a recommended default.
      - It creates the Fibre 900 Asset as Installed at the same Location.
      - It links the two with the standard AssetRelationship object, type "Upgrade" (createable; no custom field).
    - **No logic in the org:** all writes go through standard APIs or the mapping-only adapter.
-   - **Live test:** still waits until all three agree this document.
+   - **Live test:** released: all three agreed this document (30 Oct 2026); live org tests run from DevBot's secure setup, never from the room.
 7. **Jeopardy storage.** Default: L3 plus events, with no change to the Salesforce order (section 6).
 8. **Where TMF921 lives.** Outside Salesforce, confirmed by LalitC on 27 Oct 2026.
    - **Where:** a small intent service in L1, stored in L3 Postgres, which is the system of record for the Intent and IntentReports. An Intent is agent-layer state, not system-of-record data.
@@ -213,7 +213,7 @@ Each decision has a recommended default.
 9. **L7 mocked** (LalitC, 27 Oct 2026). Interpretation: L7 is the operator's digital core, the network and the platform. The card leads with a mocked network view of Brightwell's site (site 4471, access port 150 to 900 when the OSS step completes), labelled as our illustration, with platform services as one line underneath. Network records stay in L6. Compose is kept as plumbing, and credentials stay server-side regardless.
 10. **No Salesforce MCP in the MVP** (LalitC, 27 Oct 2026). MCP is used only between the agent and our own three tools, named in our business terms. The L4 context service reads Salesforce through its native APIs and our facades, read-only, per request; only the L5 workflow writes. To avoid vendor lock-in, no vendor's tools define the agent's vocabulary: a vendor MCP server, if used later, sits behind the context layer as one more source, called by code (roadmap).
 
-## 11. Build items (not started until all three agree)
+## 11. Build items (released by LalitC, 30 Oct 2026; built on branch `mvp-build`)
 
 0. Install Docker and Ollama on the demo host (after sign-off).
 1. Upgrade ("modify") action on the order Apex add-on [TMF622]: mapping only, no business rules.
