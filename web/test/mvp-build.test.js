@@ -51,13 +51,14 @@ test('policy and model come from this build', () => {
 });
 test('L6 wording, footer, no hosting wording, branding', () => {
   const l6 = CFG.copy.layers.find((l) => l.id === 'L6');
-  assert.match(JSON.stringify(l6), /TM Forum Open APIs, exposed by Salesforce through a thin TMF facade layer within Salesforce/);
+  assert.match(JSON.stringify(l6), /TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce/);
   assert.match(app.js, /TMF Open APIs \(Salesforce\)/);
   assert.doesNotMatch(app.js, /native Salesforce API/);
   assert.doesNotMatch(app.js.replace(/not (ODA-)?certified( as conformant)?/g, ''), /\b(conformant|certified)\b/i);
   assert.match(app.js, /All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer\./);
   assert.ok(html.includes(FOOT) && (app.html + app.js).includes(FOOT));
   assert.doesNotMatch(app.js, /demo host\. Salesforce is a hosted|regional hosting|UK hosting/);
+  assert.doesNotMatch(app.js, /Docker|Compose host/);
   assert.doesNotMatch(app.js, /GBR58|UK region to be confirmed/);
   assert.match(app.js, /event bus'/);   // platform line, no hosting mention (LalitC, 30 Oct)
   assert.match(app.js, /TMF facade within Salesforce \(Apex\)/);

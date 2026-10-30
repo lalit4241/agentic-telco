@@ -129,7 +129,7 @@ Salesforce holds Brightwell's customer record, contacts, site, quote, order and 
 It shows the operator's network at site 4471: the exchange, the fibre path to Martlesham and the access port. The port changes from 150 to 900 when the network fulfilment step completes. One line underneath lists the platform services an operator would provide.
 
 - **Why it matters:** it shows where the order meets the network and what a production platform needs, without claiming the MVP has it.
-- **What you'll see:** the network view for site 4471, labelled "network view is our illustration"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus); and the line "MVP runs on a single Docker Compose host".
+- **What you'll see:** the network view for site 4471, labelled "network view is our illustration"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus).
 - **Tags:** none
 
 ## L8 Observability
@@ -171,5 +171,5 @@ It builds a step timeline for Sam's request from the audit log. It shows each st
 **Hidden rule**: A business rule buried inside a system's configuration or code, often undocumented. In our demo org, a custom flow silently required a usage record on each order; the demo now creates it inside the TMF622 order.
 **TM Forum Open APIs**: Industry-standard telco APIs published by TM Forum, each with a number, such as TMF622 for product orders. The demo is TMF-aligned.
 **ODA**: Open Digital Architecture, TM Forum's reference architecture for telco IT, built from functional blocks. The demo is aligned to ODA functional blocks and uses TMF Open API contracts.
-**Digital core**: The operator's network and the platform that runs its software. In the demo it is a labelled illustration; the MVP itself runs on one Docker Compose host.
+**Digital core**: The operator's network and the platform that runs its software. In the demo it is a labelled illustration.
 **Audit timeline**: The step-by-step record of one request, built from the audit log: each step, its timing, both policy decisions and the model's token use.

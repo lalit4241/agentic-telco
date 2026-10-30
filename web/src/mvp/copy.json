@@ -96,11 +96,11 @@
     },
     {
      "key": "What you'll see",
-     "text": "the context pack with source chips (\"Salesforce\" or \"Legacy stand-in (mocked)\"), the policy decision and the rule that applied."
+     "text": "the context pack with source chips (\"TMF Open API (Salesforce)\" with the API name, or \"Legacy stand-in (mocked)\"), the policy decision and the rule that applied."
     },
     {
      "key": "Today vs agentic",
-     "text": "in our own demo org, the \"Custom Assetize Order\" flow silently required a usage record on each order. Nothing documented it. That is an org customisation, not a Salesforce flaw. Here the same kind of rule is one visible policy."
+     "text": "in our own demo org, the \"Custom Assetize Order\" flow silently required a usage record on each order. Nothing documented it. That is an org customisation, not a Salesforce flaw. Here the same kind of rule is one visible policy, and the usage record is created inside the TMF622 order itself, not as a separate call."
     },
     {
      "key": "Tags",
@@ -145,7 +145,7 @@
    "n": 6,
    "name": "Systems of record",
    "body": [
-    "Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Everything above this layer reaches it only through TM Forum Open APIs, never through Salesforce-specific APIs. Salesforce provides TM Forum APIs for customers, parties and installed services. A thin TMF facade layer within Salesforce (Apex) adds catalogue, quote, order and promotion, plus the few lookups and installed-service updates that Salesforce's own TMF APIs don't cover. It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The legacy billing, availability and network systems sit behind adapters with the same TM Forum API shapes. The APIs are TMF-aligned, not certified as conformant."
+    "Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Everything above this layer reaches it only through TM Forum Open APIs, never through Salesforce-specific APIs. Out of the box, Salesforce provides two of them: the customer record (TMF629) and reading one installed service by its ID (TMF637). A thin TMF facade layer within Salesforce (Apex) provides the rest: the organisation and its contact roles (TMF632), listing, creating and updating installed services and linking them as an upgrade (TMF637), catalogue (TMF620), quote (TMF648), order (TMF622) and promotion (TMF671). It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The usage record that our demo org expects on each order is created inside the TMF622 order itself, not as a separate call. The legacy billing, availability, network inventory and network fulfilment systems sit behind adapters with the same TM Forum API shapes. The overdue-balance payment link is a mocked stand-in and is not a TMF API. The APIs are TMF-aligned."
    ],
    "bullets": [
     {
@@ -158,13 +158,13 @@
     },
     {
      "key": "Tags",
-     "text": "TMF Open APIs exposed by Salesforce [TMF629] [TMF632] [TMF637] [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666] [TMF679] [TMF641] (shape only)"
+     "text": "TMF Open API (Salesforce), out of the box [TMF629] [TMF637 get-by-id] · TMF Open API (Salesforce), TMF facade [TMF632] [TMF637 list/create/update/relationship] [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666 billing] [TMF679 availability] [TMF639 network inventory] [TMF641 network fulfilment] (shape only) · payment link (mocked, not a TMF API)"
     }
    ],
    "question": "Where is the truth recorded?",
-   "tech": "Salesforce as the system of record, exposed only through TM Forum Open APIs: Salesforce's own TMF APIs plus a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind TMF-shaped adapters",
+   "tech": "Salesforce as the system of record, exposed only through TM Forum Open APIs: TMF629 and TMF637 get-by-id out of the box from Salesforce; TMF632, TMF637 list/create/update/relationship, TMF620, TMF648, TMF622 and TMF671 from a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind TMF-shaped adapters",
    "status": "Salesforce real; legacy billing, availability, inventory and OSS mocked",
-   "label": "TM Forum Open APIs, exposed by Salesforce through a thin TMF facade layer within Salesforce",
+   "label": "TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce",
    "chip": "TMF Open APIs (Salesforce)"
   },
   {
@@ -181,7 +181,7 @@
     },
     {
      "key": "What you'll see",
-     "text": "the network view for site 4471, labelled \"network view is our illustration\"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus); and the line \"MVP runs on a single Docker Compose host\"."
+     "text": "the network view for site 4471, labelled \"network view is our illustration\"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus)."
     },
     {
      "key": "Tags",
@@ -225,7 +225,7 @@
  "glossary": [
   {
    "term": "Intent",
-   "definition": "A customer need written as an outcome, not a product, such as \"support 15 more staff and cloud video at this site\". Here it follows the shape of the TM Forum intent API (TMF921) but is not conformance-tested."
+   "definition": "A customer need written as an outcome, not a product, such as \"support 15 more staff and cloud video at this site\". Here it follows the shape of the TM Forum intent API (TMF921) and is TMF-aligned."
   },
   {
    "term": "Intent report",
@@ -293,11 +293,11 @@
   },
   {
    "term": "TMF facade",
-   "definition": "A thin layer within Salesforce, written in Apex, that exposes Salesforce's records as TM Forum Open APIs where Salesforce's own TMF APIs don't cover the need: catalogue, quote, order, promotion, and the installed-service updates. It lives in the Salesforce org, not in a separate integration tier, and only translates data."
+   "definition": "A thin layer within Salesforce, written in Apex, that exposes Salesforce's records as TM Forum Open APIs where Salesforce's out-of-the-box TMF APIs (TMF629 and TMF637 get-by-id) don't cover the need: TMF632 contact roles, TMF637 list, create, update and relationship, TMF620 catalogue, TMF648 quote, TMF622 order (including the usage record, created inside the order) and TMF671 promotion. It lives in the Salesforce org, not in a separate integration tier, and only translates data."
   },
   {
    "term": "Legacy stand-in",
-   "definition": "A mocked version of an older system, such as billing or network fulfilment, built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen."
+   "definition": "A mocked version of an older system, such as billing (TMF666 shape), availability (TMF679), network inventory (TMF639) or network fulfilment (TMF641), built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen."
   },
   {
    "term": "Adapter",
@@ -313,19 +313,19 @@
   },
   {
    "term": "Hidden rule",
-   "definition": "A business rule buried inside a system's configuration or code, often undocumented. In our demo org, a custom flow silently required a usage record on each order."
+   "definition": "A business rule buried inside a system's configuration or code, often undocumented. In our demo org, a custom flow silently required a usage record on each order; the demo now creates it inside the TMF622 order."
   },
   {
    "term": "TM Forum Open APIs",
-   "definition": "Industry-standard telco APIs published by TM Forum, each with a number, such as TMF622 for product orders. The demo is aligned with them, not certified."
+   "definition": "Industry-standard telco APIs published by TM Forum, each with a number, such as TMF622 for product orders. The demo is TMF-aligned."
   },
   {
    "term": "ODA",
-   "definition": "Open Digital Architecture, TM Forum's reference architecture for telco IT, built from functional blocks. The demo is aligned to ODA functional blocks and uses TMF Open API contracts; it is not ODA-certified."
+   "definition": "Open Digital Architecture, TM Forum's reference architecture for telco IT, built from functional blocks. The demo is aligned to ODA functional blocks and uses TMF Open API contracts."
   },
   {
    "term": "Digital core",
-   "definition": "The operator's network and the platform that runs its software. In the demo it is a labelled illustration; the MVP itself runs on one Docker Compose host."
+   "definition": "The operator's network and the platform that runs its software. In the demo it is a labelled illustration."
   },
   {
    "term": "Audit timeline",

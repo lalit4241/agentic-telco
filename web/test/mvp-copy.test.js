@@ -14,7 +14,7 @@ test('27 glossary terms, each with a definition', () => {
 });
 test('L6 wording: full label and chip', () => {
   const l6 = c.layers[5];
-  assert.strictEqual(l6.label, 'TM Forum Open APIs, exposed by Salesforce through a thin TMF facade layer within Salesforce');
+  assert.strictEqual(l6.label, 'TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce');
   assert.strictEqual(l6.chip, 'TMF Open APIs (Salesforce)');
   assert.ok(!/native Salesforce API/.test(JSON.stringify(c)));
 });
