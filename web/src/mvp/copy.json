@@ -181,7 +181,7 @@
     },
     {
      "key": "What you'll see",
-     "text": "the network view for site 4471, labelled \"network view is our illustration\"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus, UK hosting); and the line \"MVP runs on a single Docker Compose host\"."
+     "text": "the network view for site 4471, labelled \"network view is our illustration\"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus); and the line \"MVP runs on a single Docker Compose host\"."
     },
     {
      "key": "Tags",

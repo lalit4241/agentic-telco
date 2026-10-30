@@ -49,14 +49,14 @@ test('policy and model come from this build', () => {
   assert.match(CFG.model, /Qwen3-4B/i);
   assert.match(CFG.bpmn, /bpmndi:BPMNDiagram/);
 });
-test('L6 wording, footer, hosting wording, branding', () => {
+test('L6 wording, footer, no hosting wording, branding', () => {
   const l6 = CFG.copy.layers.find((l) => l.id === 'L6');
   assert.match(JSON.stringify(l6), /Salesforce native APIs plus a thin TMF facade layer within Salesforce/);
   assert.match(app.js, /Salesforce APIs \+ TMF facade \(in Salesforce\)/);
   assert.ok(html.includes(FOOT) && (app.html + app.js).includes(FOOT));
-  assert.match(app.js, /The agent, model, policy and workflow run locally on our demo host\. Salesforce is a hosted Salesforce trial org\./);
+  assert.doesNotMatch(app.js, /demo host\. Salesforce is a hosted|regional hosting|UK hosting/);
   assert.doesNotMatch(app.js, /GBR58|UK region to be confirmed/);
-  assert.match(app.js, /event bus · regional hosting'/);   // platform line in mvp.js (layer-panels.md copy is owned by TMForumCTO)
+  assert.match(app.js, /event bus'/);   // platform line, no hosting mention (LalitC, 30 Oct)
   assert.match(app.js, /TMF facade within Salesforce \(Apex\)/);
   assert.doesNotMatch(app.js, /facade inside Salesforce/);
   assert.doesNotMatch(html + app.html + app.js, /<img|LC monogram/i);

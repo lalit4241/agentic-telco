@@ -15,8 +15,7 @@
     { id: 'overdue', t: 'Overdue balance', s: 'Policy says no' },
     { id: 'delayed', t: 'Order delayed', s: '+2 days, Sam told first' }];
   var OPENING = "We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. Our broadband already struggles. What do you suggest?";
-  var HOSTING = 'The agent, model, policy and workflow run locally on our demo host. Salesforce is a hosted Salesforce trial org.';
-  var PLATFORM = 'Kubernetes · secrets vault · network zones · API gateway · agent and workload identity · event bus · regional hosting';
+  var PLATFORM = 'Kubernetes · secrets vault · network zones · API gateway · agent and workload identity · event bus';
   var S = { tab: 'demo', caseId: null, cid: null, full: null, t: Infinity, busy: false, open: null, presenter: false, follow: false, play: null, speed: 1, rec: null };
   var layerCopy = {}; (COPY.layers || []).forEach(function (l) { layerCopy[l.id] = l; });
 
@@ -100,7 +99,7 @@
       '<section id="v-demo"><div class="wrap"><div class="col-l"></div><div class="col-r"></div></div></section>' +
       '<section id="v-arch" hidden></section>' +
       '<div class="dr" id="drawer" aria-hidden="true"></div>' +
-      '<div class="foot">Concept demo by Lalit Chauhan · not an official Salesforce product · ' + esc(HOSTING) + '</div>';
+      '<div class="foot">Concept demo by Lalit Chauhan · not an official Salesforce product</div>';
     $('.col-l').innerHTML =
       '<div class="panel"><div class="ph"><h2>Business view</h2><span class="sub">Brightwell Design Ltd · Fibre 150 → Fibre 900</span></div>' +
       '<div class="cases">' + CASES.map(function (c, i) { return '<button class="case" data-case="' + c.id + '"><b>' + (i + 1) + '. ' + c.t + '</b><span>' + c.s + '</span></button>'; }).join('') + '</div>' +
@@ -305,7 +304,7 @@
         '<rect x="420" y="70" width="80" height="60" rx="8" fill="#fff" stroke="' + col + '" stroke-width="2"/><text x="460" y="96" text-anchor="middle" font-size="12" font-weight="700">' + (up ? '900' : '150') + ' Mbps</text><text x="460" y="113" text-anchor="middle" font-size="10" fill="#555">access port</text><text x="460" y="146" text-anchor="middle" font-size="9.5" fill="#777">' + esc((n.accessPort || {}).id || 'MH-OLT-07/1/14') + '</text>' +
         '<line x1="500" y1="100" x2="530" y2="100" stroke="#64748b" stroke-width="3"/><rect x="530" y="60" width="100" height="80" rx="10" fill="#eef4ff" stroke="#0176d3"/><text x="580" y="92" text-anchor="middle" font-size="12" font-weight="700">Site 4471</text><text x="580" y="110" text-anchor="middle" font-size="11" fill="#555">Brightwell</text><text x="580" y="125" text-anchor="middle" font-size="11" fill="#555">Martlesham</text>' +
         '<text x="320" y="180" text-anchor="middle" font-size="12" fill="' + col + '">' + (up ? 'Port upgraded 150 → 900 when the OSS step completed' : jeo ? 'No 900 Mbps port free: the order is in jeopardy (+2 days)' : sent ? 'Order sent to the legacy OSS, waiting for the overnight batch' : 'Today: Fibre 150 on this port') + '</text></svg>' +
-        '<div class="sec">Platform (target state, mocked)</div><p>' + PLATFORM + '</p><p class="small">Provided by the operator\'s digital core, mocked in the MVP. MVP runs on a single host (native processes in this build; Docker Compose in the design). ' + esc(HOSTING) + '</p>' +
+        '<div class="sec">Platform (target state, mocked)</div><p>' + PLATFORM + '</p><p class="small">Provided by the operator\'s digital core, mocked in the MVP. MVP runs on a single host (native processes in this build; Docker Compose in the design).</p>' +
         '<p class="small">The records about the network (inventory, site, OSS order) stay in L6; L7 is the network and platform itself.</p>';
     },
     L8: function (b, v) {
@@ -337,7 +336,7 @@
     $('#v-arch').innerHTML = '<div class="arch"><h2 style="margin:4px 0">How the new architecture works</h2>' +
       '<div class="flow"><span><b>Sam</b> asks in chat</span><em>→</em><span>L1 Intent</span><em>→</em><span>L2 Agent proposes</span><em>→</em><span>L4 Context &amp; Policy decides</span><em>→</em><span>L5 Workflow writes</span><em>→</em><span>L6 Salesforce + legacy</span><em>→</em><span>L7 network</span><em>·</em><span>L3 remembers · L8 proves</span></div>' +
       '<div class="agrid">' + LAYER_IDS.map(function (id) { var l = layerCopy[id] || {}, k = statusKind(l.status); return '<div class="ac" data-layer="' + id + '" style="--c:var(--' + id.toLowerCase() + ')"><span class="lab ' + k[0] + '">' + esc(l.status) + '</span><h3>' + id + ' · ' + esc(l.name) + '</h3><div class="q">' + esc(l.question) + '</div><div class="tech">' + esc(l.label) + '</div></div>'; }).join('') + '</div>' +
-      '<div class="keys" style="padding:12px 0"><div class="key"><b>Agent proposes</b>The model suggests and explains; it has no write tool and holds no rule.</div><div class="key"><b>Policy decides</b>One versioned OPA policy, checked advisory (L4) and binding (L5).</div><div class="key"><b>Workflow writes</b>BPMN (Operaton) is the only writer, through Salesforce APIs and the TMF facade layer within Salesforce.</div><div class="key"><b>Hosting</b>' + esc(HOSTING) + '</div></div>' +
+      '<div class="keys" style="padding:12px 0"><div class="key"><b>Agent proposes</b>The model suggests and explains; it has no write tool and holds no rule.</div><div class="key"><b>Policy decides</b>One versioned OPA policy, checked advisory (L4) and binding (L5).</div><div class="key"><b>Workflow writes</b>BPMN (Operaton) is the only writer, through Salesforce APIs and the TMF facade layer within Salesforce.</div></div>' +
       '<div class="ph" style="border:1px solid var(--line);border-radius:10px 10px 0 0"><h2>Glossary (' + g.length + ' terms, from docs/mvp/layer-panels.md)</h2><input class="glf" id="glf" placeholder="Filter terms…"></div>' +
       '<div class="panel" style="border-top:0;border-radius:0 0 10px 10px;padding:12px"><div class="gl" id="gl"></div></div></div>';
     var draw = function (f) { $('#gl').innerHTML = g.filter(function (x) { return !f || (x.term + x.definition).toLowerCase().indexOf(f) >= 0; }).map(function (x) { return '<div class="gt"><b>' + esc(x.term) + '</b> · ' + esc(x.definition) + '</div>'; }).join(''); };

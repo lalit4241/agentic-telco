@@ -1,5 +1,5 @@
 {
- "at": "2026-10-30T17:21:51.547Z",
+ "at": "2026-10-30T17:40:33.010Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -52,7 +52,7 @@
    "detail": ""
   },
   {
-   "name": "footer and hosting wording",
+   "name": "footer and no hosting wording",
    "ok": true,
    "detail": ""
   },

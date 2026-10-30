@@ -35,7 +35,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('8 layer cards render', (await page.$$('.ly')).length === 8);
   check('L6 chip wording', (await page.textContent('.ly[data-layer="L6"]')).includes('Salesforce APIs + TMF facade (in Salesforce)'));
   check('4 cases', (await page.$$('.case')).length === 4);
-  check('footer and hosting wording', (await page.textContent('body')).includes(FOOT) && (await page.textContent('body')).includes('The agent, model, policy and workflow run locally on our demo host. Salesforce is a hosted Salesforce trial org.'));
+  check('footer and no hosting wording', (await page.textContent('body')).includes(FOOT) && !/hosting|demo host/i.test(await page.textContent('body')));
   const end = async () => { await page.click('#b-end'); await page.waitForTimeout(400); };
   const chev = () => page.$$eval('#chev .cv', (a) => a.map((x) => x.className.replace('cv ', '').trim()));
   const chat = () => page.textContent('#chat');
