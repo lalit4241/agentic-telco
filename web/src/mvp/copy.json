@@ -189,9 +189,9 @@
     }
    ],
    "question": "What does it run on, and where does the order reach the network?",
-   "tech": "Network view (mocked); MVP runs on a single host",
+   "tech": "Network view (mocked)",
    "status": "Mocked, our illustration",
-   "label": "Network view (mocked); MVP runs on a single host",
+   "label": "Network view (mocked)",
    "chip": "Digital Core"
   },
   {
