@@ -2,7 +2,9 @@
 
 **Status: AGREED v1.0 — LalitC [x] (signed off 30 Oct 2026: "This is the approach it has been agreed for MVP - let's go ahead and build it") DevBot [x] (agreed subject to the decision 6 edit, 27 Oct 2026) TMForumCTO [x] (agreed)**
 
-27 Oct 2026. This is the one document all three must agree before any development starts. It consolidates [MVP-design.md](MVP-design.md) and [layer-walkthrough.md](layer-walkthrough.md). The walkthrough stays as the detailed appendix. Where they differ, this document wins once agreed.
+v1.1 (30 Oct 2026): TMF-only API presentation; hosting and runtime wording removed. Agreed by LalitC.
+
+27 Oct 2026. This is the one document all three must agree before any development starts. It consolidates [MVP-design.md](MVP-design.md) and [layer-walkthrough.md](layer-walkthrough.md). The walkthrough is superseded (30 Oct 2026) and kept for history only; the on-screen wording is in [layer-panels.md](layer-panels.md). Where they differ, this document wins once agreed.
 
 Labels: CONFIRMED (checked in a primary source or our own org/code), REPORTED (stated by others, not checked), INFERRED (our analysis), RECOMMENDED (our proposal), UNKNOWN. Customer names, IDs and prices are examples. Layer names follow TechM's Zero Gravity report. Everything else is our design, not the report's.
 
@@ -71,8 +73,8 @@ The same business customer exists under three IDs. All IDs are examples.
 | L3 Data Foundation | What do we remember? | Conversation, decisions, consent, workflow and jeopardy history, audit; identity cross-reference | PostgreSQL (PostgreSQL Licence) | Cross-reference rows, audit rows | Real; IDs are examples |
 | L4 Enterprise Context | What do we know, and is it allowed? | Semantic definitions, context pack with sources, policy decision | Context service (ours), OPA (Apache-2.0) | Context pack, policy decision and rule | Real; balance and availability are stand-ins |
 | L5 Deterministic Execution | Who actually does the work? | One BPMN process: binding check, quote, order, fulfilment wait, jeopardy, asset change; idempotent; absorbs slow and batch legacy | Operaton (Apache-2.0), Python workers (ours) | BPMN diagram, current step highlighted | Real; OSS is a stand-in |
-| L6 Agent-Ready SoR | Where is the truth recorded? | Salesforce, plus legacy stand-ins, each behind a standard API | Salesforce (commercial), with a thin TMF facade layer within Salesforce (Apex, ours) | Each call, labelled "native Salesforce API" or "TMF facade inside Salesforce (Apex)", with record links | Salesforce real |
-| L7 Digital Core | What does it run on, and where does the order reach the network? | Mocked network view of Brightwell's site (exchange, fibre path, access port changing from 150 to 900) plus the platform in one line; the MVP itself runs on one host | Mock panel; Docker Compose as plumbing (Apache-2.0) | Network view for site 4471, platform line, "MVP runs on a single Docker Compose host" | Target state mocked, labelled; plumbing real |
+| L6 Agent-Ready SoR | Where is the truth recorded? | Salesforce, plus legacy stand-ins, each behind a standard API | Salesforce (commercial), exposed only through TM Forum Open APIs: two out of the box, the rest from a thin TMF facade layer within Salesforce (Apex, ours) | Each call, shown by its TMF API number and labelled "TMF Open API (Salesforce)" or "Legacy stand-in (mocked)", with record links; the detail drawer says whether Salesforce provides it out of the box or our facade does | Salesforce real |
+| L7 Digital Core | What does it run on, and where does the order reach the network? | Mocked network view of Brightwell's site (exchange, fibre path, access port changing from 150 to 900) plus the platform in one line | Mock panel | Network view for site 4471, platform line | Target state mocked, labelled |
 | L8 Observability & Governance | How do we prove what happened? | Step timeline per request across all layers (agreed by LalitC, 27 Oct 2026) | Built from the L3 audit log | Step timeline | Real data from each run |
 
 **L1.** Sam types "We're hiring 15 people and moving to cloud video editing; the line can't keep up." Sam never has to name a product. The agent fills a structured **Intent** [TMF921] and submits it as a proposal. The Intent states an outcome, not a product. For example: "support 15 more staff and cloud video at the Martlesham site, no extra visits, within contract, by 30 Nov 2026" (example date). Fibre 900 is the agent's recommendation in answer to the Intent; the Intent never names it. Progress comes back as **IntentReports**: a delay means "intent at risk, revised date", and Fibre 900 going live closes the Intent as fulfilled.
@@ -87,9 +89,9 @@ TMF921 is designed mainly for intent handover between autonomous-network layers 
 
 **L5.** One BPMN process on Operaton (decision 4) does every system-of-record write. It runs the binding policy check, quote, upgrade order and the fulfilment wait. A timer raises the delay and the revised date. The process decides each Intent state change: at risk = `icm:StateDegrades`, fulfilled = `icm:StateComplies` (INFERRED mapping). It posts these as IntentReports to the intent service. It then makes the asset change. The order external ID is the business key, so reruns can't double-write. Python workers absorb slow and batch legacy systems.
 
-**L6.** Salesforce keeps the records and nothing else. Calls use native Salesforce APIs where the org has them: customer and contacts [TMF629/632] and installed services [TMF637]. Otherwise they use a thin, mapping-only TMF facade layer within Salesforce (Apex): catalogue [TMF620], quote [TMF648], order [TMF622] and promotion [TMF671] (ADR amendment 001, approved by LalitC). The facades live in the Salesforce org, not in a separate integration tier, and hold no business rules. The Intent [TMF921] is not in Salesforce (decision 8). Every legacy system sits behind an adapter speaking a standard API. A system that can't be adapted is wrapped, and systems are replaced one at a time.
+**L6.** Salesforce keeps the records and nothing else. Everything above L6 reaches Salesforce only through TM Forum Open APIs, labelled "TMF Open API (Salesforce)" (LalitC, 30 Oct 2026). Two come out of the box from Salesforce: the customer record [TMF629] and reading one installed service by its ID [TMF637 get-by-id]. A thin, mapping-only TMF facade layer within Salesforce (Apex) provides the rest: the organisation and its contact roles [TMF632], listing, creating and updating installed services and linking them as an upgrade [TMF637 list/create/update/relationship], catalogue [TMF620], quote [TMF648], order [TMF622] and promotion [TMF671] (ADR amendment 001, approved by LalitC). The usage record our demo org expects on each order is created inside the TMF622 order, not as a separate call. The facades live in the Salesforce org, not in a separate integration tier, and hold no business rules. Nothing above L6 uses SOQL or sObject REST; a test and a runtime guard enforce that. The legacy stand-ins (billing [TMF666], availability [TMF679], network inventory [TMF639], network fulfilment [TMF641]) are mocked behind TMF-shaped adapters. The overdue-balance payment link is mocked and is not a TMF API. The claim is "TMF-aligned" only. The Intent [TMF921] is not in Salesforce (decision 8). Every legacy system sits behind an adapter speaking a standard API. A system that can't be adapted is wrapped, and systems are replaced one at a time.
 
-**L7.** Mocked in the MVP (decision 9). The L7 card leads with a network view of Brightwell's site, labelled "mocked, operator's digital core (network and edge)": the exchange, the fibre path to Martlesham and the access port, whose capacity changes from 150 to 900 at the moment the OSS step completes. It uses the same site ID 4471 as the L6 inventory stand-in. The records about the network (inventory, site, OSS order) stay in L6; L7 is the network and platform itself. A note says "network view is our illustration": the Zero Gravity report (p. 17) names network virtualisation and edge in L7 but does not place physical assets (INFERRED). Underneath, one line lists the platform target state: Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus, UK hosting. It adds one plain line: "MVP runs on a single Docker Compose host". That plumbing is real but not presented as a feature: one Compose stack, one private network, and Salesforce credentials kept server-side.
+**L7.** Mocked in the MVP (decision 9). The L7 card leads with a network view of Brightwell's site, labelled "mocked, operator's digital core (network and edge)": the exchange, the fibre path to Martlesham and the access port, whose capacity changes from 150 to 900 at the moment the OSS step completes. It uses the same site ID 4471 as the L6 inventory stand-in. The records about the network (inventory, site, OSS order) stay in L6; L7 is the network and platform itself. A note says "network view is our illustration": the Zero Gravity report (p. 17) names network virtualisation and edge in L7 but does not place physical assets (INFERRED). Underneath, one line lists the platform target state: Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus. The card makes no hosting or runtime statement. The plumbing underneath is real but not presented as a feature; Salesforce credentials are kept server-side.
 
 **L8.** A step timeline per request, built from the L3 audit log (agreed by LalitC, 27 Oct 2026). It shows each layer's step and its timing, both policy decisions and the model token counts. Each step carries a trace ID and timing fields in OpenTelemetry shape, so moving to OpenTelemetry and Jaeger later is configuration, not a rewrite (roadmap).
 
@@ -102,17 +104,17 @@ TMF921 is designed mainly for intent handover between autonomous-network layers 
 | L3 Data | Conversation, decisions, audit, the customer ID cross-reference (Salesforce Account, billing ID BIL-B-0077812, inventory site 4471, address key A00000001975), order milestones and delay history, Intents and IntentReports (system of record) | Postgres | Real | Kafka, pgvector, semantic cache |
 | L4 Enterprise Context and Policy | Business terms defined once with their source; one context pack per request, each fact tagged with its source; one policy run twice (advisory before the offer, binding before any write): authorised contact, no overdue balance, available at the site, upgrade-only mid-contract | YAML semantic model (checked with JSON Schema), context service in Python and FastAPI, OPA (Rego, tested with `opa test`) | Real | Multiple policy packs, graph |
 | L5 Execution | One business process: binding policy check, quote, upgrade order, wait for fulfilment, timer raises the delay and revised date, then Fibre 150 set to Obsolete, Fibre 900 created as Installed, the two linked as an Upgrade. Order ID as business key, so reruns can't double-write | Operaton BPMN with Python workers; no DMN, rules stay in OPA | Real | Multiple processes, human task queues |
-| L6 Systems of record (Salesforce and legacy) | Salesforce: reads customer, contacts and roles, site, current product; writes quote, order and asset changes. Legacy: billing (own ID, slow), availability (refreshed overnight), inventory, OSS fulfilment (overnight batch, +2 day delay), each behind an adapter | Native Salesforce APIs (TMF629/632/637); thin mapping-only Apex for catalogue, quote, order with the upgrade action, promotion (TMF620/648/622/671); legacy stand-ins (TMF666/679/641) | Salesforce real; legacy mocked and labelled | Real BSS/OSS, the org's own availability check (returns an error) |
-| L7 Digital Core | Shown as a labelled mocked panel led by a network view of site 4471 (exchange, fibre path, access port 150 to 900 when the OSS step completes; "network view is our illustration"), then the operator's platform services (Kubernetes, secrets vault, network zones, API gateway, agent/workload identity, event bus, UK hosting), "provided by the operator's digital core, mocked in the MVP", labelled "mocked, target state"; the card adds one plain line: "MVP runs on a single Docker Compose host" | Mock panel; the demo itself is started by a plain Docker Compose file (plumbing, not presented as a layer): about 7 containers plus Ollama, about 5 to 6 GB with a 4B model (to be measured), one private network; Salesforce credentials server-side in environment secrets (security baseline) | Target state mocked, labelled; plumbing real | Kubernetes, gateway, vault, agent identity, event bus, multi-region |
+| L6 Systems of record (Salesforce and legacy) | Salesforce: reads customer, contacts and roles, site, current product; writes quote, order and asset changes. Legacy: billing (own ID, slow), availability (refreshed overnight), inventory, OSS fulfilment (overnight batch, +2 day delay), each behind an adapter | TMF Open APIs only, labelled "TMF Open API (Salesforce)": out of the box TMF629 and TMF637 get-by-id; thin mapping-only Apex facade for TMF632 contact roles, TMF637 list/create/update/relationship, catalogue, quote, order with the upgrade action (usage record created inside the order), promotion (TMF620/648/622/671); no SOQL or sObject REST above L6 (test and runtime guard); legacy stand-ins (TMF666/679/639/641); payment link mocked, not TMF | Salesforce real; legacy mocked and labelled | Real BSS/OSS, the org's own availability check (returns an error) |
+| L7 Digital Core | Shown as a labelled mocked panel led by a network view of site 4471 (exchange, fibre path, access port 150 to 900 when the OSS step completes; "network view is our illustration"), then the operator's platform services (Kubernetes, secrets vault, network zones, API gateway, agent/workload identity, event bus), "provided by the operator's digital core, mocked in the MVP", labelled "mocked, target state"; no hosting or runtime line on the card | Mock panel; the demo itself runs as local processes (plumbing, not presented as a layer); Salesforce credentials server-side in environment secrets (security baseline) | Target state mocked, labelled; plumbing real | Kubernetes, gateway, vault, agent identity, event bus, multi-region |
 | L8 Observability (agreed) | Step timeline per request: each layer's step, its timing, both policy decisions, model token counts | Built from the L3 audit log | Real data from each run | OpenTelemetry and Jaeger (roadmap), Grafana, Langfuse |
 
-The public GitHub Pages site is static and cannot reach the agent, OPA, Operaton or Salesforce. It replays recorded runs (real record IDs and timelines), labelled "recorded run". The live version runs from the Docker Compose host.
+The public GitHub Pages site is static and cannot reach the agent, OPA, Operaton or Salesforce. It replays recorded runs (real record IDs and timelines), labelled "recorded run". The live version runs from the local demo stack.
 
 Deployment diagram: DevBot to attach.
 
 ## 6. Legacy handling
 
-**A real hidden rule (CONFIRMED, our demo org).** An existing org customisation, the record-triggered flow "Custom Assetize Order", silently required a Subscription Management usage record on each order before activation. Nothing documented it. It broke our orders, and we worked out the hidden rule from the error emails. We handled it outside the flow, by creating that record before activation, and did not modify the flow. This is an org customisation, not a Salesforce product flaw. The lesson applies to any customised system of record: rules hide in it. The agentic contrast is the upgrade-only mid-contract rule, written as one visible, versioned, tested OPA policy.
+**A real hidden rule (CONFIRMED, our demo org).** An existing org customisation, the record-triggered flow "Custom Assetize Order", silently required a Subscription Management usage record on each order before activation. Nothing documented it. It broke our orders, and we worked out the hidden rule from the error emails. We handled it outside the flow, by creating that record before activation (now inside the TMF622 order), and did not modify the flow. This is an org customisation, not a Salesforce product flaw. The lesson applies to any customised system of record: rules hide in it. The agentic contrast is the upgrade-only mid-contract rule, written as one visible, versioned, tested OPA policy.
 
 **Adapters.** Every legacy system (billing, inventory, availability, OSS) sits behind an adapter that speaks a standard API. Wrap a system if it can't speak one, as we did on Salesforce, then replace systems one at a time. There is no big bang: wrap, resolve identities, extract rules, let the agent act on that journey, retire systems incrementally (the strangler pattern, which the report also describes for legacy-heavy operators; CONFIRMED).
 
@@ -130,7 +132,7 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 4. **Real vs mocked, and MVP to scale (3 min).** Show what is a stand-in, and the path from MVP to pilot to scale.
 
 **Layer view (proposal, DevBot to build after agreement).**
-- **Split screen:** Sam's chat on the left. On the right, all eight layers light up as the request passes through them. Clicking a layer shows what it did for this request, with real data. The L3 card shows the cross-reference. The L4 card shows the context pack with source chips, the decision and the rule. The L5 card shows the BPMN diagram with the current step highlighted. The L6 card shows each call labelled "native Salesforce API" or "TMF facade inside Salesforce (Apex)", with record links.
+- **Split screen:** Sam's chat on the left. On the right, all eight layers light up as the request passes through them. Clicking a layer shows what it did for this request, with real data. The L3 card shows the cross-reference. The L4 card shows the context pack with source chips, the decision and the rule. The L5 card shows the BPMN diagram with the current step highlighted. The L6 card shows each call by its TMF API number, labelled "TMF Open API (Salesforce)" or "Legacy stand-in (mocked)", with record links; the detail drawer says whether Salesforce provides it out of the box or our facade does.
 - **Presenter mode:** a Step button pauses after each layer. The layer text is written by us, not generated.
 - **Architecture tab:** one card per layer: purpose, open-source tech and licence, contract with its neighbours, real or mocked.
 - **Scenario buttons:**
@@ -146,7 +148,7 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 |---|---|---|---|
 | 1 | Do we replace Salesforce or our BSS? | No. Salesforce stays the system of record for SME. The rest of the estate stays, behind adapters | L6 |
 | 2 | Who is in control? | The agent proposes, policy decides, the workflow writes | Not authorised button |
-| 3 | Lock-in? | Standard telco APIs between layers; open source outside Salesforce; the TMF facade layer within Salesforce only translates. Aligned with industry standards, not certified | Architecture tab, L6 labels |
+| 3 | Lock-in? | Standard telco APIs between layers; open source outside Salesforce; the TMF facade layer within Salesforce only translates. TMF-aligned | Architecture tab, L6 labels |
 | 4 | Safe and compliant? | Every decision is recorded in the audit timeline. Data residency: see decision 2; no UK-only claim yet | L8, L4, L3 |
 | 5 | Run cost? | Real model calls and token usage from the run's audit timeline; OpenTelemetry is on the roadmap (L8 agreed: audit-log step timeline). An agent makes several calls per request. No figures until measured | L2, L8 |
 | 6 | Path to production? | MVP, then pilot, then scale. What changes: runtime platform, real availability, real billing, real fulfilment, more BPMN processes | Architecture tab |
@@ -162,16 +164,16 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 - The agent and the local model.
 - Context service and both policy decisions.
 - BPMN process, idempotency, Postgres records, cross-reference, step timeline.
-- Plumbing (not presented as a feature): one Docker Compose stack, one private network, Salesforce credentials server-side.
+- Plumbing (not presented as a feature): Salesforce credentials server-side.
 
 **Legacy stand-ins (mocked, always labelled on screen):**
 - Billing balance.
 - Availability by address key.
 - Network inventory site ID.
 - Legacy OSS fulfilment, including the jeopardy.
-- Payment link.
+- Payment link (not a TMF API).
 
-**Mocked digital core (labelled "mocked, operator's digital core"):** the L7 network view of site 4471 (exchange, fibre path, access port 150 to 900), then the platform line: Kubernetes, secrets vault, network zones, API gateway, agent/workload identity, event bus, UK hosting.
+**Mocked digital core (labelled "mocked, operator's digital core"):** the L7 network view of site 4471 (exchange, fibre path, access port 150 to 900), then the platform line: Kubernetes, secrets vault, network zones, API gateway, agent/workload identity, event bus.
 
 **Examples, not real data:** UK Telco, Brightwell, Sam, street name, address key, legacy IDs.
 
@@ -180,7 +182,7 @@ Four acts, about 20 minutes. The journey is the same in every act. The presented
 Each decision has a recommended default.
 
 1. **Contract effect of a mid-contract upgrade.** Default: keep the current end date (10 months left), no re-contract, new price from the upgrade date. The seeded term price is £45.00 a month for Fibre 900, against £27.00 for Fibre 150 (CONFIRMED in the seed catalogue; read from Salesforce at run time). DevBot agrees with this default; accepted by LalitC (30 Oct 2026).
-2. **Hosting wording.** Default: "The agent and model run locally in our stack. Salesforce runs on instance GBR58 (REPORTED; UK region to be confirmed)." Make no UK-only claim yet. The GitHub Pages replay, the org region and model hosting are unverified. DevBot agrees with this default; accepted by LalitC (30 Oct 2026).
+2. **Hosting wording.** Resolved by LalitC (30 Oct 2026): the demo makes no hosting statement. The footer reads "Concept demo by Lalit Chauhan · not an official Salesforce product". (Superseded the earlier default, which named a Salesforce instance and region.)
 3. **Model.** Qwen3-4B-Instruct-2507 via Ollama (Apache 2.0, non-thinking variant), agreed by LalitC on 27 Oct 2026. It replaces Qwen2.5 3B, whose Qwen Research License allows non-commercial use only (CONFIRMED, Hugging Face licence file), which rules it out for client demos. Backups: Phi-4-mini-instruct (MIT), then Granite 3.3 2B (Apache 2.0). Build step 0 speed-tests all three on the CPU-only host against the 5-second-per-turn target and picks the fastest that calls the tools correctly. 7B is not used in the MVP. Memory to be re-measured on the 15 GB host (Qwen2.5 3B stack was about 5 GB, CONFIRMED by DevBot).
    - **Narrow tasks only:** the model understands the need, fills the Intent, chooses from the allowed offers in the context pack and phrases the reply.
    - **Explanations:** concept explanations come from the layer panels, the context pack and the glossary, not from the model, so they are always correct.
@@ -195,23 +197,23 @@ Each decision has a recommended default.
 5. **MVP mode.** Default: run as a separate "MVP mode" alongside the full AgenticTelco demo.
 6. **Installed-service end state.** CONFIRMED read-only (DevBot, 27 Oct 2026, flow metadata pulled, org unchanged):
    - **How the flow behaves:** the active "Custom Assetize Order" flow fires on any Order update to Activated, whatever the order type. If the Subscription Management usage record is missing, it calls Salesforce's licensed create-or-update-asset action. If the record exists, it ends with no action.
-   - **No duplicate Asset on upgrade:** our workflow always creates the usage record first, so the flow ends without action.
+   - **No duplicate Asset on upgrade:** our workflow always creates the usage record first (inside the TMF622 order), so the flow ends without action.
    - **The L5 workflow owns the Asset end state, because the flow won't touch Assets:**
      - It sets the Fibre 150 Asset to Obsolete, with an end date.
      - It creates the Fibre 900 Asset as Installed at the same Location.
      - It links the two with the standard AssetRelationship object, type "Upgrade" (createable; no custom field).
-   - **No logic in the org:** all writes go through standard APIs or the mapping-only adapter.
+   - **No logic in the org:** all writes go through TMF Open APIs from the mapping-only facade layer.
    - **Live test:** released: all three agreed this document (30 Oct 2026); live org tests run from DevBot's secure setup, never from the room.
 7. **Jeopardy storage.** Default: L3 plus events, with no change to the Salesforce order (section 6).
 8. **Where TMF921 lives.** Outside Salesforce, confirmed by LalitC on 27 Oct 2026.
    - **Where:** a small intent service in L1, stored in L3 Postgres, which is the system of record for the Intent and IntentReports. An Intent is agent-layer state, not system-of-record data.
    - **Who writes:** the agent proposes the structured Intent. The intent service validates it (schema plus the OPA authorised-contact check) and records it. L5 posts the IntentReports. The agent has no write tools to any system of record.
-   - **Rule (LalitC, 27 Oct 2026: "TMF921 stays out of Salesforce - Salesforce only has the APIs for SoR"):** Salesforce hosts only APIs for data it is the system of record for (native APIs, or thin mapping-only Apex facades where the org lacks them). Agent-layer state such as TMF921 Intent lives outside Salesforce.
-   - **Apex facades:** remain for TMF620/622/648/671 only.
+   - **Rule (LalitC, 27 Oct 2026: "TMF921 stays out of Salesforce - Salesforce only has the APIs for SoR"):** Salesforce hosts only APIs for data it is the system of record for (TMF Open APIs, out of the box or from thin mapping-only Apex facades). Agent-layer state such as TMF921 Intent lives outside Salesforce.
+   - **Apex facades:** TMF620/622/648/671, extended by LalitC on 30 Oct 2026 to TMF632 contact roles and TMF637 list/create/update/relationship (TMF-only presentation).
    - **Rejected:** an Apex facade with a custom object, and stretching Opportunity or Case.
    - **Record:** an ADR-001 amendment.
-9. **L7 mocked** (LalitC, 27 Oct 2026). Interpretation: L7 is the operator's digital core, the network and the platform. The card leads with a mocked network view of Brightwell's site (site 4471, access port 150 to 900 when the OSS step completes), labelled as our illustration, with platform services as one line underneath. Network records stay in L6. Compose is kept as plumbing, and credentials stay server-side regardless.
-10. **No Salesforce MCP in the MVP** (LalitC, 27 Oct 2026). MCP is used only between the agent and our own three tools, named in our business terms. The L4 context service reads Salesforce through its native APIs and our facades, read-only, per request; only the L5 workflow writes. To avoid vendor lock-in, no vendor's tools define the agent's vocabulary: a vendor MCP server, if used later, sits behind the context layer as one more source, called by code (roadmap).
+9. **L7 mocked** (LalitC, 27 Oct 2026). Interpretation: L7 is the operator's digital core, the network and the platform. The card leads with a mocked network view of Brightwell's site (site 4471, access port 150 to 900 when the OSS step completes), labelled as our illustration, with platform services as one line underneath. Network records stay in L6. No hosting or runtime wording is shown, and credentials stay server-side regardless.
+10. **No Salesforce MCP in the MVP** (LalitC, 27 Oct 2026). MCP is used only between the agent and our own three tools, named in our business terms. The L4 context service reads Salesforce through TMF Open APIs (out of the box and our facades), read-only, per request; only the L5 workflow writes. To avoid vendor lock-in, no vendor's tools define the agent's vocabulary: a vendor MCP server, if used later, sits behind the context layer as one more source, called by code (roadmap).
 
 ## 11. Build items (released by LalitC, 30 Oct 2026; built on branch `mvp-build`)
 
@@ -278,19 +280,23 @@ The input carries `mode: advisory` or `mode: binding` for the audit only; the ru
 
 ## Appendix B: standards mapping
 
-Full table: [layer-walkthrough.md, section 12](layer-walkthrough.md#12-appendix-standards-mapping-for-architects).
+Older full table (superseded 30 Oct 2026): [layer-walkthrough.md, section 12](layer-walkthrough.md#12-appendix-standards-mapping-for-architects). This table wins.
 
 | Step | API | Served by |
 |---|---|---|
-| Customer, contact role | TMF629, TMF632 | Salesforce native |
+| Customer | TMF629 | TMF Open API (Salesforce), out of the box |
+| Contact role | TMF632 | TMF Open API (Salesforce), TMF facade (Apex) |
 | Site, address key | TMF674 / TMF673 shape | Our layer over standard Location / Address |
-| Installed service | TMF637 | Salesforce native (Asset write via standard sObject REST) |
-| Catalogue, price | TMF620 | Apex add-on |
-| Availability | TMF679 shape | Legacy stand-in (native returns 400 on this org, CONFIRMED) |
+| Installed service | TMF637 | TMF Open API (Salesforce): get-by-id out of the box; list, create, update and relationship from the TMF facade (Apex) |
+| Catalogue, price | TMF620 | TMF Open API (Salesforce), TMF facade (Apex) |
+| Availability | TMF679 shape | Legacy stand-in (the org's own availability check returns 400, CONFIRMED) |
 | Balance | TMF666 / TMF678 shape | Legacy stand-in |
-| Quote | TMF648 | Apex add-on |
-| Order (`action: modify`) | TMF622 | Apex add-on (build item 1) |
+| Quote | TMF648 | TMF Open API (Salesforce), TMF facade (Apex) |
+| Order (`action: modify`) | TMF622 | TMF Open API (Salesforce), TMF facade (Apex, build item 1); usage record created inside the order |
+| Promotion | TMF671 | TMF Open API (Salesforce), TMF facade (Apex) |
+| Network inventory site | TMF639 shape | Legacy stand-in |
 | Fulfilment, jeopardy | TMF641 shape | Adapter over the legacy OSS stand-in |
+| Payment link | Not a TMF API | Mocked stand-in |
 | Customer need, progress | TMF921 Intent Management v5.0.0 (Intent, IntentReport), TMF921-shaped | Small intent service in L1, stored in L3 Postgres; not in Salesforce (decision 8) |
 
 **TMF921 (CONFIRMED, 27 Oct 2026):**
@@ -306,4 +312,4 @@ Full table: [layer-walkthrough.md, section 12](layer-walkthrough.md#12-appendix-
 - TMF641 v4.2.0 has `jeopardyAlert`, `milestone` and the matching service-order events.
 - The order stays `inProgress` throughout.
 
-SID mapping of the business terms is in MVP-design.md section 10. It is conceptual alignment, not certified.
+SID mapping of the business terms is in MVP-design.md section 10. It is conceptual alignment only (TMF-aligned).

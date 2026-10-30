@@ -1,5 +1,7 @@
 # AgenticTelco MVP: layer-by-layer architecture walkthrough
 
+> **SUPERSEDED (30 Oct 2026): this walkthrough is out of date. See [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) and [layer-panels.md](layer-panels.md).**
+
 **Status:** Draft, 27 Oct 2026, for LalitC review. It explains the agreed MVP design ([MVP-design.md](MVP-design.md)); it does not change the business process. Nothing here is built until LalitC signs off.
 
 **Labels.** **CONFIRMED**: a primary source states it (TM Forum spec file, the Zero Gravity report, our org capability check or our code). **REPORTED**: stated by someone else and not checked by us. **INFERRED**: our analysis. **RECOMMENDED**: our design choice. **UNKNOWN**: not known yet. All customer names, IDs, dates and prices below are **examples** unless marked otherwise.
