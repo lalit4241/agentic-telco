@@ -106,7 +106,7 @@ test('no secrets in the page', () => {
 });
 test('three audience views, all their copy in one object (ui-copy.json)', () => {
   const UI = CFG.ui;
-  assert.deepStrictEqual(UI.tabs.map((t) => t.label), ['Business view', 'CIO view', 'Chief Architect view']);
+  assert.deepStrictEqual(UI.tabs.map((t) => t.label), ['Business View', 'Architect View', 'Dev View']);
   assert.deepStrictEqual(UI.tabs.map((t) => t.subtitle), ['What does the customer get?', 'Is this safe, and does it fit my estate?', 'How does it actually work?']);
   assert.strictEqual(UI.cio.headline, 'Agentic change, on the estate you already have.');
   assert.deepStrictEqual(UI.cio.cards.map((c) => c.title), ['Agent proposes', 'Policy decides', 'Workflow writes']);

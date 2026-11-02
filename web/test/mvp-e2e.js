@@ -32,8 +32,8 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const head = await page.textContent('header');
   check('title and heading', head.includes('Agent upgrades a Business Customer Service (B2B), on existing systems') && /AGENTICTELCO MVP · BASED ON ZERO GRAVITY ARCHITECTURE/i.test(head));
   const tabs = await page.$$eval('.tabs button', (a) => a.map((b) => b.textContent));
-  check('three tabs, business first, each with its question', tabs.length === 3 && tabs[0].includes('Business view') && tabs[1].includes('CIO view') && tabs[2].includes('Chief Architect view') && tabs.every((t, i) => t.includes(UI.tabs[i].subtitle)), tabs.join(' | '));
-  check('business view is the default', await page.isVisible('#v-business') && !(await page.isVisible('#v-cio')));
+  check('three tabs, business first, each with its question', tabs.length === 3 && tabs[0].includes('Business View') && tabs[1].includes('Architect View') && tabs[2].includes('Dev View') && tabs.every((t, i) => t.includes(UI.tabs[i].subtitle)), tabs.join(' | '));
+  check('Business View is the default', await page.isVisible('#v-business') && !(await page.isVisible('#v-cio')));
   check('4 journeys', (await page.$$('.case')).length === 4);
   check('footer, no hosting wording, no model names, no certification claims', await page.evaluate((F) => { const t = document.body.innerText; return t.includes(F) && !/hosting|demo host|docker|ollama|qwen|certified|conformant/i.test(t); }, FOOT));
   check('no "native Salesforce API" anywhere', !/native Salesforce API/.test(await page.content()));
@@ -44,14 +44,14 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const scrollTo = (sel) => page.evaluate((q) => { const e = document.querySelector(q); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 70); }, sel);
   const tab = async (t) => { await page.click(`.tabs button[data-tab="${t}"]`); await page.waitForTimeout(300); };
 
-  // ---- 1. Business view: happy path
+  // ---- 1. Business View: happy path
   await page.click('.case[data-case="happy"]');
   check('modebar says recorded run', /recorded run/i.test(await page.textContent('#modebar')));
   await page.selectOption('#spd', '4'); await page.waitForTimeout(3500); await shot('1-business-happy-start.png');
   check('play advances the step bar', (await chev()).some((x) => /now|done/.test(x)));
-  // while playing, the CIO view lights the layers in use
+  // while playing, the Architect View lights the layers in use
   await tab('cio'); await page.waitForTimeout(500);
-  check('CIO view lights layers during the replay', (await page.$$('#dsvg .dn.on')).length >= 2, String((await page.$$('#dsvg .dn.on')).length));
+  check('Architect View lights layers during the replay', (await page.$$('#dsvg .dn.on')).length >= 2, String((await page.$$('#dsvg .dn.on')).length));
   await tab('business');
   await end();
   let c = await chev(), t = await chat(), b = await bizText();
@@ -62,10 +62,10 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const out = await page.textContent('#outcome');
   check('happy: outcome card Fibre 900, £45, 28 Aug 2027, order 00000173, live 31 Oct 2026', /Fibre 900 is live/.test(out) && /£45 a month/.test(out) && /28 Aug 2027/.test(out) && /00000173/.test(out) && /31 Oct 2026/.test(out), out);
   check('happy: KPIs derived from the run', (await page.$$('#kpis .kg div')).length === 4 && /request to live/.test(await page.textContent('#kpis')));
-  check('business view has no layer numbers, APIs or drawers', !/\bL[1-8]\b|TMF\d|API/.test(b) && !(await page.$('#v-business [data-about]')));
+  check('Business View has no layer numbers, APIs or drawers', !/\bL[1-8]\b|TMF\d|API/.test(b) && !(await page.$('#v-business [data-about]')));
   await shot('2-business-happy-end.png');
 
-  // ---- step selection drives the CIO and Architect views
+  // ---- step selection drives the Architect and Dev Views
   await page.click('#chev .cv[data-step="4"]');
   check('selecting a step marks it', (await page.$$('#chev .cv.sel')).length === 1);
   await tab('cio');
@@ -100,7 +100,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('CIO: Salesforce evidence gallery', figs.length >= 6 && (await page.textContent('#gallery h2')) === 'Proof: the real records in Salesforce', String(figs.length));
   await scrollTo('#gallery'); await page.waitForTimeout(400); await shot('4-cio-gallery.png');
 
-  // ---- 3. Chief Architect view
+  // ---- 3. Dev View
   await tab('architect');
   check('architect: step timeline with whole journey and 6 steps', (await page.$$('#atl .as')).length === 7);
   check('architect: selected step carries over (Ordered)', /Ordered/.test(await page.textContent('#atl .as.sel')));
