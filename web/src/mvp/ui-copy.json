@@ -54,8 +54,8 @@
   ],
   "messages": [
    { "title": "Nothing ripped out", "text": "Salesforce and the older systems stay as the records." },
-   { "title": "No lock-in", "text": "Every connection is a TM Forum Open API (TMF-aligned)." },
-   { "title": "Controls hold", "text": "Authorisation, consent and financial checks are never bypassed." },
+   { "title": "No lock-in", "text": "Salesforce and the older systems are reached only through TM Forum Open APIs (TMF-aligned)." },
+   { "title": "Controls hold", "text": "Authorisation, overdue balance and availability are checked by policy, never by the AI." },
    { "title": "Every step evidenced", "text": "One timeline from request to live service." }
   ],
   "stepsLabel": "Light up a step:",
@@ -97,10 +97,10 @@
   "about": "About this layer",
   "apisHeading": "Exposed APIs (TMF-aligned)",
   "mappingHeading": "ODA, eTOM and SID: conceptual alignment",
-  "mappingIntro": "Team mapping from the repo docs (docs/architecture/03-api-event-sid-mapping.md and docs/mvp/MVP-design.md). Conceptual alignment only (TMF-aligned): ODA blocks and SID entity names are inferred and still to be checked against the ODA Component Directory and GB922.",
+  "mappingIntro": "Our mapping of each step to TM Forum's frameworks. Conceptual alignment only: the ODA blocks and SID entities are our interpretation, still to be checked against the ODA Component Directory and the SID model (GB922).",
   "etom": "eTOM: Customer Order Handling (Fulfillment), preceded by a pre-order availability check.",
   "mapping": [
-   ["Intent capture", "TMF921 Intent", "Engagement Management", "Intent (TR292 TIO)"],
+   ["Intent capture", "TMF921 Intent", "Engagement Management", "Intent (TMF921)"],
    ["Customer lookup", "TMF629 Customer", "Party Management", "Customer, CustomerAccount"],
    ["Party and contact role", "TMF632 Party", "Party Management", "Party, Individual (PartyRole \"Authorised Buyer\")"],
    ["Catalogue read", "TMF620 Product Catalog", "Core Commerce Management", "ProductOffering, ProductSpecification, ProductOfferingPrice"],

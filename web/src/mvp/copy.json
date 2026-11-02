@@ -50,9 +50,9 @@
     }
    ],
    "question": "What should we offer and why?",
-   "tech": "LangGraph (MIT), MCP SDK (MIT), local model Qwen3-4B-Instruct-2507 (Apache 2.0) via Ollama",
+   "tech": "LangGraph (MIT), MCP SDK (MIT), an open-weight language model (Apache 2.0)",
    "status": "Real",
-   "label": "LangGraph (MIT), MCP SDK (MIT), local model Qwen3-4B-Instruct-2507 (Apache 2.0) via Ollama",
+   "label": "LangGraph (MIT), MCP SDK (MIT), an open-weight language model (Apache 2.0)",
    "chip": "Agent"
   },
   {

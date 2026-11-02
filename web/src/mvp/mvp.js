@@ -19,8 +19,7 @@
   var PLATFORM = 'Kubernetes · secrets vault · network zones · API gateway · agent and workload identity · event bus';
   /* step: null = follow the replay, 0..5 = a selected business step, 'all' = whole journey */
   var S = { tab: 'business', caseId: null, cid: null, full: null, t: Infinity, busy: false, open: null, presenter: false, follow: false, play: null, speed: 1, rec: null, step: null };
-  /* display only: the panel prose names the model; on screen it reads as a local language model (copy.json itself is unchanged) */
-  var layerCopy = {}; (COPY.layers || []).forEach(function (l) { layerCopy[l.id] = JSON.parse(JSON.stringify(l).replace(/local model [^,.\"]*? via Ollama/g, 'a local open-weight language model').replace(/\b(Ollama|Qwen[\w.-]*)\b/g, 'local model')); });
+  var layerCopy = {}; (COPY.layers || []).forEach(function (l) { layerCopy[l.id] = l; });
 
   function statusKind(s) { s = (s || '').toLowerCase(); if (/^mock/.test(s)) return ['mock', 'Mocked']; if (/mock|stand-in/.test(s)) return ['mix', 'Real + stand-ins']; return ['real', 'Real']; }
   /* no model or runtime names on screen: the agent's model calls read as the agent's own language model */
@@ -367,7 +366,7 @@
       '<h2 class="hl">' + esc(UC.headline) + '</h2>' +
       '<div class="banner"><div class="big">' + esc(UC.banner).replace(/ · /g, '<i>·</i>') + '</div><div class="small">' + esc(UC.bannerSmall) + '</div></div>' +
       '<div class="c3">' + (UC.cards || []).map(function (c, i) { return '<div class="cc"><div class="ci">' + '<svg viewBox="0 0 24 24" width="26" height="26">' + icon(['agent', 'shield', 'flow'][i], 0, 0, 24, 'currentColor') + '</svg></div><div><b>' + esc(c.title) + '</b><p>' + esc(c.text) + '</p></div></div>'; }).join('') + '</div>' +
-      '<div class="cmain"><div class="panel dgm"><div class="strip" id="cstrip"></div>' + diagramSvg() + '<div class="dcap" id="dcap"></div>' +
+      '<div class="cmain"><div class="panel dgm"><div class="strip" id="cstrip"></div><div class="dcap" id="dcap"></div>' + diagramSvg() +
       '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '</div></div>' +
       '<div class="msgs">' + (UC.messages || []).map(function (m) { return '<div class="mc"><b>' + esc(m.title) + '</b><p>' + esc(m.text) + '</p></div>'; }).join('') + '</div></div>' +
       '<div class="gal" id="gallery"><h2>' + esc(UC.galleryHeading) + '</h2><p class="small">' + esc(UC.galleryIntro) + '</p>' +
@@ -478,7 +477,7 @@
       var sp = w.spans.filter(function (s) { return s.layer === 'L1'; }), um = w.messages.filter(function (m) { return m.role === 'user'; });
       if (!sp.length && !w.reports.length && !w.consent.length) return false;
       var h = um.length ? '<div class="sec">Customer said</div>' + um.map(quote).join('') : '';
-      if (w.consent.length) h += '<div class="sec">Consent</div>' + w.consent.map(function (c) { return '<p>“' + esc(c.text) + '” · ' + hm(T(c.at)) + '</p>'; }).join('');
+      if (w.consent.length) h += '<div class="sec">Customer go-ahead</div>' + w.consent.map(function (c) { return '<p>“' + esc(c.text) + '” · ' + hm(T(c.at)) + '</p>'; }).join('');
       var it = e.intent;
       if (it && w.intentHere) { var ex = (it.body.expression || {}).expressionValue || it.body.expression; h += '<div class="sec">Intent [TMF921], recorded in this step</div><p><b>' + esc(it.id) + '</b> · ' + esc(it.body.name || '') + '</p><pre class="js">' + esc(JSON.stringify(ex, null, 1)) + '</pre>'; }
       else if (it) h += '<p class="small">Intent <b>' + esc(it.id) + '</b> · lifecycle ' + esc(it.lifecycle_status) + '</p>';
@@ -628,7 +627,7 @@
       if (!it) h += '<p class="small">No Intent yet. The agent records an Intent only when the customer agrees (and the advisory policy check allows it).</p>';
       else { var e = (it.body.expression || {}).expressionValue || it.body.expression; h += '<p><b>' + esc(it.id) + '</b> · lifecycle <span class="lab ' + (it.lifecycle_status === 'fulfilled' ? 'real' : it.lifecycle_status === 'atRisk' ? 'mock' : 'mix') + '">' + esc(it.lifecycle_status) + '</span> · ' + esc(it.body.name || '') + '</p><pre class="js">' + esc(JSON.stringify(e, null, 1)) + '</pre>'; }
       h += '<div class="sec">Intent reports</div>' + ((v.reports || []).length ? spanRows(v.reports, [['When', function (r) { return hm(T(r.creationDate)); }], ['Report', function (r) { return esc(r.name); }], ['State', function (r) { var s = r.expression.expressionValue['icm:reportState']; return '<span class="lab ' + (/Complies/.test(s) ? 'real' : 'mock') + '">' + esc(s.replace('icm:', '')) + '</span>'; }], ['Detail', function (r) { var x = r.expression.expressionValue; return esc(x.reason || x.product || '') + (x.revisedCompletionDate ? ' · revised ' + esc(x.revisedCompletionDate) : ''); }]]) : '<p class="small">None yet.</p>');
-      h += '<div class="sec">Consent</div>' + (v.consent.length ? v.consent.map(function (c) { return '<p>“' + esc(c.text) + '” · ' + hm(T(c.at)) + '</p>'; }).join('') : '<p class="small">No consent recorded.</p>');
+      h += '<div class="sec">Customer go-ahead</div>' + (v.consent.length ? v.consent.map(function (c) { return '<p>“' + esc(c.text) + '” · ' + hm(T(c.at)) + '</p>'; }).join('') : '<p class="small">No go-ahead recorded.</p>');
       b.innerHTML = h;
     },
     L2: function (b, v) {
@@ -641,7 +640,7 @@
     L3: function (b, v) {
       b.innerHTML = '<div class="sec">Cross-reference: the same customer in each system</div>' +
         spanRows(v.xref || [], [['System', function (x) { return '<b>' + esc(x.system) + '</b>'; }], ['ID', function (x) { return '<span class="mono">' + esc(x.external_id) + '</span>'; }], ['Source', function (x) { return '<span class="small">' + esc(x.source) + '</span>'; }], ['Verified', function (x) { return x.verified ? '<span class="ok">✔</span>' : '✖'; }]]) +
-        '<div class="sec">What we remember for this conversation</div><p>' + v.messages.length + ' messages · ' + v.decisions.length + ' policy decisions · ' + v.consent.length + ' consent · ' + v.spans.length + ' audit rows (trace <span class="mono">' + esc(v.conversation.trace_id) + '</span>)</p>' +
+        '<div class="sec">What we remember for this conversation</div><p>' + v.messages.length + ' messages · ' + v.decisions.length + ' policy decisions · ' + v.consent.length + ' customer go-ahead · ' + v.spans.length + ' audit rows (trace <span class="mono">' + esc(v.conversation.trace_id) + '</span>)</p>' +
         '<p class="small">IDs are examples from the demo org and stand-ins.</p>';
     },
     L4: function (b, v) {

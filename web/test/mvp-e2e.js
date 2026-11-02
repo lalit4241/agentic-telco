@@ -82,6 +82,11 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('CIO: "Checks" lights the context and policy layers and the older systems', ['L4', 'billing'].every((n) => lit1.includes(n)), lit1.join(','));
   await page.click('#cstrip .pill[data-step="1"]');   // back to following the replay (end of run: everything lit)
   await page.waitForTimeout(700); await shot('3-cio-diagram.png');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  check('CIO: diagram caption visible without scrolling at 1440x900', await page.$eval('#dcap', (e) => { const r = e.getBoundingClientRect(); return r.height > 0 && r.bottom <= window.innerHeight; }));
+  const msgText = await page.textContent('#v-cio .msgs');
+  check('CIO: four messages with the reworded Controls hold and No lock-in', (await page.$$('#v-cio .msgs .mc')).length === 4 && msgText.includes('Authorisation, overdue balance and availability are checked by policy, never by the AI.') && msgText.includes('Salesforce and the older systems are reached only through TM Forum Open APIs (TMF-aligned).'));
+  await scrollTo('#v-cio .msgs'); await page.waitForTimeout(300); await shot('10-cio-four-messages.png'); await page.evaluate(() => window.scrollTo(0, 0));
   await page.click('#cstrip .pill[data-step="4"]'); await page.waitForTimeout(200);
   // the diagram opens the layer detail
   for (const [node, L, want] of [['L1', 'L1', /intent/i], ['L2', 'L2', /token/i], ['L3', 'L3', /001QH00002La125YAB/], ['L4', 'L4', /policy|authorised/i], ['L5', 'L5', /Operaton|BPMN/i], ['api', 'L6', /TMF Open API \(Salesforce\)/], ['L7', 'L7', /900/], ['L8', 'L8', /trace/i]]) {
@@ -151,6 +156,10 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('delayed: order number not shown anywhere', !(await page.evaluate(() => document.body.innerText)).includes('00000171'));
   await tab('architect'); await page.click('#atl .as[data-step="all"]'); await page.waitForTimeout(500);
   check('delayed: order number masked in the architect view', !(await page.evaluate(() => document.body.innerText)).includes('00000171'));
+  const banned = /ollama|qwen|local model|local open-weight|consent/i; let seen = [];
+  for (const st of ['0', '1', '2', '3', '4', '5', 'all']) { const b = await page.$(`#atl .as[data-step="${st}"]`); if (b) { await b.click(); await page.waitForTimeout(250); } const m = (await page.textContent('#v-architect')).match(banned); if (m) seen.push(st + ':' + m[0]); }
+  await tab('cio'); { const m = (await page.textContent('#v-cio')).match(banned); if (m) seen.push('cio:' + m[0]); }
+  check('no model names, "local" runtime wording or consent-check claims on screen', seen.length === 0, seen.join(','));
   await tab('business');
   await page.keyboard.press('p'); check('presenter mode toggles', await page.evaluate(() => document.body.classList.contains('presenter')));
   await page.keyboard.press('p');

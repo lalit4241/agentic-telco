@@ -1,5 +1,5 @@
 {
- "at": "2026-11-02T17:35:02.647Z",
+ "at": "2026-11-02T17:38:15.709Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -145,6 +145,16 @@
    "name": "CIO: \"Checks\" lights the context and policy layers and the older systems",
    "ok": true,
    "detail": "L2,L4,L3,api,sf,billing,avail,L8"
+  },
+  {
+   "name": "CIO: diagram caption visible without scrolling at 1440x900",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: four messages with the reworded Controls hold and No lock-in",
+   "ok": true,
+   "detail": ""
   },
   {
    "name": "CIO: L1 opens the L1 detail with run data",
@@ -313,6 +323,11 @@
   },
   {
    "name": "delayed: order number masked in the architect view",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "no model names, \"local\" runtime wording or consent-check claims on screen",
    "ok": true,
    "detail": ""
   },

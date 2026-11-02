@@ -122,6 +122,9 @@ test('three audience views, all their copy in one object (ui-copy.json)', () => 
 test('no model names on screen and the delayed order number is masked', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'mvp', 'mvp.js'), 'utf8');
   assert.doesNotMatch(src.replace(/\/ollama\|qwen[^/]*\/i|\/ollama\/i|\(Ollama\|Qwen\[[^)]*\)|via Ollama/g, ''), /Ollama|Qwen/i);
+  assert.doesNotMatch(JSON.stringify(CFG.copy.layers), /Ollama|Qwen|local model/i, 'panel copy names no model or local runtime');
+  assert.doesNotMatch(JSON.stringify(CFG.ui), /consent|local model/i);
+  assert.ok(CFG.ui.architect.mapping.some((r) => r[3] === 'Intent (TMF921)'));
   assert.match(src, /function rtName/); assert.match(src, /function maskNum/);
   const D = CFG.recordings.delayed.state; assert.ok(JSON.stringify(D).includes(D.links.orderNumber), 'delayed number is in the data, so the UI must mask it');
 });
