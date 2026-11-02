@@ -1,5 +1,5 @@
 {
- "at": "2026-10-30T21:26:33.620Z",
+ "at": "2026-11-02T17:35:02.647Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -32,17 +32,22 @@
    "detail": ""
   },
   {
-   "name": "banner",
+   "name": "three tabs, business first, each with its question",
+   "ok": true,
+   "detail": "Business viewWhat does the customer get? | CIO viewIs this safe, and does it fit my estate? | Chief Architect viewHow does it actually work?"
+  },
+  {
+   "name": "business view is the default",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "8 layer cards render",
+   "name": "4 journeys",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "L6 chip wording",
+   "name": "footer, no hosting wording, no model names, no certification claims",
    "ok": true,
    "detail": ""
   },
@@ -52,104 +57,169 @@
    "detail": ""
   },
   {
-   "name": "4 cases",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "name": "footer and no hosting wording",
-   "ok": true,
-   "detail": ""
-  },
-  {
    "name": "modebar says recorded run",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: chevrons all done, Live green",
-   "ok": true,
-   "detail": "done,done,done,done,skip,live"
-  },
-  {
-   "name": "happy: Fibre 900 £45, contract end kept, live message",
+   "name": "play advances the step bar",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: layers touched",
+   "name": "CIO view lights layers during the replay",
    "ok": true,
    "detail": "8"
   },
   {
-   "name": "happy: L1 drawer opens with run data",
+   "name": "happy: step bar Asks..Live, all done, Live green",
+   "ok": true,
+   "detail": "done,done,done,done,done,live"
+  },
+  {
+   "name": "happy: step labels",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: L2 drawer opens with run data",
+   "name": "happy: Sam Taylor, Operations Director",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: L3 drawer opens with run data",
+   "name": "happy: chat has Fibre 900 £45, contract end kept, live",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: L4 drawer opens with run data",
+   "name": "happy: outcome card Fibre 900, £45, 28 Aug 2027, order 00000173, live 31 Oct 2026",
+   "ok": true,
+   "detail": "What Sam getsFibre 900 is liveServiceFibre 900Price£45 a monthContract end28 Aug 2027 (unchanged)Order00000173Live31 Oct 2026"
+  },
+  {
+   "name": "happy: KPIs derived from the run",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "L4: context pack with source chips and the rule",
+   "name": "business view has no layer numbers, APIs or drawers",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "L4 API view: context reads are TMF calls",
-   "ok": true,
-   "detail": "8 rows"
-  },
-  {
-   "name": "happy: L5 drawer opens with run data",
+   "name": "selecting a step marks it",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "L5: BPMN diagram rendered with markers",
+   "name": "CIO: headline, 3 cards, 4 messages verbatim",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: L6 drawer opens with run data",
+   "name": "CIO: banner",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "L6: record links to Salesforce",
+   "name": "CIO: 5 groups and the two chips in the diagram",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "L6 API view: every call shows method, path and TMF tag",
+   "name": "CIO: older systems and the network tagged Mocked",
    "ok": true,
-   "detail": "28 rows"
+   "detail": ""
   },
   {
-   "name": "L6 API view: Salesforce calls read \"TMF Open API (Salesforce)\"",
+   "name": "CIO: \"Ordered\" lights the workflow, the APIs and Salesforce",
+   "ok": true,
+   "detail": "customer,L2,L3,L5,api,sf,billing,avail,L8"
+  },
+  {
+   "name": "CIO: no Exposed APIs list here",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: \"Checks\" lights the context and policy layers and the older systems",
+   "ok": true,
+   "detail": "L2,L4,L3,api,sf,billing,avail,L8"
+  },
+  {
+   "name": "CIO: L1 opens the L1 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: L2 opens the L2 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "L2 detail shows no model or runtime names",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: L3 opens the L3 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: L4 opens the L4 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: L5 opens the L5 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: api opens the L6 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: L7 opens the L7 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: L8 opens the L8 detail with run data",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: Salesforce evidence gallery",
+   "ok": true,
+   "detail": "7"
+  },
+  {
+   "name": "architect: step timeline with whole journey and 6 steps",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "architect: selected step carries over (Ordered)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "architect: 8 layer sections",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "architect Ordered: policy binding decision, BPMN, TMF order calls",
    "ok": true,
    "detail": ""
   },
   {
    "name": "call detail: Provided by, TMF tag, request and response",
    "ok": true,
-   "detail": "L6 · SalesforceCreate Fibre 900 (active) at the same siteTMF637 Product Inventory TMF Open API (Salesforce)×POST /servic"
-  },
-  {
-   "name": "call detail: link to the Salesforce record",
-   "ok": true,
-   "detail": ""
+   "detail": "L6 · SalesforceInstalled service, site and contract endTMF637 Product Inventory TMF Open API (Salesforce)×GET /services/"
   },
   {
    "name": "call detail: redacted (no tokens, session ids, login URLs)",
@@ -157,57 +227,47 @@
    "detail": ""
   },
   {
-   "name": "call detail: out-of-the-box call says so",
+   "name": "architect Checks: context pack with sources, policy rule and decision",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "legacy calls read \"Legacy stand-in (mocked)\"",
+   "name": "architect Checks: audit entries with matched IDs and xref",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: L7 drawer opens with run data",
+   "name": "architect: step spans listed, call rows clickable",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "happy: L8 drawer opens with run data",
+   "name": "architect Asks: TMF921 intent shown",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "L8: trace and span ids",
+   "name": "architect Live: network change and audit",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "notauth: blocked at Checks, points to Sam",
-   "ok": true,
-   "detail": "done,done,blocked,skip,skip,skip"
-  },
-  {
-   "name": "overdue: blocked, overdue reason only, pay link",
-   "ok": true,
-   "detail": "done,done,blocked,skip,skip,skip"
-  },
-  {
-   "name": "delayed: delay chevron orange then Live",
-   "ok": true,
-   "detail": "done,done,done,done,delay,live"
-  },
-  {
-   "name": "delayed: Sam told of delay before go-live",
+   "name": "architect: system-of-record line",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "architecture: 8 layer cards",
+   "name": "architect: Exposed APIs (out of the box, facade, stand-ins mocked)",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "architecture: 27 glossary terms",
+   "name": "architect: ODA/eTOM/SID panel is \"conceptual alignment\", never certified",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "architect: 27 glossary terms",
    "ok": true,
    "detail": "27"
   },
@@ -217,24 +277,79 @@
    "detail": ""
   },
   {
-   "name": "architecture: system-of-record line",
+   "name": "notauth: blocked, points to Sam, no order",
+   "ok": true,
+   "detail": "done,done,blocked,skip,skip,skip"
+  },
+  {
+   "name": "notauth: Alex Reed, not authorised",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "architecture: Exposed APIs (out of the box, facade, stand-ins mocked)",
+   "name": "overdue: blocked, overdue reason only, pay link",
+   "ok": true,
+   "detail": "done,done,blocked,skip,skip,skip"
+  },
+  {
+   "name": "overdue: architect says the step does not happen",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "Salesforce evidence gallery (story order)",
+   "name": "delayed: Live step says delayed, customer told first",
    "ok": true,
-   "detail": "7"
+   "detail": "done,done,done,done,done,live"
+  },
+  {
+   "name": "delayed: Sam told of delay before go-live",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "delayed: order number not shown anywhere",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "delayed: order number masked in the architect view",
+   "ok": true,
+   "detail": ""
   },
   {
    "name": "presenter mode toggles",
    "ok": true,
    "detail": ""
+  },
+  {
+   "name": "responsive 1280x800: business fits the width",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "responsive 1280x800: cio fits the width",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "responsive 1280x800: architect fits the width",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "responsive 1920x1080: business fits the width",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "responsive 1920x1080: cio fits the width",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "responsive 1920x1080: architect fits the width",
+   "ok": true,
+   "detail": "0"
   },
   {
    "name": "no console errors",

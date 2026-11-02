@@ -104,3 +104,24 @@ test('no secrets in the page', () => {
   const sec = path.join(ROOT, '.data', 'secrets.env');
   if (fs.existsSync(sec)) for (const l of fs.readFileSync(sec, 'utf8').split('\n')) { const v = l.split('=').slice(1).join('=').trim(); if (v.length >= 8) assert.ok(!s.includes(v), 'secret value leaked'); }
 });
+test('three audience views, all their copy in one object (ui-copy.json)', () => {
+  const UI = CFG.ui;
+  assert.deepStrictEqual(UI.tabs.map((t) => t.label), ['Business view', 'CIO view', 'Chief Architect view']);
+  assert.deepStrictEqual(UI.tabs.map((t) => t.subtitle), ['What does the customer get?', 'Is this safe, and does it fit my estate?', 'How does it actually work?']);
+  assert.strictEqual(UI.cio.headline, 'Agentic change, on the estate you already have.');
+  assert.deepStrictEqual(UI.cio.cards.map((c) => c.title), ['Agent proposes', 'Policy decides', 'Workflow writes']);
+  assert.deepStrictEqual(UI.cio.messages.map((c) => c.title), ['Nothing ripped out', 'No lock-in', 'Controls hold', 'Every step evidenced']);
+  assert.deepStrictEqual(UI.diagram.groups.map((g) => g.title), ['Understand', 'Know', 'Act', 'Connect', 'Prove']);
+  assert.strictEqual(UI.cio.galleryHeading, 'Proof: the real records in Salesforce');
+  assert.deepStrictEqual(UI.business.steps.map((s) => s.label), ['Asks', 'Checks', 'Recommends', 'Agrees', 'Ordered', 'Live']);
+  assert.strictEqual(UI.diagram.chips.sf, 'TMF Open API (Salesforce)');
+  assert.strictEqual(UI.diagram.chips.facade, 'TMF facade within Salesforce');
+  assert.match(UI.architect.mappingHeading, /conceptual alignment/);
+  assert.doesNotMatch(JSON.stringify(UI), /certif|conforman|Salesforce APIs|sObject|hosting|Docker|Ollama|Qwen/i);
+});
+test('no model names on screen and the delayed order number is masked', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'mvp', 'mvp.js'), 'utf8');
+  assert.doesNotMatch(src.replace(/\/ollama\|qwen[^/]*\/i|\/ollama\/i|\(Ollama\|Qwen\[[^)]*\)|via Ollama/g, ''), /Ollama|Qwen/i);
+  assert.match(src, /function rtName/); assert.match(src, /function maskNum/);
+  const D = CFG.recordings.delayed.state; assert.ok(JSON.stringify(D).includes(D.links.orderNumber), 'delayed number is in the data, so the UI must mask it');
+});

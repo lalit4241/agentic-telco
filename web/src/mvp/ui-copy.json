@@ -1,0 +1,115 @@
+{
+ "_note": "All tab copy for the MVP page in one place (labels, subtitles, CIO view copy, diagram text). CIO view copy is TMForumCTO's final wording (Nov 2026). Layer panel prose stays in docs/mvp/layer-panels.md.",
+ "header": {
+  "kicker": "AGENTICTELCO MVP · BASED ON ZERO GRAVITY ARCHITECTURE",
+  "title": "Agent upgrades a Business Customer Service (B2B), on existing systems"
+ },
+ "tabs": [
+  { "id": "business", "label": "Business view", "subtitle": "What does the customer get?" },
+  { "id": "cio", "label": "CIO view", "subtitle": "Is this safe, and does it fit my estate?" },
+  { "id": "architect", "label": "Chief Architect view", "subtitle": "How does it actually work?" }
+ ],
+ "business": {
+  "customer": "Brightwell Design Ltd",
+  "site": "Site 4471, Martlesham",
+  "people": {
+   "Sam Taylor": "Operations Director, authorised to order",
+   "Alex Reed": "Team member, not authorised to order"
+  },
+  "journeysHeading": "Choose a journey",
+  "journeys": [
+   { "id": "happy", "title": "Upgrade goes live", "sub": "Sam asks, agrees, and Fibre 900 goes live" },
+   { "id": "notauth", "title": "Not authorised", "sub": "Alex asks; no order, Sam is asked to approve" },
+   { "id": "overdue", "title": "Overdue balance", "sub": "No offer until the overdue bill is paid" },
+   { "id": "delayed", "title": "Delayed, customer told first", "sub": "Two-day delay; Sam hears before it slips" }
+  ],
+  "steps": [
+   { "id": "asks", "label": "Asks", "sub": "More speed for 35 staff", "subNotauth": "Alex asks for more speed" },
+   { "id": "checks", "label": "Checks", "sub": "Customer, site, contract, bill" },
+   { "id": "recommends", "label": "Recommends", "sub": "Fibre 900, £45 a month", "subNotauth": "Not authorised: ask Sam", "subOverdue": "On hold: overdue bill" },
+   { "id": "agrees", "label": "Agrees", "sub": "Sam says yes", "subSkip": "Nothing to agree" },
+   { "id": "ordered", "label": "Ordered", "sub": "Order placed", "subSkip": "No order" },
+   { "id": "live", "label": "Live", "sub": "Fibre 900 live", "subDelay": "Delayed 2 days, Sam told first", "subSkip": "No change" }
+  ],
+  "stepHint": "Selected step lights up the layers in the CIO view.",
+  "stepHintLink": "See it in the CIO view",
+  "chatEmpty": "Choose a journey above, then press Play. Each starts from Brightwell on Fibre 150 at £27 a month, contract to 28 August 2027.",
+  "chatReady": "Press Play to replay the recorded run.",
+  "todayHeading": "Today",
+  "outcomeHeading": "What Sam gets",
+  "outcomeHeadingNo": "Outcome",
+  "outcomeWaiting": "The outcome appears here when the journey ends.",
+  "outcomeNoOrder": "No order placed",
+  "kpiHeading": "From this run",
+  "kpiNote": "Counted from the recorded run. The overnight network batch is simulated, so the elapsed time is the demo run, not a real install."
+ },
+ "cio": {
+  "headline": "Agentic change, on the estate you already have.",
+  "banner": "Agent proposes · Policy decides · Workflow writes",
+  "bannerSmall": "The AI never holds business rules and never writes to a system of record",
+  "cards": [
+   { "title": "Agent proposes", "text": "Understands the request and recommends. It holds no rules and can't write to any system." },
+   { "title": "Policy decides", "text": "One versioned rule checks authorisation, overdue balance and availability. It runs before the offer and again before the order." },
+   { "title": "Workflow writes", "text": "The only part that changes records. It works step by step, with retries and a full audit trail." }
+  ],
+  "messages": [
+   { "title": "Nothing ripped out", "text": "Salesforce and the older systems stay as the records." },
+   { "title": "No lock-in", "text": "Every connection is a TM Forum Open API (TMF-aligned)." },
+   { "title": "Controls hold", "text": "Authorisation, consent and financial checks are never bypassed." },
+   { "title": "Every step evidenced", "text": "One timeline from request to live service." }
+  ],
+  "stepsLabel": "Light up a step:",
+  "allSteps": "Whole journey",
+  "galleryHeading": "Proof: the real records in Salesforce",
+  "galleryIntro": "Lightning record pages from the Salesforce org for the recorded happy-path run, in story order. AgenticTelco demo records only; user details are blurred."
+ },
+ "diagram": {
+  "customer": { "title": "Sam", "sub": "Business portal chat" },
+  "groups": [
+   { "id": "understand", "title": "Understand", "text": "The customer's request, captured as an intent (L1), and the agent (L2)." },
+   { "id": "know", "title": "Know", "text": "Context and policy (L4), plus memory and audit (L3)." },
+   { "id": "act", "title": "Act", "text": "The workflow (L5)." },
+   { "id": "connect", "title": "Connect", "text": "TM Forum Open APIs exposed by Salesforce, with adapters to the older billing, availability and network systems (L6)." },
+   { "id": "prove", "title": "Prove", "text": "The network view (L7) and the step timeline (L8)." }
+  ],
+  "nodes": {
+   "L1": { "title": "Intent", "sub": "The request, captured" },
+   "L2": { "title": "Agent", "sub": "Understands, recommends" },
+   "L4": { "title": "Context and policy", "sub": "One pack · one rule" },
+   "L3": { "title": "Memory and audit", "sub": "Same customer, every step" },
+   "L5": { "title": "Workflow", "sub": "The only writer" },
+   "api": { "title": "TM Forum Open APIs", "sub": "TMF-aligned" },
+   "sf": { "title": "Salesforce", "sub": "Customer, catalogue, quote, order, installed service" },
+   "billing": { "title": "Billing", "sub": "Older system" },
+   "avail": { "title": "Availability", "sub": "Older system" },
+   "oss": { "title": "Network orders", "sub": "Older system (OSS)" },
+   "L7": { "title": "Network view", "sub": "Exchange port and fibre" },
+   "L8": { "title": "Step timeline", "sub": "Request to live service" }
+  },
+  "chips": { "sf": "TMF Open API (Salesforce)", "facade": "TMF facade within Salesforce", "mocked": "Mocked", "adapters": "Adapters" }
+ },
+ "architect": {
+  "stepsHeading": "Step timeline",
+  "layersHeading": "What happened at each layer",
+  "notReached": "The replay has not reached this step yet. Press Play or Skip to end.",
+  "notUsed": "Not involved in this step.",
+  "notInJourney": "This step does not happen in this journey: the policy stopped it earlier.",
+  "about": "About this layer",
+  "apisHeading": "Exposed APIs (TMF-aligned)",
+  "mappingHeading": "ODA, eTOM and SID: conceptual alignment",
+  "mappingIntro": "Team mapping from the repo docs (docs/architecture/03-api-event-sid-mapping.md and docs/mvp/MVP-design.md). Conceptual alignment only (TMF-aligned): ODA blocks and SID entity names are inferred and still to be checked against the ODA Component Directory and GB922.",
+  "etom": "eTOM: Customer Order Handling (Fulfillment), preceded by a pre-order availability check.",
+  "mapping": [
+   ["Intent capture", "TMF921 Intent", "Engagement Management", "Intent (TR292 TIO)"],
+   ["Customer lookup", "TMF629 Customer", "Party Management", "Customer, CustomerAccount"],
+   ["Party and contact role", "TMF632 Party", "Party Management", "Party, Individual (PartyRole \"Authorised Buyer\")"],
+   ["Catalogue read", "TMF620 Product Catalog", "Core Commerce Management", "ProductOffering, ProductSpecification, ProductOfferingPrice"],
+   ["Availability at the site", "TMF679 Product Offering Qualification", "Core Commerce Management", "ProductOfferingQualification"],
+   ["Overdue balance", "TMF666 Account", "not mapped in the docs", "CustomerAccount balance / CustomerBill"],
+   ["Quote", "TMF648 Quote", "Core Commerce Management", "Quote, QuoteItem"],
+   ["Product order", "TMF622 Product Order", "Core Commerce Management", "ProductOrder, ProductOrderItem"],
+   ["Service order (OSS, mocked)", "TMF641 Service Order", "Production", "ServiceOrder, ServiceOrderItem"],
+   ["Installed service", "TMF637 Product Inventory", "Core Commerce Management", "Product"]
+  ]
+ }
+}

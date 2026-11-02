@@ -1,25 +1,32 @@
-/* AgenticTelco MVP UI. Business view (left) and the eight Zero Gravity layers (right).
+/* AgenticTelco MVP UI, three audience views over one shared replay:
+   Business view (what the customer gets), CIO view (is it safe, does it fit the estate), Chief Architect view (how it works, layer by layer).
+   All tab copy comes from one object (web/src/mvp/ui-copy.json, as CFG.ui); layer panel prose comes from docs/mvp/layer-panels.md (CFG.copy).
    Live mode polls the gateway (/api/state); recorded mode replays a recorded run (final /api/state, filtered by time). */
 (function () {
   'use strict';
-  var CFG = window.MVP_CFG || {}, COPY = CFG.copy, BPMN_XML = CFG.bpmn, REGO = CFG.rego || '';
+  var CFG = window.MVP_CFG || {}, COPY = CFG.copy, BPMN_XML = CFG.bpmn, REGO = CFG.rego || '', UI = CFG.ui || {};
   var LIVE = CFG.mode === 'live', REC = CFG.recordings || {};
+  var UB = UI.business || {}, UC = UI.cio || {}, UD = UI.diagram || {}, UA = UI.architect || {};
   var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var T = function (x) { return x ? Date.parse(String(x).replace(/([+-]\d\d)(\d\d)$/, '$1:$2')) : NaN; };
   var hm = function (ms) { var d = new Date(ms); return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/London' }); };
   var LAYER_IDS = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'];
-  var CASES = [
-    { id: 'happy', t: 'Happy path', s: 'Sam (Decision Maker) upgrades' },
-    { id: 'notauth', t: 'Not authorised', s: 'Alex (Business User) asks' },
-    { id: 'overdue', t: 'Overdue balance', s: 'Policy says no' },
-    { id: 'delayed', t: 'Order delayed', s: '+2 days, Sam told first' }];
+  var CASES = UB.journeys || [{ id: 'happy' }, { id: 'notauth' }, { id: 'overdue' }, { id: 'delayed' }];
+  var STEPS = UB.steps || [];
   var OPENING = "We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. Our broadband already struggles. What do you suggest?";
   var PLATFORM = 'Kubernetes · secrets vault · network zones · API gateway · agent and workload identity · event bus';
-  var S = { tab: 'demo', caseId: null, cid: null, full: null, t: Infinity, busy: false, open: null, presenter: false, follow: false, play: null, speed: 1, rec: null };
-  var layerCopy = {}; (COPY.layers || []).forEach(function (l) { layerCopy[l.id] = l; });
+  /* step: null = follow the replay, 0..5 = a selected business step, 'all' = whole journey */
+  var S = { tab: 'business', caseId: null, cid: null, full: null, t: Infinity, busy: false, open: null, presenter: false, follow: false, play: null, speed: 1, rec: null, step: null };
+  /* display only: the panel prose names the model; on screen it reads as a local language model (copy.json itself is unchanged) */
+  var layerCopy = {}; (COPY.layers || []).forEach(function (l) { layerCopy[l.id] = JSON.parse(JSON.stringify(l).replace(/local model [^,.\"]*? via Ollama/g, 'a local open-weight language model').replace(/\b(Ollama|Qwen[\w.-]*)\b/g, 'local model')); });
 
   function statusKind(s) { s = (s || '').toLowerCase(); if (/^mock/.test(s)) return ['mock', 'Mocked']; if (/mock|stand-in/.test(s)) return ['mix', 'Real + stand-ins']; return ['real', 'Real']; }
+  /* no model or runtime names on screen: the agent's model calls read as the agent's own language model */
+  function rtName(r) { return /ollama|qwen|llama|gpt|mistral|gemma/i.test(r || '') ? 'Language model (ours)' : (r || ''); }
+  /* the delayed journey's Salesforce order number stays off screen */
+  function maskNum(s) { var n = S.caseId === 'delayed' && S.full && S.full.links && S.full.links.orderNumber; return n ? String(s).split(n).join('[hidden]') : s; }
 
   /* ---------- state at time t (recorded replay filters the final state by timestamps) ---------- */
   function view(full, t) {
@@ -57,118 +64,222 @@
     return { hot: hot, used: used };
   }
 
+  /* ---------- the six business steps, as time windows over the recorded run ----------
+     Asks → Checks (first agent tool call) → Recommends (first model call after the checks) → Agrees (customer's yes)
+     → Ordered (binding policy check in the workflow) → Live (order handed to the network). Spans belong to the step they start in. */
+  var winCache = { full: null, n: -1, w: null };
+  function byStart(a, b) { return T(a.start_ts) - T(b.start_ts); }
+  function windows(full) {
+    if (!full) return null;
+    var n = (full.spans || []).length + (full.messages || []).length * 1000;
+    if (winCache.full === full && winCache.n === n) return winCache.w;
+    var sp = (full.spans || []).slice().sort(byStart), msgs = full.messages || [];
+    var first = function (pred, after) { for (var i = 0; i < sp.length; i++) { var t = T(sp[i].start_ts); if ((after == null || t > after) && pred(sp[i])) return t; } return null; };
+    var users = msgs.filter(function (m) { return m.role === 'user'; });
+    var t0 = users.length ? T(users[0].at) : (sp.length ? T(sp[0].start_ts) : null);
+    if (sp.length) t0 = Math.min(t0, T(sp[0].start_ts));
+    var bChecks = first(function (s) { return s.layer === 'L2' && /^Tool:/.test(s.step); }); if (bChecks == null) bChecks = first(function (s) { return s.layer === 'L4'; });
+    var bRec = bChecks == null ? null : first(function (s) { return s.layer === 'L2' && /^Model call$/.test(s.step); }, bChecks);
+    var bAgree = null;
+    if (bRec != null && users[1]) { bAgree = T(users[1].at); var cm = first(function (s) { return s.layer === 'L1' && /Customer message/.test(s.step); }, bRec); if (cm != null) bAgree = Math.min(bAgree, cm); }
+    var bOrder = bAgree == null ? null : first(function (s) { return /Binding policy check/.test(s.step) || s.component === 'Operaton worker'; }, bAgree);
+    if (bOrder != null) (full.bpmn || []).forEach(function (a) { if (a.id === 'T_Binding') bOrder = Math.min(bOrder, T(a.start)); });
+    var bLive = bOrder == null ? null : first(function (s) { return /OSS/.test(s.step); }, bOrder);
+    var starts = [t0, bChecks, bRec, bAgree, bOrder, bLive], w = [];
+    for (var i = 0; i < 6; i++) {
+      var a = starts[i]; if (a == null || isNaN(a)) { w.push({ a: null, b: null }); continue; }
+      var b = Infinity; for (var j = i + 1; j < 6; j++) if (starts[j] != null) { b = starts[j]; break; }
+      w.push({ a: i === 0 ? -Infinity : a, b: b, a0: a });
+    }
+    var adv = (full.decisions || []).filter(function (d) { return d.mode === 'advisory'; });
+    w.blocked = adv.length > 0 && !adv.some(function (d) { return d.result.allow; });
+    w.denyReason = w.blocked ? (adv[0].result.deny || [])[0] : null;
+    winCache = { full: full, n: n, w: w };
+    return w;
+  }
+  function stepAt(W, t) { var k = -1; if (!W) return k; for (var i = 0; i < 6; i++) if (W[i].a != null && W[i].a0 <= t) k = i; return k; }
+  function selStep() {   // the step the CIO and Chief Architect views show: the selected one, else the replay's current one
+    if (S.step === 'all') return 'all';
+    if (S.step != null) return S.step;
+    var W = windows(S.full); if (!W) return null;
+    if (!LIVE && S.rec && !S.play && S.t >= S.rec.tEnd) return 'all';   // replay finished: show the whole journey
+    var k = stepAt(W, nowT()); return k < 0 ? null : k;
+  }
+  function isLive(v) { return !!(v && (v.milestones || []).some(function (m) { return m.name === 'Live'; })); }
+  function stepKinds(v) {
+    var W = windows(S.full), t = nowT(), out = [];
+    var cur = stepAt(W, t), asst = v ? v.messages.filter(function (m) { return m.role === 'assistant'; }) : [];
+    var blockedNow = W && W.blocked && asst.length > 0, live = isLive(v), jeo = v && (v.jeopardy || []).length && !live;
+    for (var i = 0; i < 6; i++) {
+      var c = STEPS[i] || {}, k = '', sub = c.sub || '';
+      if (S.caseId === 'notauth' && c.subNotauth) sub = c.subNotauth;
+      if (!W || !v) { out.push({ k: '', b: c.label, s: sub }); continue; }
+      if (W[i].a == null) { if (W.blocked) { k = blockedNow ? 'skip' : ''; sub = c.subSkip || sub; } }
+      else if (W[i].a0 <= t) k = i < cur ? 'done' : 'now';
+      if (i === 2 && W.blocked) { sub = W.denyReason === 'overdue_balance' ? (c.subOverdue || sub) : (c.subNotauth || sub); if (blockedNow) k = 'blocked'; }
+      if (i === 4 && k && S.caseId !== 'delayed' && S.full.links && S.full.links.orderNumber && (v.milestones || []).some(function (m) { return m.name === 'OrderInProgress'; })) sub = 'Order ' + S.full.links.orderNumber;
+      if (i === 5 && jeo) { k = 'delay'; sub = c.subDelay || sub; }
+      if (i === 5 && live) { k = 'live'; var d = liveDate(v); sub = (S.caseId === 'delayed' ? 'Live ' : 'Fibre 900 live ') + (d ? d.replace(/ \d{4}$/, '') : '') + (S.caseId === 'delayed' ? ' · ' + delayDays(v) + ' days late, Sam told first' : ''); }
+      out.push({ k: k, b: c.label, s: sub });
+    }
+    return out;
+  }
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function shortDate(iso) { var d = new Date(iso + 'T12:00:00Z'); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()].slice(0, 3) + ' ' + d.getUTCFullYear(); }
+  function liveDate(v) {   // the live date the agent told the customer, from its proactive message
+    var m = (v.messages || []).filter(function (x) { return x.meta && x.meta.proactive && /Complies/.test(x.meta.reportState || ''); }).pop();
+    var r = m && m.content.match(new RegExp('(\\d{1,2}) (' + MONTHS.join('|') + ') (\\d{4})'));
+    return r ? r[1] + ' ' + r[2].slice(0, 3) + ' ' + r[3] : null;
+  }
+  function dur(ms) { var s = Math.round(ms / 1000), m = Math.floor(s / 60); return (m ? m + ' min ' : '') + (s % 60) + ' s'; }
+
   /* ---------- derived business facts ---------- */
   function facts(v) {
     var st = (v && v.state) || {}, pack = st.contextPack || {}, f = {};
-    f.who = st.contactFullName ? st.contactFullName + ' · ' + st.contactRole : '—';
-    f.current = (pack.currentBroadband && ((pack.currentBroadband.product || pack.currentBroadband.name) + ' · £' + pack.currentBroadband.monthlyPriceGBP + '/month')) || 'AgenticTelco Fibre 150 · £27/month';
+    f.name = st.contactFullName || '';
+    f.who = st.contactFullName ? st.contactFullName + ', ' + ((UB.people || {})[st.contactFullName] || st.contactRole) : '—';
+    f.current = (pack.currentBroadband && ((pack.currentBroadband.product || pack.currentBroadband.name) + ' · £' + pack.currentBroadband.monthlyPriceGBP + ' a month')) || 'AgenticTelco Fibre 150 · £27 a month';
     var ce = (pack.contractMonthsLeft || {}).contractEnd; f.contractEnd = ce ? new Date(ce + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '28 August 2027';
-    f.site = (pack.site && pack.site.name) || 'Site 4471, Martlesham';
+    f.contractShort = ce ? shortDate(ce) : '28 Aug 2027';
+    f.site = UB.site || 'Site 4471, Martlesham';
     return f;
   }
-  function stage(v) {
-    var c = S.caseId, out = [];
-    var msgs = v ? v.messages : [], users = msgs.filter(function (m) { return m.role === 'user'; }), asst = msgs.filter(function (m) { return m.role === 'assistant'; });
-    var adv = v && v.decisions.filter(function (d) { return d.mode === 'advisory'; }), anyAllow = adv && adv.some(function (d) { return d.result.allow; });
-    var denyAll = adv && adv.length && !anyAllow;
-    var checked = v && v.spans.some(function (s) { return s.layer === 'L4'; });
-    var consent = v && v.consent.length, jeo = v && v.jeopardy && v.jeopardy.length, live = v && v.intent && v.intent.lifecycle_status === 'fulfilled';
-    var denyReason = denyAll ? (adv[0].result.deny || [])[0] : null;
-    var rec = (v && v.state && v.state.recommended) || null;
-    out.push({ b: 'Sam asks', s: c === 'notauth' ? 'Alex asks' : 'needs more speed', k: users.length ? 'done' : '' });
-    out.push({ b: 'Checks', s: 'customer, site, contract, policy', k: checked ? 'done' : (users.length ? 'now' : '') });
-    if (denyAll) out.push({ b: 'Recommends', s: denyReason === 'not_authorised' ? 'Not authorised: ask Sam' : denyReason === 'overdue_balance' ? 'Blocked: overdue balance' : 'Not allowed', k: asst.length ? 'blocked' : 'now' });
-    else out.push({ b: 'Recommends', s: 'Fibre 900 £45/month', k: asst.length ? 'done' : (checked ? 'now' : '') });
-    out.push({ b: 'Agrees', s: denyAll ? 'nothing to agree' : 'Sam says yes', k: denyAll ? 'skip' : consent ? 'done' : '' });
-    out.push({ b: 'Delay', s: c === 'delayed' || jeo ? '+2 days, Sam told first' : 'no delay in this case', k: jeo ? 'delay' : (c === 'delayed' ? '' : 'skip') });
-    out.push({ b: 'Live', s: live ? 'Fibre 900 live' : denyAll ? 'no order' : 'Fibre 900 live', k: live ? 'live' : denyAll ? 'skip' : (consent ? 'now' : '') });
-    for (var i = out.length - 1; i >= 0; i--) if (out[i].k === 'now') { for (var j = i - 1; j >= 0; j--) if (out[j].k === 'now') out[j].k = 'done'; break; }
-    return out;
-  }
 
-  /* ---------- rendering ---------- */
+  /* ---------- page shell ---------- */
   function shell() {
+    var H = UI.header || {};
     document.title = 'AgenticTelco MVP · Agent upgrades a Business Customer Service (B2B)';
     $('#app').innerHTML =
       '<header class="hd"><div class="brand">' + (CFG.mark || '') + '<div><div class="brand-name">AgenticTelco</div><div class="brand-sub">TelForce business portal</div></div></div>' +
-      '<div class="ttl"><div class="kick">AGENTICTELCO MVP · BASED ON ZERO GRAVITY ARCHITECTURE</div><h1>Agent upgrades a Business Customer Service (B2B), on existing systems</h1></div>' +
-      '<div class="tabs"><button data-tab="demo" class="on">Demo</button><button data-tab="arch">Architecture</button><button data-tab="evidence">Salesforce evidence</button></div>' +
+      '<div class="ttl"><div class="kick">' + esc(H.kicker) + '</div><h1>' + esc(H.title) + '</h1></div>' +
       '<button class="tb" id="b-pres" title="Presenter mode (P)">Presenter</button>' + (LIVE ? '' : '<button class="tb" id="btn-lock" title="Lock">Lock</button>') + '</header>' +
+      '<nav class="tabs" role="tablist">' + (UI.tabs || []).map(function (t) { return '<button role="tab" data-tab="' + t.id + '"><b>' + esc(t.label) + '</b><span>' + esc(t.subtitle) + '</span></button>'; }).join('') + '</nav>' +
       '<div class="modebar' + (LIVE ? '' : ' rec') + '" id="modebar"></div>' +
-      '<div class="banner"><div class="big">Agent proposes<i>·</i>Policy decides<i>·</i>Workflow writes</div><div class="small">The AI never holds business rules and never writes to a system of record</div></div>' +
-      '<section id="v-demo"><div class="wrap"><div class="col-l"></div><div class="col-r"></div></div></section>' +
-      '<section id="v-arch" hidden></section><section id="v-evidence" hidden></section>' +
+      '<main><section id="v-business"></section><section id="v-cio" hidden></section><section id="v-architect" hidden></section></main>' +
       '<div class="dr" id="drawer" aria-hidden="true"></div>' +
       '<div class="foot">Concept demo by Lalit Chauhan · not an official Salesforce product</div>';
-    $('.col-l').innerHTML =
-      '<div class="panel"><div class="ph"><h2>Business view</h2><span class="sub">Brightwell Design Ltd · Fibre 150 → Fibre 900</span></div>' +
-      '<div class="cases">' + CASES.map(function (c, i) { return '<button class="case" data-case="' + c.id + '"><b>' + (i + 1) + '. ' + c.t + '</b><span>' + c.s + '</span></button>'; }).join('') + '</div>' +
-      '<div class="chev" id="chev"></div>' +
-      '<div class="portal"><div class="av" id="av">S</div><div class="who" id="who">AgenticTelco Business portal · choose a case to start</div><span class="badge" id="ist">no intent yet</span></div>' +
-      '<div class="chat" id="chat"></div>' +
-      (LIVE ? '<div class="quick" id="quick"></div><div class="composer"><textarea id="msg" placeholder="Type as the customer…"></textarea><button class="btn" id="send">Send</button></div>' : '') +
-      '<div class="facts" id="facts"></div>' +
-      '<div class="keys"><div class="key"><b>Salesforce is the system of record only</b>it keeps the records; the agent never writes to it</div><div class="key"><b>Rules live in one versioned policy</b>OPA (Rego) · checked advisory, then binding</div>' +
-      '<div class="key"><b>Open TM Forum APIs</b>TMF921 · 629 · 632 · 637 · 620 · 648 · 622 · 671</div><div class="key"><b>Every decision is traceable</b>one trace ID from chat to Salesforce record</div></div></div>';
-    $('.col-r').innerHTML =
-      '<div class="panel"><div class="ph"><h2>Architecture view · Zero Gravity layers</h2><span class="sub">lights up live · click a layer</span></div><div class="layers" id="layers">' +
-      LAYER_IDS.map(function (id) {
-        var l = layerCopy[id] || {}, k = statusKind(l.status);
-        return '<div class="ly" data-layer="' + id + '" style="--c:var(--' + id.toLowerCase() + ')"><div class="n">' + id + '</div><div><div class="nm">' + esc(l.name) + '<small>' + esc(l.chip && l.chip !== l.name ? l.chip : '') + '</small></div><div class="q">' + esc(l.question) + '</div><div class="now"></div></div>' +
-          '<div class="rt"><span class="lab ' + k[0] + '" title="' + esc(l.status) + '">' + k[1] + '</span><span class="cnt"></span></div></div>';
-      }).join('') + '</div></div>';
-    document.querySelectorAll('.tabs button').forEach(function (b) { b.onclick = function () { setTab(b.dataset.tab); }; });
-    document.querySelectorAll('.case').forEach(function (b) { b.onclick = function () { startCase(b.dataset.case); }; });
-    document.querySelectorAll('.ly').forEach(function (b) { b.onclick = function () { openLayer(b.dataset.layer); }; });
+    shellBusiness(); shellCio(); shellArchitect();
+    $$('.tabs button').forEach(function (b) { b.onclick = function () { setTab(b.dataset.tab); }; });
     $('#b-pres').onclick = togglePresenter;
-    if (LIVE) { $('#send').onclick = function () { send($('#msg').value); }; $('#msg').onkeydown = function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send($('#msg').value); } }; }
+    document.addEventListener('click', function (e) {
+      var st = e.target.closest && e.target.closest('[data-step]'); if (st) { selectStep(st.dataset.step); return; }
+      var go = e.target.closest && e.target.closest('[data-goto]'); if (go) { e.preventDefault(); setTab(go.dataset.goto); return; }
+      var ab = e.target.closest && e.target.closest('[data-about]'); if (ab) { openLayer(ab.dataset.about); }
+    });
     document.addEventListener('keydown', function (e) {
-      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
       if (e.key === 'Escape') closeLayer(); else if (e.key === 'p' || e.key === 'P') togglePresenter();
       else if (/^[1-4]$/.test(e.key)) startCase(CASES[+e.key - 1].id); else if (e.key === ' ' && !LIVE) { e.preventDefault(); togglePlay(); }
     });
-    renderArch(); modebar(); render();
+    setTab('business'); modebar(); render();
   }
-  function setTab(t) { S.tab = t; document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); }); $('#v-demo').hidden = t !== 'demo'; $('#v-arch').hidden = t !== 'arch'; $('#v-evidence').hidden = t !== 'evidence'; if (t === 'evidence') renderEvidence(); }
-  function togglePresenter() { S.presenter = !S.presenter; S.follow = S.presenter; document.body.classList.toggle('presenter', S.presenter); $('#b-pres').classList.toggle('on', S.presenter); }
+  function setTab(t) {
+    S.tab = t;
+    $$('.tabs button').forEach(function (b) { var on = b.dataset.tab === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    ['business', 'cio', 'architect'].forEach(function (x) { $('#v-' + x).hidden = x !== t; });
+    archKey = ''; render(); window.scrollTo(0, 0);
+  }
+  function selectStep(x) {
+    if (x === 'follow') S.step = null; else if (x === 'all') S.step = S.step === 'all' ? null : 'all';
+    else { x = +x; S.step = S.step === x ? null : x; }
+    archKey = ''; render();
+  }
+  function togglePresenter() { S.presenter = !S.presenter; document.body.classList.toggle('presenter', S.presenter); $('#b-pres').classList.toggle('on', S.presenter); }
 
   function modebar() {
     var m = $('#modebar');
-    if (LIVE) { m.innerHTML = '<span class="badge">LIVE</span><span>Live run against the real Salesforce org, local model ' + esc(CFG.model || 'Qwen3-4B-Instruct-2507') + ', Operaton and OPA. Legacy systems are labelled stand-ins.</span><span class="sp"></span><span id="mstat"></span>'; return; }
+    if (LIVE) { m.innerHTML = '<span class="badge">LIVE</span><span>Live run against the real Salesforce org, our agent, workflow and policy. Legacy systems are labelled stand-ins.</span><span class="sp"></span><span id="mstat"></span>'; return; }
     var r = S.rec;
-    m.innerHTML = '<span class="badge">RECORDED RUN</span><span>' + (r ? 'Recorded run of “' + esc(r.title) + '” on ' + esc(new Date(r.recordedAt).toLocaleString('en-GB', { timeZone: 'Europe/London', dateStyle: 'medium', timeStyle: 'short' })) + ' (UK time), replayed from the real data it produced. Long waits are shortened.' : 'Recorded runs: choose a case to replay what really happened.') + '</span><span class="sp"></span>' +
-      '<span class="ctrl"><button class="tb" id="b-play">' + (S.play ? 'Pause' : 'Play') + '</button><input type="range" id="scrub" min="0" max="1000" value="0"><button class="tb" id="b-end">Skip to end</button>' +
-      '<select id="spd" class="tb"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></span>';
+    m.innerHTML = '<span class="badge">RECORDED RUN</span><span class="mtxt">' + (r ? 'Recorded run of “' + esc(r.title) + '” on ' + esc(new Date(r.recordedAt).toLocaleString('en-GB', { timeZone: 'Europe/London', dateStyle: 'medium', timeStyle: 'short' })) + ' (UK time), replayed from the real data it produced. Long waits are shortened.' : 'Recorded runs: choose a journey to replay what really happened.') + '</span><span class="sp"></span>' +
+      '<span class="ctrl"><button class="tb" id="b-play">' + (S.play ? 'Pause' : 'Play') + '</button><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Replay position"><button class="tb" id="b-end">Skip to end</button>' +
+      '<select id="spd" class="tb" aria-label="Speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></span>';
     $('#b-play').onclick = togglePlay; $('#b-end').onclick = function () { if (S.rec) { stopPlay(); S.t = S.rec.tEnd; render(); } };
     $('#spd').value = String(S.speed); $('#spd').onchange = function () { S.speed = +this.value; };
     $('#scrub').oninput = function () { if (!S.rec) return; stopPlay(); S.t = S.rec.timeAt(+this.value / 1000); render(); };
   }
 
   function render() {
-    var v = view(S.full, S.t), cid = S.caseId;
-    document.querySelectorAll('.case').forEach(function (b) { b.classList.toggle('on', b.dataset.case === cid); b.disabled = S.busy && LIVE; });
-    $('#chev').innerHTML = stage(v).map(function (c) { return '<div class="cv ' + c.k + '"><b>' + c.b + '</b>' + esc(c.s) + '</div>'; }).join('');
-    var st = (v && v.state) || {};
-    $('#av').textContent = (st.contactName || 'S')[0];
-    $('#who').textContent = st.contactFullName ? 'AgenticTelco Business portal · signed in as ' + st.contactFullName + ' (' + st.contactRole + ') · Brightwell Design Ltd' : 'AgenticTelco Business portal · choose a case to start';
-    var is = v && v.intent ? v.intent.lifecycle_status : null;
-    $('#ist').textContent = is ? 'Intent ' + is : 'no intent yet'; $('#ist').style.color = is === 'fulfilled' ? 'var(--ok)' : is === 'atRisk' ? '#fdba74' : '#fff';
-    renderChat(v);
-    var f = facts(v);
-    $('#facts').innerHTML = '<div>Customer<b>Brightwell Design Ltd</b></div><div>Contact<b>' + esc(f.who) + '</b></div><div>' + (is === 'fulfilled' ? 'Now' : 'Today') + '<b>' + esc(is === 'fulfilled' ? 'AgenticTelco Fibre 900 · £45/month (live)' : f.current) + '</b></div><div>Contract end<b>' + esc(f.contractEnd) + ' (kept)</b></div>';
-    var hl = hotLayers(v);
-    LAYER_IDS.forEach(function (id) {
-      var el = $('.ly[data-layer="' + id + '"]'), h = hl.hot[id];
-      el.classList.toggle('hot', !!h); el.classList.toggle('touched', !!hl.used[id]);
-      $('.now', el).textContent = h ? '▶ ' + (h.step || '') + (h.runtime ? ' · ' + h.runtime : '') : (hl.used[id] ? lastStep(v, id) : '');
-      $('.cnt', el).textContent = hl.used[id] ? hl.used[id] + (id === 'L7' ? ' event' : ' step') + (hl.used[id] > 1 ? 's' : '') : '';
-    });
-    if (S.follow) { var hk = Object.keys(hl.hot).filter(function (k) { return k !== 'L8'; }).pop(); if (hk && hk !== S.open) openLayer(hk, true); }
+    var v = view(S.full, S.t);
+    renderBusiness(v);
+    if (S.tab === 'cio') renderCio(v);
+    if (S.tab === 'architect') renderArchitect(v);
     if (S.open) renderLayer(S.open, v);
     if (!LIVE && S.rec && $('#scrub')) { $('#scrub').value = Math.round(S.rec.fracAt(S.t) * 1000); }
     if (LIVE && $('#mstat')) $('#mstat').textContent = S.busy ? 'agent working…' : (S.cid ? 'conversation ' + S.cid : '');
   }
-  function lastStep(v, id) { var s = v.spans.filter(function (x) { return x.layer === id; }).pop(); if (id === 'L7') return 'Port ' + (portIs900(v) ? '900' : '150') + ' Mbps at site 4471'; return s ? s.step : ''; }
+
+  /* ---------- 1. Business view ---------- */
+  function shellBusiness() {
+    $('#v-business').innerHTML = '<div class="bv">' +
+      '<div class="jrow"><div class="jl">' + esc(UB.journeysHeading) + '</div><div class="cases">' + CASES.map(function (c, i) { return '<button class="case" data-case="' + c.id + '"><b>' + (i + 1) + '. ' + esc(c.title) + '</b><span>' + esc(c.sub) + '</span></button>'; }).join('') + '</div></div>' +
+      '<div class="chev" id="chev"></div><div class="stephint" id="stephint"></div>' +
+      '<div class="bgrid"><div class="panel chatp"><div class="portal"><div class="av" id="av">S</div><div class="who" id="who"></div><span class="badge" id="ist"></span></div>' +
+      '<div class="chat" id="chat"></div>' +
+      (LIVE ? '<div class="quick" id="quick"></div><div class="composer"><textarea id="msg" placeholder="Type as the customer…"></textarea><button class="btn" id="send">Send</button></div>' : '') + '</div>' +
+      '<div class="bside"><div class="card today" id="today"></div><div class="card outcome" id="outcome"></div><div class="card kpis" id="kpis" hidden></div></div></div></div>';
+    $$('.case').forEach(function (b) { b.onclick = function () { startCase(b.dataset.case); }; });
+    if (LIVE) { $('#send').onclick = function () { send($('#msg').value); }; $('#msg').onkeydown = function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send($('#msg').value); } }; }
+  }
+  function renderBusiness(v) {
+    var cid = S.caseId, kinds = stepKinds(v), sel = S.step;
+    $$('.case').forEach(function (b) { b.classList.toggle('on', b.dataset.case === cid); b.disabled = S.busy && LIVE; });
+    var ch = kinds.map(function (c, i) { return '<button class="cv ' + c.k + (sel === i ? ' sel' : '') + '" data-step="' + i + '" title="Show this step in the CIO and Chief Architect views"><b>' + esc(c.b) + '</b><span>' + esc(c.s) + '</span></button>'; }).join('');
+    if ($('#chev').dataset.k !== ch) { $('#chev').innerHTML = ch; $('#chev').dataset.k = ch; }
+    var hint = sel === null || sel === 'all' ? esc(UB.stepHint) + ' <a href="#" data-goto="cio">' + esc(UB.stepHintLink) + ' →</a>'
+      : 'Selected: <b>' + esc((STEPS[sel] || {}).label) + '</b> · <a href="#" data-goto="cio">' + esc(UB.stepHintLink) + ' →</a> · <a href="#" data-step="follow">Follow the replay</a>';
+    if ($('#stephint').innerHTML !== hint) $('#stephint').innerHTML = hint;
+    var st = (v && v.state) || {}, f = facts(v);
+    $('#av').textContent = (st.contactName || 'S')[0];
+    $('#who').innerHTML = st.contactFullName ? '<b>' + esc(f.who) + '</b><span>Business portal chat · ' + esc(UB.customer) + '</span>' : '<b>Business portal chat</b><span>' + esc(UB.customer) + '</span>';
+    var k5 = kinds[5] ? kinds[5].k : '', k2 = kinds[2] ? kinds[2].k : '', k4 = kinds[4] ? kinds[4].k : '';
+    var badge = k5 === 'live' ? ['Live', 'ok'] : k5 === 'delay' ? ['Delayed, customer told', 'warn'] : k2 === 'blocked' ? ['No order', 'no'] : k4 ? ['Order placed', ''] : ['', ''];
+    $('#ist').textContent = badge[0]; $('#ist').className = 'badge ' + badge[1]; $('#ist').hidden = !badge[0];
+    renderChat(v);
+    var live = isLive(v);
+    $('#today').innerHTML = '<h3>' + esc(UB.todayHeading) + '</h3><dl><dt>Customer</dt><dd>' + esc(UB.customer) + ' · ' + esc(f.site) + '</dd><dt>Asking</dt><dd>' + esc(f.who) + '</dd><dt>Service</dt><dd>' + esc(f.current) + '</dd><dt>Contract end</dt><dd>' + esc(f.contractEnd) + '</dd></dl>';
+    var o = outcome(v, f);
+    $('#outcome').innerHTML = '<h3>' + esc(k2 === 'blocked' ? UB.outcomeHeadingNo : UB.outcomeHeading) + '</h3>' + o;
+    $('#outcome').classList.toggle('done', live); $('#outcome').classList.toggle('no', k2 === 'blocked');
+    var kp = kpis(v); $('#kpis').hidden = !kp; if (kp) $('#kpis').innerHTML = '<h3>' + esc(UB.kpiHeading) + '</h3>' + kp;
+  }
+  function outcome(v, f) {
+    if (!v) return '<p class="muted">' + esc(UB.outcomeWaiting) + '</p>';
+    var W = windows(S.full), asst = v.messages.filter(function (m) { return m.role === 'assistant'; });
+    if (W && W.blocked && asst.length) {
+      var od = (((v.state || {}).contextPack || {}).overdueBalance || {}).amountGBP;
+      return '<div class="big no">' + esc(UB.outcomeNoOrder) + '</div>' + (W.denyReason === 'overdue_balance'
+        ? '<p>The overdue balance of <b>£' + Number(od || 0).toFixed(2) + '</b> must be paid first. The agent sent ' + esc(f.name.split(' ')[0] || 'the customer') + ' a payment link (mocked).</p>'
+        : '<p>' + esc(f.name.split(' ')[0] || 'The requester') + ' is not authorised to order. The agent asked them to bring in Sam Taylor, the authorised contact.</p>') + '<p class="muted">Nothing was quoted, ordered or changed.</p>';
+    }
+    if (!isLive(v)) {
+      var jeo = (v.jeopardy || []).slice(-1)[0];
+      if (jeo) return '<div class="big warn">Delayed by ' + delayDays(v) + ' days</div><p>No exchange port is free yet. ' + esc(f.name.split(' ')[0] || 'The customer') + ' was told the new date (' + esc(shortDate(jeo.body['x-revisedCompletionDate'])) + ') before it slipped.</p>';
+      return '<p class="muted">' + esc(UB.outcomeWaiting) + '</p>';
+    }
+    var pack = (v.state || {}).contextPack || {}, prod = (v.milestones.filter(function (m) { return m.name === 'Live'; })[0].body || {}).product || 'AgenticTelco Fibre 900';
+    var off = (pack.offerings || []).filter(function (o) { return o.name === prod; })[0] || {};
+    var rows = [['Service', esc(prod.replace(/^AgenticTelco /, ''))], ['Price', '£' + esc(off.monthlyPriceGBP || 45) + ' a month'], ['Contract end', esc(f.contractShort) + ' <span class="muted">(unchanged)</span>']];
+    if (S.caseId !== 'delayed' && v.links && v.links.orderNumber) rows.push(['Order', '<span class="mono">' + esc(v.links.orderNumber) + '</span>']);
+    var ld = liveDate(v); rows.push(['Live', esc(ld || '') + (S.caseId === 'delayed' ? ' <span class="muted">(' + delayDays(v) + ' days later than planned; customer told first)</span>' : '')]);
+    return '<div class="big ok">' + esc(prod.replace(/^AgenticTelco /, '')) + ' is live</div><dl>' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>';
+  }
+  function delayDays(v) {
+    var j = (S.full.jeopardy || [])[0], s = (S.full.milestones || []).filter(function (m) { return m.name === 'SentToOSS'; })[0];
+    if (!j || !s) return 2;
+    return Math.round((T(j.body['x-revisedCompletionDate'] + 'T12:00:00Z') - T(s.body.expectedCompletionDate + 'T12:00:00Z')) / 864e5);
+  }
+  function kpis(v) {
+    if (!v) return '';
+    var W = windows(S.full), asst = v.messages.filter(function (m) { return m.role === 'assistant'; }), live = isLive(v);
+    if (!(live || (W && W.blocked && asst.length))) return '';
+    var users = v.messages.filter(function (m) { return m.role === 'user'; }), pro = asst.filter(function (m) { return m.meta && m.meta.proactive; });
+    var orders = v.milestones.filter(function (m) { return m.name === 'OrderInProgress'; }).length, k = [];
+    if (live && S.caseId !== 'delayed') { var lv = v.milestones.filter(function (m) { return m.name === 'Live'; })[0]; k.push([dur(T(lv.at) - T(users[0].at)), 'request to live (demo run)']); }
+    k.push([v.spans.length, 'automated steps, all logged']);
+    k.push([users.length, users.length === 1 ? 'customer message' : 'customer messages']);
+    if (live) k.push([pro.length, pro.length === 1 ? 'proactive update' : 'proactive updates']); else k.push([orders, 'orders placed']);
+    return '<div class="kg">' + k.map(function (x) { return '<div><b>' + esc(x[0]) + '</b><span>' + esc(x[1]) + '</span></div>'; }).join('') + '</div>' + (live ? '<p class="muted small">' + esc(UB.kpiNote) + '</p>' : '');
+  }
   function linkify(t) { return esc(t).replace(/(https:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
   function renderChat(v) {
     var c = $('#chat'), msgs = v ? v.messages : [];
@@ -178,7 +289,7 @@
     }).join('');
     var lastUser = msgs.length && msgs[msgs.length - 1].role === 'user';
     if ((LIVE && S.busy) || (!LIVE && lastUser)) html += '<div class="typing">Agent is checking…</div>';
-    if (!msgs.length) html = '<div class="empty">' + (S.caseId ? (LIVE ? 'Press Send to ask the opening question as the customer.' : 'Press Play to replay the recorded run.') : 'Choose one of the four cases above. Each starts from Brightwell on Fibre 150 at £27 a month, contract to 28 August 2027.') + '</div>';
+    if (!msgs.length) html = '<div class="empty">' + (S.caseId ? (LIVE ? 'Press Send to ask the opening question as the customer.' : esc(UB.chatReady)) : esc(UB.chatEmpty)) + '</div>';
     var key = msgs.length + '|' + (S.busy ? 1 : 0) + '|' + lastUser + S.caseId;
     if (c.dataset.k !== key) { c.innerHTML = html; c.dataset.k = key; c.scrollTop = c.scrollHeight; }
     if (LIVE) {
@@ -189,6 +300,245 @@
       $('#quick').querySelectorAll('button').forEach(function (b, i) { b.onclick = function () { send(q[i]); }; });
     }
   }
+
+  /* ---------- 2. CIO view: the estate as a layered picture, lit by step ---------- */
+  var ICON = {   // simple 24x24 line icons, drawn in code
+    person: '<circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+    agent: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01M9 16.5h6"/><circle cx="12" cy="3.5" r="1"/>',
+    shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+    db: '<ellipse cx="12" cy="5.5" rx="7" ry="2.5"/><path d="M5 5.5v13c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-13M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
+    flow: '<rect x="2.5" y="9" width="5" height="6" rx="1"/><rect x="9.5" y="9" width="5" height="6" rx="1"/><rect x="16.5" y="9" width="5" height="6" rx="1"/><path d="M7.5 12h2M14.5 12h2"/>',
+    api: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14"/>',
+    cloud: '<path d="M7 18h10.5a4 4 0 0 0 .5-8 6 6 0 0 0-11.5-1.5A4.8 4.8 0 0 0 7 18z"/>',
+    server: '<rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/>',
+    bill: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    pin: '<path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+    net: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11l9.4-5M7.3 13l9.4 5"/>',
+    timeline: '<path d="M4 6h9M7 12h11M5 18h7"/><path d="M3 3v18"/>'
+  };
+  /* node: [id, x, y, w, h, icon, colour var, mocked] ; diagram text comes from UI.diagram */
+  var DNODES = [
+    ['customer', 16, 56, 104, 132, 'person', '--navy'],
+    ['L1', 148, 56, 156, 132, 'chat', '--l1'], ['L2', 328, 56, 156, 132, 'agent', '--l2'],
+    ['L4', 524, 56, 156, 132, 'shield', '--l4'], ['L3', 704, 56, 156, 132, 'db', '--l3'],
+    ['L5', 900, 56, 144, 132, 'flow', '--l5'],
+    ['api', 148, 256, 896, 56, 'api', '--l6'],
+    ['sf', 148, 340, 352, 152, 'cloud', '--blue'],
+    ['billing', 528, 366, 160, 118, 'bill', '--legacy', 1], ['avail', 700, 366, 160, 118, 'pin', '--legacy', 1], ['oss', 872, 366, 160, 118, 'server', '--legacy', 1],
+    ['L8', 1084, 56, 168, 200, 'timeline', '--l8'], ['L7', 1084, 296, 168, 196, 'net', '--l7', 1]];
+  var DGROUPS = { understand: [136, 16, 360, 188, '--l2'], know: [512, 16, 360, 188, '--l4'], act: [888, 16, 168, 188, '--l5'], connect: [136, 220, 920, 284, '--l6'], prove: [1072, 16, 192, 488, '--l8'] };
+  var DEDGES = [['customer', 'L1', 'M120 122H148'], ['L1', 'L2', 'M304 122H328'], ['L2', 'L4', 'M484 122H524'], ['L4', 'L3', 'M680 122H704'],
+    ['L1', 'L5', 'M226 188V212H972V188'], ['L4', 'api', 'M602 188V256'], ['L5', 'api', 'M972 212V256'], ['L3', 'L8', 'M782 56V8H1168V56'],
+    ['api', 'sf', 'M324 312V340'], ['api', 'billing', 'M608 312V366'], ['api', 'avail', 'M780 312V366'], ['api', 'oss', 'M952 312V366'], ['oss', 'L7', 'M1032 425H1084']];
+  function wrapText(s, max) { var w = String(s || '').split(' '), out = [], cur = ''; w.forEach(function (x) { if ((cur + ' ' + x).trim().length > max && cur) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); if (cur) out.push(cur); return out; }
+  function icon(name, x, y, s, col) { return '<g class="ic" transform="translate(' + x + ' ' + y + ') scale(' + (s / 24) + ')" fill="none" stroke="' + col + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</g>'; }
+  function diagramSvg() {
+    var N = UD.nodes || {}, G = {}, chips = UD.chips || {}; (UD.groups || []).forEach(function (g) { G[g.id] = g; });
+    var h = '<svg class="dsvg" id="dsvg" viewBox="0 0 1280 512" role="img" aria-label="' + esc(UC.headline) + '"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>';
+    Object.keys(DGROUPS).forEach(function (k) { var g = DGROUPS[k]; h += '<g class="dg" data-group="' + k + '"><rect x="' + g[0] + '" y="' + g[1] + '" width="' + g[2] + '" height="' + g[3] + '" rx="14" style="--c:var(' + g[4] + ')"/><text x="' + (g[0] + 14) + '" y="' + (g[1] + 24) + '" class="gt">' + esc(((G[k] || {}).title || k).toUpperCase()) + '</text></g>'; });
+    h += '<g class="older"><rect x="516" y="330" width="528" height="166" rx="10"/><text x="528" y="352" class="ot">' + esc(chips.adapters || 'Adapters') + ' · older systems</text></g>';
+    DEDGES.forEach(function (e) { h += '<path class="de" data-e="' + e[0] + '-' + e[1] + '" d="' + e[2] + '" marker-end="url(#ah)"/>'; });
+    DNODES.forEach(function (n) {
+      var id = n[0], x = n[1], y = n[2], w = n[3], ht = n[4], t = id === 'customer' ? (UD.customer || {}) : (N[id] || {}), col = 'var(' + n[6] + ')';
+      var lay = /^L\d$/.test(id) ? id : id === 'api' || id === 'sf' || id === 'billing' || id === 'avail' || id === 'oss' ? 'L6' : '';
+      h += '<g class="dn" data-node="' + id + '"' + (lay ? ' data-about="' + lay + '"' : '') + ' style="--c:' + col + '" tabindex="0"><title>' + esc(t.title) + (lay ? ' (' + lay + ')' : '') + '</title><rect class="bx" x="' + x + '" y="' + y + '" width="' + w + '" height="' + ht + '" rx="12"/>';
+      if (id === 'api') {
+        h += '<circle cx="' + (x + 28) + '" cy="' + (y + 28) + '" r="18" class="icb"/>' + icon('api', x + 17, y + 17, 22, col) +
+          '<text x="' + (x + 56) + '" y="' + (y + 25) + '" class="nt">' + esc(t.title) + '</text><text x="' + (x + 56) + '" y="' + (y + 43) + '" class="ns">' + esc(t.sub) + ' · L6</text>' +
+          '<g class="chipg"><rect x="' + (x + 470) + '" y="' + (y + 15) + '" width="196" height="26" rx="13" class="chs"/><text x="' + (x + 568) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.sf) + '</text>' +
+          '<rect x="' + (x + 676) + '" y="' + (y + 15) + '" width="206" height="26" rx="13" class="chs f"/><text x="' + (x + 779) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.facade) + '</text></g>';
+      } else {
+        var cx = id === 'customer' ? x + w / 2 : x + 30;
+        h += '<circle cx="' + cx + '" cy="' + (y + 30) + '" r="19" class="icb"/>' + icon(n[5], cx - 12, y + 18, 24, col);
+        var tx = id === 'customer' ? x + w / 2 : x + 14, anc = id === 'customer' ? ' text-anchor="middle"' : '';
+        h += '<text x="' + tx + '" y="' + (y + 72) + '" class="nt"' + anc + '>' + esc(t.title) + '</text>';
+        wrapText(t.sub, Math.floor((w - 24) / 6.4)).slice(0, 3).forEach(function (ln, i) { h += '<text x="' + tx + '" y="' + (y + 92 + i * 16) + '" class="ns"' + anc + '>' + esc(ln) + '</text>'; });
+        if (lay && id !== 'sf' && id !== 'billing' && id !== 'avail' && id !== 'oss') h += '<text x="' + (x + w - 12) + '" y="' + (y + 22) + '" text-anchor="end" class="ln">' + lay + '</text>';
+        if (n[7]) h += '<g class="mk"><rect x="' + (x + w - 64) + '" y="' + (y + ht - 28) + '" width="54" height="18" rx="9"/><text x="' + (x + w - 37) + '" y="' + (y + ht - 15) + '" text-anchor="middle">' + esc(chips.mocked || 'Mocked') + '</text></g>';
+      }
+      h += '</g>';
+    });
+    return h + '</svg>';
+  }
+  function shellCio() {
+    var ev = CFG.evidence || [];
+    $('#v-cio').innerHTML = '<div class="cio">' +
+      '<h2 class="hl">' + esc(UC.headline) + '</h2>' +
+      '<div class="banner"><div class="big">' + esc(UC.banner).replace(/ · /g, '<i>·</i>') + '</div><div class="small">' + esc(UC.bannerSmall) + '</div></div>' +
+      '<div class="c3">' + (UC.cards || []).map(function (c, i) { return '<div class="cc"><div class="ci">' + '<svg viewBox="0 0 24 24" width="26" height="26">' + icon(['agent', 'shield', 'flow'][i], 0, 0, 24, 'currentColor') + '</svg></div><div><b>' + esc(c.title) + '</b><p>' + esc(c.text) + '</p></div></div>'; }).join('') + '</div>' +
+      '<div class="cmain"><div class="panel dgm"><div class="strip" id="cstrip"></div>' + diagramSvg() + '<div class="dcap" id="dcap"></div>' +
+      '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '</div></div>' +
+      '<div class="msgs">' + (UC.messages || []).map(function (m) { return '<div class="mc"><b>' + esc(m.title) + '</b><p>' + esc(m.text) + '</p></div>'; }).join('') + '</div></div>' +
+      '<div class="gal" id="gallery"><h2>' + esc(UC.galleryHeading) + '</h2><p class="small">' + esc(UC.galleryIntro) + '</p>' +
+      (ev.length ? '<div class="evg">' + ev.map(function (e, i) { return '<figure class="ev"><img loading="lazy" alt="' + esc(e.caption) + '" src="' + e.src + '"><figcaption><b>' + (i + 1) + '.</b> ' + esc(e.caption) + '</figcaption></figure>'; }).join('') + '</div>' : '<p class="small">No screenshots in this build.</p>') + '</div></div>';
+    $$('.ev img').forEach(function (im) { im.onclick = function () { var w = window.open(); if (w) w.document.write('<img style="max-width:100%" src="' + im.src + '">'); }; });
+  }
+  /* which diagram nodes a set of spans and events touches */
+  function litNodes(spans, msgs, mss) {
+    var on = {};
+    spans.forEach(function (s) {
+      on[s.layer] = 1; on.L8 = 1;
+      if (s.layer === 'L1' && /Customer message/.test(s.step)) on.customer = 1;
+      if (s.layer === 'L6') {
+        on.api = 1; var r = (s.runtime || '') + ' ' + s.step + ' ' + (s.component || '');
+        if (/Salesforce/.test(s.runtime || '')) on.sf = 1;
+        if (/Billing|Payment/i.test(r)) on.billing = 1; if (/Availability/i.test(r)) on.avail = 1; if (/OSS/.test(r)) on.oss = 1;
+      }
+    });
+    if (msgs.length) on.customer = 1;
+    if (mss.some(function (m) { return /SentToOSS|PortReserved|Jeopardy|Live/.test(m.name); })) on.L7 = 1;
+    return on;
+  }
+  function inWin(W, k) { var w = k === 'all' ? { a: -Infinity, b: Infinity } : W[k]; return function (x) { var t = T(x); return w.a != null && t >= w.a && t < w.b; }; }
+  function renderCio(v) {
+    var W = windows(S.full), k = selStep(), kinds = stepKinds(v);
+    var strip = '<span class="sl">' + esc(UC.stepsLabel) + '</span>' + kinds.map(function (c, i) { return '<button class="pill ' + c.k + (S.step === i ? ' sel' : '') + (k === i && S.step === null ? ' cur' : '') + '" data-step="' + i + '">' + esc(c.b) + '</button>'; }).join('') +
+      '<button class="pill all' + (S.step === 'all' ? ' sel' : '') + '" data-step="all">' + esc(UC.allSteps) + '</button>';
+    if ($('#cstrip').dataset.k !== strip) { $('#cstrip').innerHTML = strip; $('#cstrip').dataset.k = strip; }
+    var svg = $('#dsvg'), on = {}, src = null, cap;
+    if (!v || k == null || !W) { svg.classList.remove('active'); cap = S.caseId ? 'Press Play: the layers light up as the replay reaches each step.' : 'Choose a journey on the Business view, then press Play or pick a step: the layers it uses light up here.'; }
+    else {
+      var f = inWin(W, k), selected = S.step !== null;
+      src = selected ? S.full : v;   // a selected step shows everything it uses; following the replay shows what has happened so far
+      on = W[k === 'all' ? 0 : k] && (k === 'all' || W[k].a != null) ? litNodes((src.spans || []).filter(function (s) { return f(s.start_ts); }), (src.messages || []).filter(function (m) { return f(m.at); }), (src.milestones || []).filter(function (m) { return f(m.at); })) : {};
+      svg.classList.add('active');
+      var names = DNODES.filter(function (n) { return on[n[0]]; }).map(function (n) { var t = n[0] === 'customer' ? UD.customer : (UD.nodes || {})[n[0]]; return (t || {}).title; });
+      var lbl = k === 'all' ? UC.allSteps : (STEPS[k] || {}).label;
+      cap = (selected ? 'Showing step: ' : 'Following the replay: ') + '<b>' + esc(lbl) + '</b>' + (names.length ? ' · lit: ' + esc(names.join(', ')) : ' · nothing runs in this step for this journey') + (selected ? ' · <a href="#" data-step="follow">Follow the replay</a>' : '');
+    }
+    var hot = S.step === null && S.play ? hotLayers(v).hot : {};
+    $$('.dn', svg).forEach(function (g) { var id = g.dataset.node; g.classList.toggle('on', !!on[id]); g.classList.toggle('hot', !!(hot[id] || (id === 'api' && hot.L6))); });
+    $$('.de', svg).forEach(function (p) { var e = p.dataset.e.split('-'); p.classList.toggle('on', !!(on[e[0]] && on[e[1]])); });
+    if ($('#dcap').innerHTML !== cap) $('#dcap').innerHTML = cap;
+  }
+
+  /* ---------- 3. Chief Architect view: step timeline on the left, what each layer did in that step on the right ---------- */
+  function shellArchitect() {
+    var g = COPY.glossary || [], M = UA.mapping || [];
+    $('#v-architect').innerHTML = '<div class="av3"><div class="agrid3"><aside class="panel atl" id="atl"></aside><div class="alay" id="alay"></div></div>' +
+      '<p class="sorline"><b>All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer.</b></p>' +
+      exposedApis() +
+      '<div class="ph boxh"><h2>' + esc(UA.mappingHeading) + '</h2><span class="lab mix">conceptual alignment</span></div><div class="panel boxb" id="oda"><p class="small">' + esc(UA.mappingIntro) + '</p><p>' + esc(UA.etom) + '</p>' +
+      '<table class="t"><tr><th>Step in the journey</th><th>TM Forum Open API</th><th>ODA functional block (conceptual)</th><th>SID entities (inferred)</th></tr>' + M.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td><span class="tmf"><b>' + esc(r[1].split(' ')[0]) + '</b> ' + esc(r[1].split(' ').slice(1).join(' ')) + '</span></td><td>' + esc(r[2]) + '</td><td class="small">' + esc(r[3]) + '</td></tr>'; }).join('') + '</table></div>' +
+      '<div class="ph boxh"><h2>Glossary (' + g.length + ' terms, from docs/mvp/layer-panels.md)</h2><input class="glf" id="glf" placeholder="Filter terms…"></div>' +
+      '<div class="panel boxb"><div class="gl" id="gl"></div></div></div>';
+    var draw = function (f) { $('#gl').innerHTML = g.filter(function (x) { return !f || (x.term + x.definition).toLowerCase().indexOf(f) >= 0; }).map(function (x) { return '<div class="gt"><b>' + esc(x.term) + '</b> · ' + esc(x.definition) + '</div>'; }).join(''); };
+    draw(''); $('#glf').oninput = function () { draw(this.value.toLowerCase()); };
+  }
+  var archKey = '';
+  function winView(k) {   // the run as it stood at the end of step k (or now, if the replay is still inside it), keeping only what happened in the step
+    var W = windows(S.full), w = k === 'all' ? { a: -Infinity, b: Infinity } : W[k], t = nowT();
+    var tc = Math.min(t, w.b === Infinity ? Infinity : w.b - 1), vEnd = view(S.full, tc === Infinity && !LIVE ? Infinity : tc);
+    var f = function (x) { return T(x) >= w.a; }, s = Object.assign({}, vEnd);
+    ['messages', 'decisions', 'consent', 'milestones', 'jeopardy'].forEach(function (n) { s[n] = (vEnd[n] || []).filter(function (x) { return f(x.at); }); });
+    s.spans = vEnd.spans.filter(function (x) { return f(x.start_ts); });
+    s.reports = (vEnd.reports || []).filter(function (r) { return f(r.creationDate); });
+    s.bpmn = (vEnd.bpmn || []).filter(function (a) { return f(a.start); });
+    s.intentHere = !!(vEnd.intent && f(vEnd.intent.body && vEnd.intent.body.creationDate));
+    return { w: s, end: vEnd, reached: w.a0 == null ? (k === 'all') : w.a0 <= t };
+  }
+  function renderArchitect(v) {
+    var W = windows(S.full), k = selStep(), kinds = stepKinds(v);
+    var key = [S.caseId, k, v ? v.spans.length : 0, v ? v.spans.filter(function (s) { return s.running; }).length : 0, v ? (v.bpmn || []).map(function (a) { return a.end ? 1 : 0; }).join('') : '', v ? v.messages.length + ':' + v.milestones.length : ''].join('|');
+    if (key === archKey) return; archKey = key;
+    var atl = $('#atl'), al = $('#alay');
+    if (!v || !W) {
+      atl.innerHTML = '<h3>' + esc(UA.stepsHeading) + '</h3><p class="small">Choose a journey on the Business view (or press 1 to 4), then Play.</p>';
+      al.innerHTML = '<h3>' + esc(UA.layersHeading) + '</h3>' + LAYER_IDS.map(function (id) { return layerSec(id, '', true); }).join('');
+      return;
+    }
+    atl.innerHTML = '<h3>' + esc(UA.stepsHeading) + ' <span class="small">(UK time)</span></h3>' +
+      '<button class="as all' + (k === 'all' ? ' sel' : '') + '" data-step="all"><b>' + esc(UC.allSteps) + '</b><span>' + v.spans.length + ' logged steps so far</span></button>' +
+      kinds.map(function (c, i) {
+        var w = W[i], sp = w.a == null ? [] : v.spans.filter(function (s) { var t = T(s.start_ts); return t >= w.a && t < w.b; });
+        var lays = {}; sp.forEach(function (s) { lays[s.layer] = 1; });
+        var rng = w.a0 == null ? 'not in this journey' : hm(w.a0) + (w.b !== Infinity ? ' – ' + hm(w.b) : '');
+        var head = '<button class="as ' + c.k + (k === i ? ' sel' : '') + '" data-step="' + i + '"><b>' + (i + 1) + '. ' + esc(c.b) + '</b><span>' + esc(rng) + (sp.length ? ' · ' + sp.length + ' entries · ' + Object.keys(lays).sort().join(' ') : '') + '</span></button>';
+        if (k !== i || !sp.length) return head;
+        return head + '<table class="t asp">' + sp.slice().sort(byStart).map(function (s) { return '<tr' + (isCall(s) ? ' class="call" data-sid="' + esc(s.span_id) + '" tabindex="0" title="Open the request and response"' : '') + '><td><span class="lyn" style="--c:var(--' + s.layer.toLowerCase() + ')">' + s.layer + '</span></td><td>' + esc(s.step) + '</td><td class="small">' + ms(s) + '</td></tr>'; }).join('') + '</table>';
+      }).join('');
+    if (k == null) { al.innerHTML = '<h3>' + esc(UA.layersHeading) + '</h3><p class="small">Press Play, or pick a step on the left.</p>'; return; }
+    var wv = winView(k), lbl = k === 'all' ? UC.allSteps : (STEPS[k] || {}).label;
+    al.innerHTML = '<h3>' + esc(UA.layersHeading) + ' · <span class="stp">' + esc(lbl) + '</span></h3>' + (k !== 'all' && W[k].a == null ? '<p class="note">' + esc(UA.notInJourney) + '</p>' : wv.reached ? '' : '<p class="note">' + esc(UA.notReached) + '</p>') +
+      LAYER_IDS.map(function (id) { return layerSec(id, '', true); }).join('');
+    LAYER_IDS.forEach(function (id) {
+      var box = $('.lsec[data-layer="' + id + '"] .lb', al), used = wv.reached && ARCH[id](box, wv.w, wv.end, k);
+      $('.lsec[data-layer="' + id + '"]', al).classList.toggle('idle', !used);
+      if (!used) box.innerHTML = '<p class="small">' + esc(wv.reached || W[k] && W[k].a == null ? UA.notUsed : UA.notReached) + '</p>';
+    });
+  }
+  function layerSec(id) {
+    var l = layerCopy[id] || {}, sk = statusKind(l.status);
+    return '<section class="lsec" data-layer="' + id + '" style="--c:var(--' + id.toLowerCase() + ')"><div class="lh"><span class="n">' + id + '</span><b>' + esc(l.name) + '</b><span class="q">' + esc(l.question) + '</span><span class="lab ' + sk[0] + '" title="' + esc(l.status) + '">' + sk[1] + '</span><button class="tb sm" data-about="' + id + '">' + esc(UA.about) + '</button></div><div class="lb"></div></section>';
+  }
+  function quote(m) { return '<blockquote class="q2">' + linkify(m.content) + '<span class="small"> · ' + hm(T(m.at)) + '</span></blockquote>'; }
+  var ARCH = {
+    L1: function (b, w, e) {
+      var sp = w.spans.filter(function (s) { return s.layer === 'L1'; }), um = w.messages.filter(function (m) { return m.role === 'user'; });
+      if (!sp.length && !w.reports.length && !w.consent.length) return false;
+      var h = um.length ? '<div class="sec">Customer said</div>' + um.map(quote).join('') : '';
+      if (w.consent.length) h += '<div class="sec">Consent</div>' + w.consent.map(function (c) { return '<p>“' + esc(c.text) + '” · ' + hm(T(c.at)) + '</p>'; }).join('');
+      var it = e.intent;
+      if (it && w.intentHere) { var ex = (it.body.expression || {}).expressionValue || it.body.expression; h += '<div class="sec">Intent [TMF921], recorded in this step</div><p><b>' + esc(it.id) + '</b> · ' + esc(it.body.name || '') + '</p><pre class="js">' + esc(JSON.stringify(ex, null, 1)) + '</pre>'; }
+      else if (it) h += '<p class="small">Intent <b>' + esc(it.id) + '</b> · lifecycle ' + esc(it.lifecycle_status) + '</p>';
+      if (w.reports.length) h += '<div class="sec">Intent reports</div>' + spanRows(w.reports, [['When', function (r) { return hm(T(r.creationDate)); }], ['Report', function (r) { return esc(r.name); }], ['State', function (r) { var s = r.expression.expressionValue['icm:reportState']; return '<span class="lab ' + (/Complies/.test(s) ? 'real' : 'mock') + '">' + esc(s.replace('icm:', '')) + '</span>'; }], ['Detail', function (r) { var x = r.expression.expressionValue; return esc(x.reason || x.product || '') + (x.revisedCompletionDate ? ' · revised ' + esc(x.revisedCompletionDate) : ''); }]]);
+      var other = sp.filter(function (s) { return !/Customer message/.test(s.step); });
+      if (other.length) h += '<div class="sec">Steps</div>' + spanRows(other, [['Step', function (s) { return esc(s.step); }], ['Time', ms]]);
+      b.innerHTML = h; return true;
+    },
+    L2: function (b, w) {
+      var sp = w.spans.filter(function (s) { return s.layer === 'L2'; }); if (!sp.length) return false;
+      var model = sp.filter(function (s) { return /Model call/.test(s.step); }), tin = 0, tout = 0; model.forEach(function (s) { tin += (s.attributes || {}).promptTokens || 0; tout += (s.attributes || {}).outputTokens || 0; });
+      var am = w.messages.filter(function (m) { return m.role === 'assistant'; });
+      b.innerHTML = '<p>' + (model.length ? model.length + ' model calls · ' + tin + ' prompt tokens · ' + tout + ' output tokens in this step. ' : '') + 'The agent proposes only: it reads through tools and has no tool that writes to Salesforce.</p>' +
+        spanRows(sp, [['Step', function (s) { return esc(s.step); }], ['Tools called', function (s) { return esc(((s.attributes || {}).toolCalls || []).join(', ')); }], ['Time', ms]]) +
+        (am.length ? '<div class="sec">Agent said</div>' + am.map(quote).join('') : '');
+      return true;
+    },
+    L3: function (b, w, e) {
+      if (!w.spans.length) return false;
+      var st = e.state || {}, L = e.links || {}, ids = [['Conversation', e.conversation.id || e.conversation.conversation_id || ''], ['Trace', e.conversation.trace_id]];
+      if (e.intent) ids.push(['Intent (TMF921)', e.intent.id], ['Order business key', st.orderExternalId]);
+      if (e.bpmn && e.bpmn.length) ids.push(['Workflow process instance', st.processInstanceId]);
+      if ((e.milestones || []).some(function (m) { return m.name === 'OrderInProgress'; })) ids.push(['Salesforce order', '<a class="link" target="_blank" rel="noopener" href="' + esc(L.order) + '">' + esc(maskNum('Order ' + (L.orderNumber || ''))) + '</a>']);
+      var resolved = w.spans.some(function (s) { return s.layer === 'L3'; });
+      b.innerHTML = '<div class="sec">Audit entries in this step (' + w.spans.length + ')</div>' +
+        '<div class="scroll">' + spanRows(w.spans.slice().sort(byStart), [['Layer', function (s) { return '<span class="lyn" style="--c:var(--' + s.layer.toLowerCase() + ')">' + s.layer + '</span>'; }], ['Step', function (s) { return esc(s.step); }], ['Span ID', function (s) { return '<span class="mono">' + esc(s.span_id) + '</span>'; }], ['Parent', function (s) { return '<span class="mono small">' + esc(s.parent_span_id || '—') + '</span>'; }]]) + '</div>' +
+        '<div class="sec">IDs matched across systems</div>' + spanRows(ids.filter(function (x) { return x[1]; }), [['What', function (x) { return x[0]; }], ['ID', function (x) { return /^</.test(x[1]) ? x[1] : '<span class="mono">' + esc(x[1]) + '</span>'; }]]) +
+        '<div class="sec">Same customer in each system' + (resolved ? ' (resolved in this step)' : '') + '</div>' +
+        spanRows(e.xref || [], [['System', function (x) { return '<b>' + esc(x.system) + '</b>'; }], ['ID', function (x) { return '<span class="mono">' + esc(x.external_id) + '</span>'; }], ['Source', function (x) { return '<span class="small">' + esc(x.source) + '</span>'; }], ['Verified', function (x) { return x.verified ? '<span class="ok">✔</span>' : '✖'; }]]) +
+        '<p class="small">Every entry carries the same trace ID; span and parent IDs link each step to the one that caused it. IDs are examples from the demo org and stand-ins.</p>';
+      return true;
+    },
+    L4: function (b, w, e) {
+      if (!w.spans.some(function (s) { return s.layer === 'L4'; }) && !w.decisions.length) return false;
+      RENDER.L4(b, w);
+      var packs = w.spans.filter(function (s) { return s.layer === 'L4' && /context pack/i.test(s.step); });
+      var reads = w.spans.filter(function (s) { return s.layer === 'L6' && isCall(s) && packs.some(function (p) { return s.parent_span_id === p.span_id || (T(s.start_ts) >= T(p.start_ts) && T(s.start_ts) <= T(p.end_ts)); }); });
+      if (reads.length) b.insertAdjacentHTML('beforeend', '<div class="sec">Sources: TMF reads behind the context pack (' + reads.length + ')</div>' + apiRows(reads, e, false));
+      return true;
+    },
+    L5: function (b, w, e) {
+      if (!w.spans.some(function (s) { return s.layer === 'L5'; }) && !w.bpmn.length) return false;
+      var here = {}; w.bpmn.forEach(function (a) { here[a.id + a.start] = 1; });
+      var acts = (e.bpmn || []).map(function (a) { return Object.assign({}, a, { mark: here[a.id + a.start] ? (a.end ? 'stp' : 'cur') : 'done' }); });
+      b.innerHTML = '<div class="bpmn" id="bpmna"></div><p class="small"><span class="chip ours">done earlier</span><span class="chip sf">this step</span><span class="chip st">jeopardy</span> · business key <span class="mono">' + esc((e.state || {}).orderExternalId || '—') + '</span></p>' +
+        (w.bpmn.length ? spanRows(w.bpmn.filter(function (a) { return a.type !== 'sequenceFlow'; }), [['Started', function (a) { return hm(T(a.start)); }], ['BPMN step', function (a) { return esc(a.name || a.id); }], ['Type', function (a) { return '<span class="small">' + esc(a.type) + '</span>'; }], ['State', function (a) { return a.end ? '<span class="ok">done</span>' : '<b style="color:var(--l5)">current</b>'; }]]) : '');
+      drawBpmn($('#bpmna', b), acts);
+      return true;
+    },
+    L6: function (b, w, e) {
+      var calls = w.spans.filter(function (s) { return s.layer === 'L6'; }); if (!calls.length) return false;
+      b.innerHTML = '<p><span class="chip sf">' + SF_CHIP + '</span><span class="chip st">' + STANDIN_CHIP + '</span> <span class="small">Click a call to see its TMF request and response.</span></p>' + apiRows(calls, e, true);
+      return true;
+    },
+    L7: function (b, w, e) {
+      if (!w.milestones.some(function (m) { return /SentToOSS|PortReserved|Jeopardy|Live/.test(m.name); }) && !w.jeopardy.length) return false;
+      RENDER.L7(b, e); return true;
+    },
+    L8: function (b, w) { if (!w.spans.length) return false; RENDER.L8(b, w); return true; }
+  };
 
   /* ---------- layer detail drawer ---------- */
   function openLayer(id, auto) { S.open = id; if (!auto) S.follow = false; var d = $('#drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false'); d.style.setProperty('--c', 'var(--' + id.toLowerCase() + ')'); d.dataset.k = ''; renderLayer(id, view(S.full, S.t)); }
@@ -222,8 +572,8 @@
   function ms(s) { return s.running ? '<span class="warn">running…</span>' : (s.duration_ms >= 1000 ? (s.duration_ms / 1000).toFixed(1) + ' s' : Math.round(s.duration_ms) + ' ms'); }
   /* Every Salesforce call reads 'TMF Open API (Salesforce)'; who provides it (out of the box or the TMF facade) is shown in the call detail only. */
   var SF_CHIP = 'TMF Open API (Salesforce)', STANDIN_CHIP = 'Legacy stand-in (mocked)';
-  function rtChip(s) { var r = s.runtime || ''; if (/TMF Open API \(Salesforce\)/.test(r)) return '<span class="chip sf">' + SF_CHIP + '</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">' + STANDIN_CHIP + '</span>'; return '<span class="chip ours">' + esc(r) + '</span>'; }
-  function tmfTag(s) { var m = String(s.api || '').match(/^(TMF\d+)\s*(.*)$/); return m ? '<span class="tmf"><b>' + esc(m[1]) + '</b> ' + esc(m[2]) + '</span>' : '<span class="mono small">' + esc(s.api || '') + '</span>'; }
+  function rtChip(s) { var r = s.runtime || ''; if (/TMF Open API \(Salesforce\)/.test(r)) return '<span class="chip sf">' + SF_CHIP + '</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">' + STANDIN_CHIP + '</span>'; return '<span class="chip ours">' + esc(rtName(r)) + '</span>'; }
+  function tmfTag(s) { var m = String(s.api || '').match(/^(TMF\d+)\s*(.*)$/); return m ? '<span class="tmf"><b>' + esc(m[1]) + '</b> ' + esc(m[2]) + '</span>' : '<span class="mono small">' + esc(/ollama/i.test(s.api || '') ? 'Model API' : (s.api || '')) + '</span>'; }
   function shortPath(p) { return String(p || '').replace(/^\/services\/apexrest\/agentictelco/, '…/apexrest/agentictelco').replace(/^\/services\/data\/v\d+\.\d+\/connect\/comms/, '…/connect/comms'); }
   function isCall(s) { return s.method && s.path; }
   function apiRows(list, v, extra) {
@@ -240,12 +590,12 @@
     if (typeof x === 'string') return x.replace(/\b00D[A-Za-z0-9]{12,15}![A-Za-z0-9._-]+/g, '[redacted]').replace(/https?:\/\/[A-Za-z0-9.-]+\.(?:my\.)?(?:salesforce|force|cloudforce|salesforce-setup|visualforce)\.com[^\s"']*/g, function (u) { return /\/lightning\/r\//.test(u) && !/frontdoor|sid=/.test(u) ? u : '[instance]' + u.replace(/^https?:\/\/[^\/]+/, '').split('?')[0]; });
     return x;
   }
-  function providedBy(s) { var a = s.attributes || {}; if (a.providedBy) return a.providedBy; return /apexrest\/agentictelco/.test(s.path || '') ? 'TMF facade within Salesforce (Apex)' : /connect\/comms/.test(s.path || '') ? 'Salesforce (out of the box)' : /stand-in/i.test(s.runtime || '') ? STANDIN_CHIP : (s.runtime || ''); }
+  function providedBy(s) { var a = s.attributes || {}; if (a.providedBy) return a.providedBy; return /apexrest\/agentictelco/.test(s.path || '') ? 'TMF facade within Salesforce (Apex)' : /connect\/comms/.test(s.path || '') ? 'Salesforce (out of the box)' : /stand-in/i.test(s.runtime || '') ? STANDIN_CHIP : rtName(s.runtime); }
   function openCall(sid) {
     var v = view(S.full, S.t) || S.full; if (!v) return;
     var s = (v.spans || []).filter(function (x) { return x.span_id === sid; })[0]; if (!s) return;
     var d = $('#calld'); if (!d) { d = document.createElement('div'); d.id = 'calld'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); document.body.appendChild(d); }
-    var link = linkFor(s, v), J = function (o) { return o == null ? '—' : esc(JSON.stringify(redact(o), null, 1)); };
+    var link = linkFor(s, v), J = function (o) { return o == null ? '—' : esc(maskNum(JSON.stringify(redact(o), null, 1))); };
     d.innerHTML = '<div class="cd"><div class="cdh"><div><div class="small">' + esc(s.layer) + ' · ' + esc(s.component) + '</div><h3>' + esc(s.step) + '</h3>' +
       '<div>' + tmfTag(s) + ' ' + rtChip(s) + '</div></div><button class="x" aria-label="Close">×</button></div>' +
       '<div class="cdb"><p><span class="mth">' + esc(s.method) + '</span> <span class="mono">' + esc(s.path) + '</span></p>' +
@@ -263,7 +613,7 @@
   function linkFor(s, v) {
     var L = v.links || {}, ms_ = v.milestones || [], has = function (n) { return ms_.some(function (m) { return m.name === n; }); }, a = function (u, t) { return u ? '<a class="link" target="_blank" rel="noopener" href="' + esc(u) + '">' + t + '</a>' : ''; };
     if (/Create quote/.test(s.step) && has('QuoteCreated')) return a(L.quote, 'Quote');
-    if (/Place upgrade order|Order in progress|Complete order/.test(s.step) && has('OrderInProgress')) return a(L.order, 'Order ' + (L.orderNumber || ''));
+    if (/Place upgrade order|Order in progress|Complete order/.test(s.step) && has('OrderInProgress')) return a(L.order, maskNum('Order ' + (L.orderNumber || '')));
     if (/Create Fibre 900/.test(s.step) && has('AssetChanged')) return a(L.newAsset, 'Fibre 900 asset');
     if (/productRelationship/.test(s.step) && has('AssetChanged')) return a(L.relationship, 'Upgrade link');
     if (/Fibre 150 terminated|Read current installed service|^Installed service/.test(s.step)) return a(L.oldAsset, 'Fibre 150 asset');
@@ -284,9 +634,9 @@
     L2: function (b, v) {
       var calls = v.spans.filter(function (s) { return s.layer === 'L2'; }), model = calls.filter(function (s) { return /Model call/.test(s.step); });
       var tin = 0, tout = 0; model.forEach(function (s) { tin += (s.attributes || {}).promptTokens || 0; tout += (s.attributes || {}).outputTokens || 0; });
-      b.innerHTML = '<p>Model: <b>' + esc(v.model || CFG.model || '') + '</b> · ' + model.length + ' model calls · ' + tin + ' prompt tokens · ' + tout + ' output tokens (measured this run).</p>' +
+      b.innerHTML = '<p>' + model.length + ' model calls · ' + tin + ' prompt tokens · ' + tout + ' output tokens (measured this run).</p>' +
         '<p class="small">The agent only proposes. It reads the context pack through MCP tools and records an Intent; it has no tool that writes to Salesforce.</p>' +
-        spanRows(calls, [['Step', function (s) { return esc(s.step); }], ['Tools', function (s) { var a = s.attributes || {}; return esc((a.toolCalls || []).join(', ')); }], ['Runtime', function (s) { return '<span class="small">' + esc(s.runtime) + '</span>'; }], ['Time', ms]]);
+        spanRows(calls, [['Step', function (s) { return esc(s.step); }], ['Tools', function (s) { var a = s.attributes || {}; return esc((a.toolCalls || []).join(', ')); }], ['Time', ms]]);
     },
     L3: function (b, v) {
       b.innerHTML = '<div class="sec">Cross-reference: the same customer in each system</div>' +
@@ -373,8 +723,8 @@
     bpmnViewer.attachTo(el);
     bpmnLoaded.then(function () {
       var canvas = bpmnViewer.get('canvas'), reg = bpmnViewer.get('elementRegistry');
-      reg.getAll().forEach(function (e) { ['done', 'cur', 'jeo'].forEach(function (m) { canvas.removeMarker(e.id, m); }); });
-      acts.forEach(function (a) { if (!reg.get(a.id)) return; canvas.addMarker(a.id, /Jeopardy|Delay/.test(a.id) ? 'jeo' : a.end ? 'done' : 'cur'); });
+      reg.getAll().forEach(function (e) { ['done', 'cur', 'jeo', 'stp'].forEach(function (m) { canvas.removeMarker(e.id, m); }); });
+      acts.forEach(function (a) { if (!reg.get(a.id)) return; canvas.addMarker(a.id, /Jeopardy|Delay/.test(a.id) ? 'jeo' : a.mark || (a.end ? 'done' : 'cur')); });
       canvas.zoom('fit-viewport');
     });
   }
@@ -400,35 +750,11 @@
       ['TMF641', 'Service Order', 'POST · GET', '/tmf-api/serviceOrdering/v4/serviceOrder', 'Legacy OSS, overnight batch'],
       ['—', 'Payment link', 'POST', '/payment/link', 'Overdue-balance payment link (not a TMF API)']] }];
   function exposedApis() {
-    return '<div class="ph" style="border:1px solid var(--line);border-radius:10px 10px 0 0;margin-top:12px"><h2>Exposed APIs (TMF-aligned)</h2></div><div class="panel" style="border-top:0;border-radius:0 0 10px 10px;padding:8px 12px" id="exposed">' +
+    return '<div class="ph boxh"><h2>' + esc(UA.apisHeading || 'Exposed APIs (TMF-aligned)') + '</h2></div><div class="panel boxb" id="exposed">' +
       EXPOSED.map(function (g) {
         return '<div class="sec">' + (g.c === 'st' ? '<span class="chip st">' + STANDIN_CHIP + '</span>' : '<span class="chip sf">' + SF_CHIP + '</span> Provided by: ' + esc(g.g)) + '</div><table class="t api"><tr><th>TMF API</th><th>Method</th><th>Path</th><th>Used for</th></tr>' +
           g.rows.map(function (r) { return '<tr><td><span class="tmf"><b>' + r[0] + '</b> ' + esc(r[1]) + '</span></td><td><span class="mth">' + esc(r[2]) + '</span></td><td class="mono small">' + esc(r[3]) + '</td><td>' + esc(r[4]) + '</td></tr>'; }).join('') + '</table>';
       }).join('') + '<p class="small">TMF-aligned resource shapes. The facade classes (AgenticTelco_TMF6nn) only map data; the rules live in the policy and the workflow.</p></div>';
-  }
-
-  /* ---------- Salesforce evidence (screenshots of the org, story order) ---------- */
-  function renderEvidence() {
-    var ev = CFG.evidence || [];
-    $('#v-evidence').innerHTML = '<div class="arch"><h2 style="margin:4px 0">Salesforce evidence</h2><p class="small">Lightning record pages from the Salesforce org for the recorded happy-path run, in story order. AgenticTelco demo records only; user details are blurred.</p>' +
-      (ev.length ? '<div class="evg">' + ev.map(function (e, i) { return '<figure class="ev"><img loading="lazy" alt="' + esc(e.caption) + '" src="' + e.src + '"><figcaption><b>' + (i + 1) + '.</b> ' + esc(e.caption) + '</figcaption></figure>'; }).join('') + '</div>' : '<p class="small">No screenshots in this build.</p>') + '</div>';
-    document.querySelectorAll('.ev img').forEach(function (im) { im.onclick = function () { window.open().document.write('<img style="max-width:100%" src="' + im.src + '">'); }; });
-  }
-
-  /* ---------- architecture tab ---------- */
-  function renderArch() {
-    var g = COPY.glossary || [];
-    $('#v-arch').innerHTML = '<div class="arch"><h2 style="margin:4px 0">How the new architecture works</h2>' +
-      '<div class="flow"><span><b>Sam</b> asks in chat</span><em>→</em><span>L1 Intent</span><em>→</em><span>L2 Agent proposes</span><em>→</em><span>L4 Context &amp; Policy decides</span><em>→</em><span>L5 Workflow writes</span><em>→</em><span>L6 Salesforce + legacy</span><em>→</em><span>L7 network</span><em>·</em><span>L3 remembers · L8 proves</span></div>' +
-      '<div class="agrid">' + LAYER_IDS.map(function (id) { var l = layerCopy[id] || {}, k = statusKind(l.status); return '<div class="ac" data-layer="' + id + '" style="--c:var(--' + id.toLowerCase() + ')"><span class="lab ' + k[0] + '">' + esc(l.status) + '</span><h3>' + id + ' · ' + esc(l.name) + '</h3><div class="q">' + esc(l.question) + '</div><div class="tech">' + esc(l.label) + '</div></div>'; }).join('') + '</div>' +
-      '<div class="keys" style="padding:12px 0"><div class="key"><b>Agent proposes</b>The model suggests and explains; it has no write tool and holds no rule.</div><div class="key"><b>Policy decides</b>One versioned OPA policy, checked advisory (L4) and binding (L5).</div><div class="key"><b>Workflow writes</b>BPMN (Operaton) is the only writer, through TM Forum Open APIs exposed by Salesforce.</div></div>' +
-      '<p class="sorline"><b>All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer.</b></p>' +
-      exposedApis() +
-      '<div class="ph" style="border:1px solid var(--line);border-radius:10px 10px 0 0"><h2>Glossary (' + g.length + ' terms, from docs/mvp/layer-panels.md)</h2><input class="glf" id="glf" placeholder="Filter terms…"></div>' +
-      '<div class="panel" style="border-top:0;border-radius:0 0 10px 10px;padding:12px"><div class="gl" id="gl"></div></div></div>';
-    var draw = function (f) { $('#gl').innerHTML = g.filter(function (x) { return !f || (x.term + x.definition).toLowerCase().indexOf(f) >= 0; }).map(function (x) { return '<div class="gt"><b>' + esc(x.term) + '</b> · ' + esc(x.definition) + '</div>'; }).join(''); };
-    draw(''); $('#glf').oninput = function () { draw(this.value.toLowerCase()); };
-    document.querySelectorAll('.ac').forEach(function (a) { a.onclick = function () { setTab('demo'); openLayer(a.dataset.layer); }; });
   }
 
   /* ---------- live mode ---------- */
@@ -436,7 +762,7 @@
   function api(path, body) { return fetch(path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {}).then(function (r) { if (!r.ok) throw new Error(path + ' ' + r.status); return r.json(); }); }
   function refresh() { if (!S.cid) return Promise.resolve(); return api('/api/state?conversationId=' + encodeURIComponent(S.cid)).then(function (s) { S.full = s; render(); }).catch(function () { }); }
   function startCase(id) {
-    closeLayer();
+    closeLayer(); S.step = null; archKey = '';
     if (!LIVE) return loadRecording(id);
     if (S.busy) return;
     S.busy = true; S.caseId = id; S.full = null; S.cid = null; render();
@@ -478,9 +804,9 @@
   }
   function startPlay() { if (!S.rec) return; stopPlay(); var last = performance.now(); S.play = setInterval(function () { var n = performance.now(), dt = (n - last) * S.speed; last = n; var f = S.rec.fracAt(S.t) + dt / S.rec.total; if (f >= 1) { S.t = S.rec.tEnd; stopPlay(); } else S.t = S.rec.timeAt(f); render(); }, 120); var b = $('#b-play'); if (b) b.textContent = 'Pause'; }
   function stopPlay() { if (S.play) clearInterval(S.play); S.play = null; var b = $('#b-play'); if (b) b.textContent = 'Play'; }
-  function togglePlay() { if (S.play) stopPlay(); else { if (S.rec && S.t >= S.rec.tEnd) S.t = S.rec.tStart; startPlay(); } }
+  function togglePlay() { if (S.play) stopPlay(); else { S.step = null; if (S.rec && S.t >= S.rec.tEnd) S.t = S.rec.tStart; startPlay(); } }
 
-  window.__mvp = { S: S, view: view, openLayer: openLayer, setTab: setTab, startCase: startCase, render: render };
+  window.__mvp = { S: S, view: view, windows: windows, openLayer: openLayer, setTab: setTab, selectStep: selectStep, startCase: startCase, render: render };
   shell();
   if (LIVE) setInterval(function () { if (S.cid) render(); }, 500);
 })();
