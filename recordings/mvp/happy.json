@@ -4493,7 +4493,6 @@
      "idempotencyKey": "AgenticTelco-00000176",
      "actionCodesNote": "Action codes are derived from the installed base (TMF637), not by the built-in decomposition.",
      "productInventory": {
-      "note": "Installed product (TMF637) has one writer: the L5 workflow's TMF637 update. The plan has no assetization step.",
       "writer": "L5 workflow (TMF637)"
      },
      "fulfillmentPlanId": "13VQH000001W9Fh2AK",

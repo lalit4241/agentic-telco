@@ -513,7 +513,7 @@
         ['Started · done', function (x) { return (x.startedAt ? hm(T(x.startedAt)) : '—') + ' · ' + (x.completedAt ? hm(T(x.completedAt)) : '—'); }]]) +
       (so.id ? '<p>TMF641 service order <b class="mono">' + esc(so.id) + '</b>: ' + esc((so.stateChange || []).map(function (c) { return c.state; }).join(' → ') || so.state || '') + ' · ' + (so.items || []).map(function (i) { return esc(i.service) + ' ' + actChip(i.action); }).join(' · ') + '</p>' : '') +
       (NF.reservation || NF.serviceInventory ? '<p class="small">Network side (inside the mocked network, not called by Salesforce): ' + [NF.reservation ? esc(NF.reservation.api) + ' reservation ' + esc(NF.reservation.id || '') : '', NF.serviceInventory ? esc(NF.serviceInventory.api) + ' services updated' : '', NF.resourceInventory ? esc(NF.resourceInventory.api) + ' resources updated' : ''].filter(Boolean).join(' · ') + ', returned as data in the TMF641 response.</p>' : '') +
-      (PI.writer ? '<p class="small">' + esc(DT.assetStep || 'Built-in asset step not used: installed product updated by the workflow (TMF637)') + '</p>' : '') +
+      (PI.writer ? '<p class="small">' + esc(DT.assetStep || 'Assetisation done (TMF637)') + '</p>' : '') +
       '<p class="small">Idempotency key <span class="mono">' + esc(P.idempotencyKey || '') + '</span> (the order) · network order adapter: ' + esc(P.adapterMode || '') + '. ' + SIM_SENTENCE + '</p>';
   }
   var ARCH = {

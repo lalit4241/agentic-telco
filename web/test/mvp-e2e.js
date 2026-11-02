@@ -138,8 +138,8 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] .sec')].find((x) => /^Decomposition/.test(x.textContent)); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 70); });
   await page.waitForTimeout(300); await shot('12-dev-decomposition-plan.png');
   { const dv = l6;
-    check('Dev View: built-in asset step line, no raw platform status', dv.includes('Built-in asset step not used: installed product updated by the workflow (TMF637)') && !/AssetizationFailed|Platform order status/.test(dv)); }
-  await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] p')].find((x) => x.textContent.startsWith('Built-in asset step not used')); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 420); });
+    check('Dev View: "Assetisation done (TMF637)", no raw platform status or asset-step wording', dv.includes('Assetisation done (TMF637)') && !/AssetizationFailed|Platform order status|asset step|assetization step/i.test(dv)); }
+  await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] p')].find((x) => x.textContent.startsWith('Assetisation done')); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 420); });
   await page.waitForTimeout(300); await shot('13-dev-plan-installed-product.png');
   const arch = await page.textContent('#v-architect');
   check('architect: system-of-record line', arch.includes('All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer.'));

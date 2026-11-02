@@ -103,9 +103,9 @@ test('evidence gallery tells the recorded happy-path story (same order, numbered
   assert.ok(cited.length >= 1 && cited.every((n) => n === num), cited.join(',') + ' vs ' + num);
   assert.ok(!CFG.evidence.some((e) => /MVP-[0-9A-F]{8}/.test(e.caption) && !e.caption.includes(ext)));
 });
-test('no raw platform order status in the demo UI or recordings (docs and evidence notes only)', () => {
-  assert.doesNotMatch(html + JSON.stringify(app), /AssetizationFailed|Platform order status/);
-  assert.strictEqual(CFG.ui.diagram.decomposition.assetStep, 'Built-in asset step not used: installed product updated by the workflow (TMF637)');
+test('Dev View says Assetisation done (TMF637); no raw platform status or asset-step wording in the demo UI or recordings', () => {
+  assert.doesNotMatch(html + JSON.stringify(app), /AssetizationFailed|Platform order status|Built-in asset step|no assetization step/);
+  assert.strictEqual(CFG.ui.diagram.decomposition.assetStep, 'Assetisation done (TMF637)');
 });
 test('no secrets in the page', () => {
   const s = html + JSON.stringify(app);
