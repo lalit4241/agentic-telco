@@ -79,13 +79,19 @@
    "L3": { "title": "Memory and audit", "sub": "Same customer, every step" },
    "L5": { "title": "Workflow", "sub": "The only writer" },
    "api": { "title": "TM Forum Open APIs", "sub": "TMF-aligned" },
-   "sf": { "title": "Salesforce", "sub": "Customer, catalogue, quote, order, installed service" },
+   "sf": { "title": "Salesforce", "sub": "System of record" },
+   "sfcust": { "title": "Customer and contacts", "sub": "TMF629, TMF632" },
+   "sfcat": { "title": "Product Catalog", "sub": "catalogue records (TMF620)" },
+   "sfcpq": { "title": "CPQ", "sub": "quote and promotion (TMF648, TMF671)" },
+   "sfom": { "title": "Order Management", "sub": "orders and installed services (TMF622, TMF637)" },
    "billing": { "title": "Billing", "sub": "Older system" },
    "avail": { "title": "Availability", "sub": "Older system" },
    "oss": { "title": "Network orders", "sub": "Older system (OSS)" },
    "L7": { "title": "Network view", "sub": "Exchange port and fibre" },
    "L8": { "title": "Step timeline", "sub": "Request to live service" }
   },
+  "sfBand": { "label": "TMF APIs interface" },
+  "adapters": { "billing": "TMF666 adapter", "avail": "TMF679 adapter", "oss": "TMF641 adapter" },
   "chips": { "sf": "TMF Open API (Salesforce)", "facade": "TMF facade within Salesforce", "mocked": "Mocked", "adapters": "Adapters" }
  },
  "architect": {

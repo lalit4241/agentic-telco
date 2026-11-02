@@ -324,6 +324,7 @@
     ['L5', 900, 56, 144, 132, 'flow', '--l5'],
     ['api', 148, 256, 896, 56, 'api', '--l6'],
     ['sf', 148, 340, 352, 152, 'cloud', '--blue'],
+    ['sfcust', 156, 396, 336, 22, '', '--blue'], ['sfcat', 156, 424, 108, 62, '', '--blue'], ['sfcpq', 270, 424, 108, 62, '', '--blue'], ['sfom', 384, 424, 108, 62, '', '--blue'],
     ['billing', 528, 366, 160, 118, 'bill', '--legacy', 1], ['avail', 700, 366, 160, 118, 'pin', '--legacy', 1], ['oss', 872, 366, 160, 118, 'server', '--legacy', 1],
     ['L8', 1084, 56, 168, 200, 'timeline', '--l8'], ['L7', 1084, 296, 168, 196, 'net', '--l7', 1]];
   var DGROUPS = { understand: [136, 16, 360, 188, '--l2'], know: [512, 16, 360, 188, '--l4'], act: [888, 16, 168, 188, '--l5'], connect: [136, 220, 920, 284, '--l6'], prove: [1072, 16, 192, 488, '--l8'] };
@@ -340,20 +341,30 @@
     DEDGES.forEach(function (e) { h += '<path class="de" data-e="' + e[0] + '-' + e[1] + '" d="' + e[2] + '" marker-end="url(#ah)"/>'; });
     DNODES.forEach(function (n) {
       var id = n[0], x = n[1], y = n[2], w = n[3], ht = n[4], t = id === 'customer' ? (UD.customer || {}) : (N[id] || {}), col = 'var(' + n[6] + ')';
-      var lay = /^L\d$/.test(id) ? id : id === 'api' || id === 'sf' || id === 'billing' || id === 'avail' || id === 'oss' ? 'L6' : '';
+      var lay = /^L\d$/.test(id) ? id : id === 'api' || /^sf/.test(id) || id === 'billing' || id === 'avail' || id === 'oss' ? 'L6' : '';
       h += '<g class="dn" data-node="' + id + '"' + (lay ? ' data-about="' + lay + '"' : '') + ' style="--c:' + col + '" tabindex="0"><title>' + esc(t.title) + (lay ? ' (' + lay + ')' : '') + '</title><rect class="bx" x="' + x + '" y="' + y + '" width="' + w + '" height="' + ht + '" rx="12"/>';
       if (id === 'api') {
         h += '<circle cx="' + (x + 28) + '" cy="' + (y + 28) + '" r="18" class="icb"/>' + icon('api', x + 17, y + 17, 22, col) +
           '<text x="' + (x + 56) + '" y="' + (y + 25) + '" class="nt">' + esc(t.title) + '</text><text x="' + (x + 56) + '" y="' + (y + 43) + '" class="ns">' + esc(t.sub) + ' · L6</text>' +
           '<g class="chipg"><rect x="' + (x + 470) + '" y="' + (y + 15) + '" width="196" height="26" rx="13" class="chs"/><text x="' + (x + 568) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.sf) + '</text>' +
           '<rect x="' + (x + 676) + '" y="' + (y + 15) + '" width="206" height="26" rx="13" class="chs f"/><text x="' + (x + 779) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.facade) + '</text></g>';
+      } else if (id === 'sf') {
+        var B = UD.sfBand || {};
+        h += '<g class="sfband"><rect class="fa" x="' + (x + 6) + '" y="' + (y + 6) + '" width="' + (w - 12) + '" height="26" rx="6"/><text x="' + (x + w / 2) + '" y="' + (y + 23) + '" text-anchor="middle">' + esc(B.label) + '</text></g>' +
+          icon('cloud', x + 10, y + 36, 18, col) + '<text x="' + (x + 34) + '" y="' + (y + 50) + '" class="nt">' + esc(t.title) + '</text><text x="' + (x + w - 10) + '" y="' + (y + 50) + '" text-anchor="end" class="ns">' + esc(t.sub) + '</text>';
+      } else if (id === 'sfcust') {
+        h += '<text x="' + (x + 10) + '" y="' + (y + 15) + '" class="ns sb">' + esc(t.title) + ' (' + esc(t.sub) + ')</text>';
+      } else if (/^sf/.test(id)) {
+        h += '<text x="' + (x + 8) + '" y="' + (y + 16) + '" class="nt sb">' + esc(t.title) + ':</text>';
+        wrapText(t.sub, 16).slice(0, 3).forEach(function (ln, i) { h += '<text x="' + (x + 8) + '" y="' + (y + 31 + i * 12) + '" class="ns">' + esc(ln) + '</text>'; });
       } else {
         var cx = id === 'customer' ? x + w / 2 : x + 30;
         h += '<circle cx="' + cx + '" cy="' + (y + 30) + '" r="19" class="icb"/>' + icon(n[5], cx - 12, y + 18, 24, col);
         var tx = id === 'customer' ? x + w / 2 : x + 14, anc = id === 'customer' ? ' text-anchor="middle"' : '';
         h += '<text x="' + tx + '" y="' + (y + 72) + '" class="nt"' + anc + '>' + esc(t.title) + '</text>';
         wrapText(t.sub, Math.floor((w - 24) / 6.4)).slice(0, 3).forEach(function (ln, i) { h += '<text x="' + tx + '" y="' + (y + 92 + i * 16) + '" class="ns"' + anc + '>' + esc(ln) + '</text>'; });
-        if (lay && id !== 'sf' && id !== 'billing' && id !== 'avail' && id !== 'oss') h += '<text x="' + (x + w - 12) + '" y="' + (y + 22) + '" text-anchor="end" class="ln">' + lay + '</text>';
+        if (lay && !/^sf/.test(id) && id !== 'billing' && id !== 'avail' && id !== 'oss') h += '<text x="' + (x + w - 12) + '" y="' + (y + 22) + '" text-anchor="end" class="ln">' + lay + '</text>';
+        if (UD.adapters && UD.adapters[id]) h += '<text x="' + (x + w - 10) + '" y="' + (y + 22) + '" text-anchor="end" class="ad">' + esc(UD.adapters[id]) + '</text>';
         if (n[7]) h += '<g class="mk"><rect x="' + (x + w - 64) + '" y="' + (y + ht - 28) + '" width="54" height="18" rx="9"/><text x="' + (x + w - 37) + '" y="' + (y + ht - 15) + '" text-anchor="middle">' + esc(chips.mocked || 'Mocked') + '</text></g>';
       }
       h += '</g>';
@@ -381,7 +392,13 @@
       if (s.layer === 'L1' && /Customer message/.test(s.step)) on.customer = 1;
       if (s.layer === 'L6') {
         on.api = 1; var r = (s.runtime || '') + ' ' + s.step + ' ' + (s.component || '');
-        if (/Salesforce/.test(s.runtime || '')) on.sf = 1;
+        if (/Salesforce/.test(s.runtime || '')) {
+          on.sf = 1; var a = s.api || '';
+          if (/TMF620/.test(a)) on.sfcat = 1;
+          if (/TMF648|TMF671/.test(a)) on.sfcpq = 1;
+          if (/TMF622|TMF637/.test(a)) on.sfom = 1;
+          if (/TMF629|TMF632/.test(a)) on.sfcust = 1;
+        }
         if (/Billing|Payment/i.test(r)) on.billing = 1; if (/Availability/i.test(r)) on.avail = 1; if (/OSS/.test(r)) on.oss = 1;
       }
     });
