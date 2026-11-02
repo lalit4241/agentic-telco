@@ -72,7 +72,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const cio = await page.evaluate(() => document.getElementById('v-cio').innerText);
   check('CIO: headline, 3 cards, 4 messages verbatim', cio.includes(UI.cio.headline) && UI.cio.cards.every((x) => cio.includes(x.title) && cio.includes(x.text)) && UI.cio.messages.every((x) => cio.includes(x.title) && cio.includes(x.text)));
   check('CIO: banner', /Agent proposes.*Policy decides.*Workflow writes/s.test(await page.textContent('#v-cio .banner')) && (await page.textContent('#v-cio .banner')).includes('never writes to a system of record'));
-  check('CIO: 5 groups and the two chips in the diagram', (await page.$$('#dsvg .dg')).length === 5 && /TMF Open API \(Salesforce\)/.test(await page.textContent('#dsvg')) && /TMF facade within Salesforce/.test(await page.textContent('#dsvg')));
+  check('CIO: 5 groups and the Salesforce chip, no facade wording in the diagram', (await page.$$('#dsvg .dg')).length === 5 && /TMF Open API \(Salesforce\)/.test(await page.textContent('#dsvg')) && !/facade/i.test(await page.textContent('#dsvg')));
   check('CIO: older systems and the network tagged Mocked', (await page.$$('#dsvg .mk')).length === 4);
   const lit = await page.$$eval('#dsvg .dn.on', (a) => a.map((x) => x.dataset.node));
   check('CIO: "Ordered" lights the workflow, the APIs and Salesforce', ['L5', 'api', 'sf'].every((n) => lit.includes(n)), lit.join(','));

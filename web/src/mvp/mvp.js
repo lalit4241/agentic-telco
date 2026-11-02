@@ -346,8 +346,7 @@
       if (id === 'api') {
         h += '<circle cx="' + (x + 28) + '" cy="' + (y + 28) + '" r="18" class="icb"/>' + icon('api', x + 17, y + 17, 22, col) +
           '<text x="' + (x + 56) + '" y="' + (y + 25) + '" class="nt">' + esc(t.title) + '</text><text x="' + (x + 56) + '" y="' + (y + 43) + '" class="ns">' + esc(t.sub) + ' · L6</text>' +
-          '<g class="chipg"><rect x="' + (x + 470) + '" y="' + (y + 15) + '" width="196" height="26" rx="13" class="chs"/><text x="' + (x + 568) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.sf) + '</text>' +
-          '<rect x="' + (x + 676) + '" y="' + (y + 15) + '" width="206" height="26" rx="13" class="chs f"/><text x="' + (x + 779) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.facade) + '</text></g>';
+          '<g class="chipg"><rect x="' + (x + 686) + '" y="' + (y + 15) + '" width="196" height="26" rx="13" class="chs"/><text x="' + (x + 784) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.sf) + '</text></g>';
       } else if (id === 'sf') {
         var B = UD.sfBand || {};
         h += '<g class="sfband"><rect class="fa" x="' + (x + 6) + '" y="' + (y + 6) + '" width="' + (w - 12) + '" height="26" rx="6"/><text x="' + (x + w / 2) + '" y="' + (y + 23) + '" text-anchor="middle">' + esc(B.label) + '</text></g>' +

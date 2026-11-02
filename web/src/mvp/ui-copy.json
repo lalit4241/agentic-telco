@@ -93,7 +93,7 @@
   "sfBand": { "label": "TMF APIs interface" },
   "adapters": { "billing": "TMF666 adapter", "avail": "TMF679 adapter", "oss": "TMF641 adapter" },
   "target": { "label": "Salesforce order orchestration", "tag": "target state", "legendTitle": "Dashed grey arrow", "legend": "Target state, not part of this run: Salesforce Order Management sends the network order. Today the workflow sends it." },
-  "chips": { "sf": "TMF Open API (Salesforce)", "facade": "TMF facade within Salesforce", "mocked": "Mocked", "adapters": "Adapters" }
+  "chips": { "sf": "TMF Open API (Salesforce)", "mocked": "Mocked", "adapters": "Adapters" }
  },
  "architect": {
   "stepsHeading": "Step timeline",

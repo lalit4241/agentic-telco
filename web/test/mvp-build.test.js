@@ -115,7 +115,7 @@ test('three audience views, all their copy in one object (ui-copy.json)', () => 
   assert.strictEqual(UI.cio.galleryHeading, 'Proof: the real records in Salesforce');
   assert.deepStrictEqual(UI.business.steps.map((s) => s.label), ['Asks', 'Checks', 'Recommends', 'Agrees', 'Ordered', 'Live']);
   assert.strictEqual(UI.diagram.chips.sf, 'TMF Open API (Salesforce)');
-  assert.strictEqual(UI.diagram.chips.facade, 'TMF facade within Salesforce');
+  assert.strictEqual(UI.diagram.chips.facade, undefined);   // the picture shows no facade chip; the Dev View keeps the detail
   assert.match(UI.architect.mappingHeading, /conceptual alignment/);
   assert.doesNotMatch(JSON.stringify(UI), /certif|conforman|Salesforce APIs|sObject|hosting|Docker|Ollama|Qwen/i);
 });
