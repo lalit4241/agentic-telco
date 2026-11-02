@@ -335,7 +335,7 @@
   function icon(name, x, y, s, col) { return '<g class="ic" transform="translate(' + x + ' ' + y + ') scale(' + (s / 24) + ')" fill="none" stroke="' + col + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</g>'; }
   function diagramSvg() {
     var N = UD.nodes || {}, G = {}, chips = UD.chips || {}; (UD.groups || []).forEach(function (g) { G[g.id] = g; });
-    var h = '<svg class="dsvg" id="dsvg" viewBox="0 0 1280 512" role="img" aria-label="' + esc(UC.headline) + '"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>';
+    var h = '<svg class="dsvg" id="dsvg" viewBox="0 0 1280 512" role="img" aria-label="' + esc(UC.headline) + '"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker><marker id="aht" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a9afbd"/></marker></defs>';
     Object.keys(DGROUPS).forEach(function (k) { var g = DGROUPS[k]; h += '<g class="dg" data-group="' + k + '"><rect x="' + g[0] + '" y="' + g[1] + '" width="' + g[2] + '" height="' + g[3] + '" rx="14" style="--c:var(' + g[4] + ')"/><text x="' + (g[0] + 14) + '" y="' + (g[1] + 24) + '" class="gt">' + esc(((G[k] || {}).title || k).toUpperCase()) + '</text></g>'; });
     h += '<g class="older"><rect x="516" y="330" width="528" height="166" rx="10"/><text x="528" y="352" class="ot">' + esc(chips.adapters || 'Adapters') + ' · older systems</text></g>';
     DEDGES.forEach(function (e) { h += '<path class="de" data-e="' + e[0] + '-' + e[1] + '" d="' + e[2] + '" marker-end="url(#ah)"/>'; });
@@ -369,6 +369,8 @@
       }
       h += '</g>';
     });
+    var TG = UD.target || {};   // target state only: never part of a run, never lit
+    h += '<g class="tgt" aria-hidden="true"><path d="M438 486V500H952V484" marker-end="url(#aht)"/><rect x="560" y="492" width="300" height="16" rx="8"/><text x="710" y="504" text-anchor="middle">' + esc(TG.label) + ' · ' + esc(TG.tag) + '</text></g>';
     return h + '</svg>';
   }
   function shellCio() {
@@ -378,7 +380,7 @@
       '<div class="banner"><div class="big">' + esc(UC.banner).replace(/ · /g, '<i>·</i>') + '</div><div class="small">' + esc(UC.bannerSmall) + '</div></div>' +
       '<div class="c3">' + (UC.cards || []).map(function (c, i) { return '<div class="cc"><div class="ci">' + '<svg viewBox="0 0 24 24" width="26" height="26">' + icon(['agent', 'shield', 'flow'][i], 0, 0, 24, 'currentColor') + '</svg></div><div><b>' + esc(c.title) + '</b><p>' + esc(c.text) + '</p></div></div>'; }).join('') + '</div>' +
       '<div class="cmain"><div class="panel dgm"><div class="strip" id="cstrip"></div><div class="dcap" id="dcap"></div>' + diagramSvg() +
-      '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '</div></div>' +
+      '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '<div class="tl"><b>' + esc((UD.target || {}).legendTitle) + '</b> ' + esc((UD.target || {}).legend) + '</div></div></div>' +
       '<div class="msgs">' + (UC.messages || []).map(function (m) { return '<div class="mc"><b>' + esc(m.title) + '</b><p>' + esc(m.text) + '</p></div>'; }).join('') + '</div></div>' +
       '<div class="gal" id="gallery"><h2>' + esc(UC.galleryHeading) + '</h2><p class="small">' + esc(UC.galleryIntro) + '</p>' +
       (ev.length ? '<div class="evg">' + ev.map(function (e, i) { return '<figure class="ev"><img loading="lazy" alt="' + esc(e.caption) + '" src="' + e.src + '"><figcaption><b>' + (i + 1) + '.</b> ' + esc(e.caption) + '</figcaption></figure>'; }).join('') + '</div>' : '<p class="small">No screenshots in this build.</p>') + '</div></div>';
