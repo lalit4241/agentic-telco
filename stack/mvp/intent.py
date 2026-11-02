@@ -34,7 +34,7 @@ def ctx(request):
 async def create_intent(request: Request):
     body = await request.json()
     trace, parent = ctx(request)
-    with Span(trace, "L1", "Intent service", "Validate and record the Intent", runtime="ours (Python, FastAPI)", api="TMF921", method="POST",
+    with Span(trace, "L1", "Intent service", "Validate and record the Intent", runtime="ours (Python, FastAPI)", api="TMF921 Intent", method="POST",
               path=BASE + "/intent", parent=parent, request=body) as sp:
         try:
             jsonschema.validate(body, SCHEMA)
@@ -100,7 +100,7 @@ async def post_report(iid: str, request: Request):
     rep = {"@type": "IntentReport", "id": rid, "href": f"{BASE}/intent/{iid}/intentReport/{rid}", "creationDate": now(),
            "intent": {"id": iid}, "expression": {"@type": "JsonLdExpression", "expressionValue": {"icm:reportState": b["state"], **(b.get("detail") or {})}},
            "name": b.get("name", b["state"])}
-    with Span(trace, "L1", "Intent service", f"IntentReport {b['state'].split(':')[-1]}", runtime="ours (Python, FastAPI)", api="TMF921",
+    with Span(trace, "L1", "Intent service", f"IntentReport {b['state'].split(':')[-1]}", runtime="ours (Python, FastAPI)", api="TMF921 Intent",
               method="POST", path=f"{BASE}/intent/{iid}/intentReport", parent=parent, request=b) as sp:
         q("insert into mvp.intent_report(id, intent_id, state, body) values (%s,%s,%s,%s)", rid, iid, b["state"], J(rep))
         q("update mvp.intent set lifecycle_status=%s, updated_at=now() where id=%s", LIFECYCLE.get(b["state"], "inProgress"), iid)

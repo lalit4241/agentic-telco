@@ -51,15 +51,52 @@ test('policy and model come from this build', () => {
 });
 test('L6 wording, footer, no hosting wording, branding', () => {
   const l6 = CFG.copy.layers.find((l) => l.id === 'L6');
-  assert.match(JSON.stringify(l6), /Salesforce native APIs plus a thin TMF facade layer within Salesforce/);
-  assert.match(app.js, /Salesforce APIs \+ TMF facade \(in Salesforce\)/);
+  assert.match(JSON.stringify(l6), /TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce/);
+  assert.match(app.js, /TMF Open APIs \(Salesforce\)/);
+  assert.doesNotMatch(app.js, /native Salesforce API/);
+  assert.doesNotMatch(app.js.replace(/not (ODA-)?certified( as conformant)?/g, ''), /\b(conformant|certified)\b/i);
+  assert.match(app.js, /All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer\./);
   assert.ok(html.includes(FOOT) && (app.html + app.js).includes(FOOT));
   assert.doesNotMatch(app.js, /demo host\. Salesforce is a hosted|regional hosting|UK hosting/);
+  assert.doesNotMatch(app.js, /Docker|Compose host/);
   assert.doesNotMatch(app.js, /GBR58|UK region to be confirmed/);
   assert.match(app.js, /event bus'/);   // platform line, no hosting mention (LalitC, 30 Oct)
   assert.match(app.js, /TMF facade within Salesforce \(Apex\)/);
   assert.doesNotMatch(app.js, /facade inside Salesforce/);
-  assert.doesNotMatch(html + app.html + app.js, /<img|LC monogram/i);
+  assert.doesNotMatch(html + app.html + app.js, /LC monogram/i);
+});
+test('every Salesforce call in the recordings is a TM Forum Open API (no SOQL, no sObject REST)', () => {
+  for (const [k, r] of Object.entries(CFG.recordings)) {
+    const l6 = r.state.spans.filter((s) => s.layer === 'L6');
+    assert.ok(l6.length > 3, k);
+    for (const s of r.state.spans) {
+      assert.doesNotMatch(String(s.path || ''), /\/query\b|\/sobjects\b|\/composite\b|\/tooling\//, k + ' ' + s.step);
+      assert.doesNotMatch(String(s.runtime || ''), /native Salesforce/, k + ' ' + s.step);
+    }
+    for (const s of l6) {
+      assert.ok(s.method && s.path, k + ' ' + s.step + ' has method and path');
+      if (/^Payment link \(mocked\)$/.test(s.step)) { assert.strictEqual(s.runtime, 'Legacy stand-in (mocked)'); continue; }   // the one non-TMF stand-in
+      assert.match(String(s.api || ''), /^TMF\d{3} \S/, k + ' ' + s.step + ' has TMF tag and name');
+      if (/^\/services\//.test(s.path)) {
+        assert.strictEqual(s.runtime, 'TMF Open API (Salesforce)', k + ' ' + s.step);
+        assert.match(s.path, /^\/services\/apexrest\/agentictelco\/tmf\d{3}\/|^\/services\/data\/v[\d.]+\/connect\/comms\//, k + ' ' + s.step);
+        assert.ok(['Salesforce (out of the box)', 'TMF facade within Salesforce (Apex)'].includes((s.attributes || {}).providedBy), k + ' ' + s.step);
+      } else assert.strictEqual(s.runtime, 'Legacy stand-in (mocked)', k + ' ' + s.step);
+    }
+  }
+});
+test('Salesforce evidence gallery in story order', () => {
+  assert.ok(CFG.evidence.length >= 6, String(CFG.evidence.length));
+  assert.deepStrictEqual(CFG.evidence.map((e) => e.file), CFG.evidence.map((e) => e.file).slice().sort());
+  assert.ok(CFG.evidence.every((e) => /^data:image\//.test(e.src) && e.caption));
+});
+test('evidence gallery tells the recorded happy-path story (same order, numbered 01..N)', () => {
+  const H = CFG.recordings.happy.state, num = H.links.orderNumber, ext = H.state.orderExternalId;
+  assert.match(num, /^\d{8}$/);
+  CFG.evidence.forEach((e, i) => assert.ok(e.file.startsWith(String(i + 1).padStart(2, '0') + '-'), e.file));
+  const cited = CFG.evidence.flatMap((e) => (e.caption.match(/order \d{8}/gi) || []).map((m) => m.slice(-8)).concat((e.file.match(/order-(\d{8})/) || []).slice(1)));
+  assert.ok(cited.length >= 1 && cited.every((n) => n === num), cited.join(',') + ' vs ' + num);
+  assert.ok(!CFG.evidence.some((e) => /MVP-[0-9A-F]{8}/.test(e.caption) && !e.caption.includes(ext)));
 });
 test('no secrets in the page', () => {
   const s = html + JSON.stringify(app);

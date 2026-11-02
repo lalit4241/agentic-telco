@@ -207,7 +207,7 @@ async def notify(request: Request):
     ev = rep["expression"]["expressionValue"]
     state = ev.get("icm:reportState")
     name = (c["state"] or {}).get("contactName", "there")
-    with Span(trace or c["trace_id"], "L2", "Agent (LangGraph)", "Proactive update", runtime="ours (LangGraph)", api="TMF921", method="NOTIFY",
+    with Span(trace or c["trace_id"], "L2", "Agent (LangGraph)", "Proactive update", runtime="ours (LangGraph)", api="TMF921 Intent", method="NOTIFY",
               path="/notify", parent=parent, conversation_id=cid, request=rep) as sp:
         facts = {k: v for k, v in ev.items() if k != "icm:reportState" and not k.lower().endswith("id")}
         for k in ("liveDate", "revisedCompletionDate", "completionDate"):   # pre-format business dates so the model copies them, not an example

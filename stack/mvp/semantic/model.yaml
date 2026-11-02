@@ -7,18 +7,18 @@ terms:
     label: Authorised contact
     meaning: The person has the Account Contact Role "Decision Maker" on the business account, so may order for it.
     type: boolean
-    source: {system: Salesforce, object: AccountContactRole, api: native Salesforce API (sObject query), field: Role}
+    source: {system: Salesforce, object: AccountContactRole, api: "TMF632 Party Management, organization relatedParty role (TMF facade within Salesforce)", field: Role}
     rule: Role == "Decision Maker"
   currentBroadband:
     label: Current broadband
     meaning: The Installed broadband service at the site.
     type: object
-    source: {system: Salesforce, object: Asset, api: "TMF637 (native)", field: "Status = Installed, Product2"}
+    source: {system: Salesforce, object: Asset, api: "TMF637 Product Inventory (TMF facade within Salesforce; serial number from TMF637 get-by-id, Salesforce out of the box)", field: "Status = Installed, Product2"}
   contractMonthsLeft:
     label: In contract
     meaning: Whole months until the current service's contract ends. More than 0 means the customer is in contract.
     type: integer
-    source: {system: Salesforce, object: Asset, api: native Salesforce API, field: UsageEndDate, note: "Asset end date stands in for the agreement"}
+    source: {system: Salesforce, object: Asset, api: "TMF637 Product Inventory (TMF facade within Salesforce)", field: "UsageEndDate (TMF637 terminationDate)", note: "Asset end date stands in for the agreement"}
   availableAtSite:
     label: Available at site
     meaning: Products the network can deliver at the site's address key.
@@ -33,7 +33,7 @@ terms:
     label: Site
     meaning: The business location the service is delivered to, with its address key.
     type: object
-    source: {system: Salesforce, object: "Location + Address", api: native Salesforce API, field: "ExternalReference = address key"}
+    source: {system: Salesforce, object: "Location + Address", api: "TMF637 Product Inventory, product place (TMF facade within Salesforce)", field: "ExternalReference = address key"}
   offering:
     label: Offer
     meaning: A broadband product the business can buy, with its term price and download speed.

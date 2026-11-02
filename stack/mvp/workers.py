@@ -6,11 +6,10 @@ so a rerun after a crash replays instead of writing twice."""
 import json, os, sys, time, traceback
 from datetime import date, datetime, timezone
 import httpx
-from stack.mvp.common import (sf_id, safe_key, soql_datetime, q, q1, J, Span, sf, soql, SF_DATA, NATIVE, FACADE, url, traceparent, init_schema, OPERATON_URL)
+from stack.mvp.common import (sf_id, safe_key, q, q1, J, Span, sf, APEX, url, traceparent, init_schema, OPERATON_URL)
 from stack.l5_orchestrator.engine import creds
 
 WORKER_ID = f"mvp-l5-worker-{os.getpid()}"
-APEX = "/services/apexrest/agentictelco"
 LOCK_MS = 120000
 STEP_NAMES = {
     "mvp-binding-check": "Binding policy check + identity", "mvp-quote": "Create quote", "mvp-order": "Place upgrade order",
@@ -74,7 +73,7 @@ def quote(v, sp):
             "relatedParty": [{"id": v["accountId"], "role": "Customer"}],
             "quoteItem": [{"id": "1", "action": "add", "quantity": 1, "productOffering": {"id": v["toOffering"]},
                            "productOfferingPrice": {"id": v["toPriceId"]}, "product": term_item(v)}]}
-    r = ok(sf(v["traceId"], "Create quote", "POST", f"{APEX}/tmf648/quote", body, runtime=FACADE, api="TMF648", parent=sp.span_id), "TMF648")
+    r = ok(sf(v["traceId"], "Create quote", "POST", f"{APEX}/tmf648/quote", body, api="TMF648", parent=sp.span_id), "TMF648")
     milestone(v["orderExternalId"], "QuoteCreated", {"quoteId": r["id"]})
     return {"quoteId": r["id"]}
 
@@ -83,10 +82,10 @@ def order(v, sp):
             "relatedParty": [{"id": v["accountId"], "role": "Customer"}], "quote": [{"id": v.get("quoteId")}],
             "productOrderItem": [{"id": "1", "action": "modify", "quantity": 1, "productOffering": {"id": v["toOffering"]},
                                   "productOfferingPrice": {"id": v["toPriceId"]}, "product": {"id": v["currentAssetId"], **term_item(v)}}]}
-    o = ok(sf(v["traceId"], "Place upgrade order (action modify)", "POST", f"{APEX}/tmf622/productOrder", body, runtime=FACADE, api="TMF622",
+    o = ok(sf(v["traceId"], "Place upgrade order (action modify)", "POST", f"{APEX}/tmf622/productOrder", body, api="TMF622",
               parent=sp.span_id), "TMF622")
-    usage = ensure_usage_record(v, sp, o["id"])
-    o2 = ok(sf(v["traceId"], "Order in progress", "PATCH", f"{APEX}/tmf622/productOrder/{o['id']}", {"state": "inProgress"}, runtime=FACADE,
+    usage = o.get("x-usageRecord")   # added inside the TMF622 facade while the order is Draft (internal step, see AgenticTelco_TMF622)
+    o2 = ok(sf(v["traceId"], "Order in progress", "PATCH", f"{APEX}/tmf622/productOrder/{o['id']}", {"state": "inProgress"},
                api="TMF622", parent=sp.span_id), "TMF622 PATCH")
     milestone(v["orderExternalId"], "OrderInProgress", {"productOrderId": o["id"], "orderNumber": o.get("x-orderNumber"), "state": o2.get("state"), "usageRecord": usage})
     return {"productOrderId": o["id"], "orderNumber": o.get("x-orderNumber") or ""}
@@ -123,61 +122,49 @@ def jeopardy(v, sp):
     sp.attrs.update(revisedCompletionDate=j.get("revisedCompletionDate"), salesforceOrder="unchanged (inProgress)")
     return {"jeopardyRaised": "yes", "revisedDate": j.get("revisedCompletionDate") or ""}
 
-def ensure_usage_record(v, sp, oid):
-    """The org's 'Custom Assetize Order' flow fires when an Order is activated and expects a Subscription Management usage record.
-    Salesforce only accepts that record while the order is still Draft, so we add it right after creating the order, through the
-    native sObject API. The flow then takes its 'record exists' branch. The flow itself is untouched."""
-    t = v["traceId"]
-    oid = sf_id(oid, "orderId")
-    have = soql(t, "Check usage record (hidden rule in Custom Assetize Order)", "SELECT Id FROM AppUsageAssignment WHERE RecordId='" + oid
-                + "' AND AppUsageType='SubscriptionManagement'", api="sObject")
-    if have:
-        return have[0]["Id"]
-    return ok(sf(t, "Add usage record while the order is Draft (hidden rule)", "POST", f"{SF_DATA}/sobjects/AppUsageAssignment",
-                 {"RecordId": oid, "AppUsageType": "SubscriptionManagement"}, api="sObject", parent=sp.span_id), "AppUsageAssignment")["id"]
-
 def activate(v, sp):
     t = v["traceId"]
-    ensure_usage_record(v, sp, v["productOrderId"])
-    o = ok(sf(t, "Complete order", "PATCH", f"{APEX}/tmf622/productOrder/{v['productOrderId']}", {"state": "completed"}, runtime=FACADE,
+    o = ok(sf(t, "Complete order", "PATCH", f"{APEX}/tmf622/productOrder/{v['productOrderId']}", {"state": "completed"},
               api="TMF622", parent=sp.span_id), "TMF622 complete")
     milestone(v["orderExternalId"], "OrderCompleted", {"state": o.get("state"), "sfStatus": o.get("x-sfStatus")})
     return {"activatedAt": datetime.now(timezone.utc).isoformat()}
 
 def asset_change(v, sp):
+    """The upgrade on the installed base, through TMF637 Product Inventory only (TMF facade within Salesforce):
+    create the new product, terminate the old one with an end date, and link them with an Upgrade productRelationship."""
     t, key = v["traceId"], safe_key(v["orderExternalId"], "orderExternalId")
     serial = "AT-" + key
-    cur, acct = sf_id(v["currentAssetId"], "currentAssetId"), sf_id(v["accountId"], "accountId")   # checked before any SOQL below
-    ex = soql(t, "Find new installed service (idempotent)", f"SELECT Id FROM Asset WHERE SerialNumber='{serial}' AND Name LIKE 'AgenticTelco%' LIMIT 1", api="sObject")
-    old = soql(t, "Read current installed service", f"SELECT Id, Name, ContactId, LocationId, UsageEndDate FROM Asset WHERE Id='{cur}'", api="sObject")[0]
+    cur, acct = sf_id(v["currentAssetId"], "currentAssetId"), sf_id(v["accountId"], "accountId")   # checked before they go into a path
+    P = f"{APEX}/tmf637/product"
+    old = ok(sf(t, "Read current installed service", "GET", f"{P}/{cur}", api="TMF637", parent=sp.span_id), "TMF637 read")
+    user = next((p["id"] for p in old.get("relatedParty") or [] if p.get("role") == "User"), None)
+    place = [{"id": p["id"]} for p in old.get("place") or []][:1]
     live = (v.get("liveDate") or date.today().isoformat())[:10]          # billed at the new price from the upgrade (go-live) date
-    keep_end = v.get("contractEnd") or old.get("UsageEndDate")            # decision: the existing contract end date is kept
-    if ex:
-        new_id = sf_id(ex[0]["Id"], "newAssetId")
-    else:
-        new_id = ok(sf(t, "Create Fibre 900 Installed at the same Location", "POST", f"{SF_DATA}/sobjects/Asset",
-                       {"Name": f"{v['toName']} – Brightwell site {v['site']}", "AccountId": v["accountId"], "ContactId": old.get("ContactId"),
-                        "Product2Id": v["toOffering"], "Status": "Installed", "Quantity": 1, "Price": float(v["toPrice"]), "SerialNumber": serial,
-                        "LocationId": old["LocationId"], "InstallDate": live, "UsageEndDate": keep_end,
-                        "Description": f"AgenticTelco MVP: upgraded from Fibre 150 by order {v.get('orderNumber')} ({key}). "
-                                       f"£{v['toPrice']} a month from {live}; contract end {keep_end} unchanged."},
-                       api="TMF637 (sObject write)", parent=sp.span_id), "Asset create")["id"]
-        new_id = sf_id(new_id, "newAssetId")
-    r = sf(t, "Fibre 150 to Obsolete with an end date", "PATCH", f"{SF_DATA}/sobjects/Asset/{v['currentAssetId']}",
-           {"Status": "Obsolete", "UsageEndDate": live}, api="TMF637 (sObject write)", parent=sp.span_id)
-    if r.status_code != 204:
-        raise RuntimeError(f"Asset obsolete → {r.status_code} {r.text[:200]}")
-    rel = soql(t, "Find Upgrade link (idempotent)", f"SELECT Id FROM AssetRelationship WHERE AssetId='{cur}' AND RelatedAssetId='{new_id}'", api="sObject")
-    rel_id = rel[0]["Id"] if rel else ok(sf(t, "Link old and new: AssetRelationship Upgrade", "POST", f"{SF_DATA}/sobjects/AssetRelationship",
-                                           {"AssetId": v["currentAssetId"], "RelatedAssetId": new_id, "RelationshipType": "Upgrade",
-                                            "FromDate": datetime.now(timezone.utc).isoformat()}, api="sObject", parent=sp.span_id), "AssetRelationship")["id"]
-    # Live check of the hidden rule: the flow must NOT have created its own Asset for this order.
+    keep_end = v.get("contractEnd") or old.get("terminationDate")         # decision: the existing contract end date is kept
+    new = ok(sf(t, "Create Fibre 900 (active) at the same site", "POST", P,
+                {"name": f"{v['toName']} – Brightwell site {v['site']}", "productSerialNumber": serial, "status": "active",
+                 "productOffering": {"id": v["toOffering"]}, "startDate": live, "terminationDate": keep_end, "place": place,
+                 "relatedParty": [{"id": acct, "role": "Customer"}] + ([{"id": user, "role": "User"}] if user else []),
+                 "productPrice": [{"priceType": "recurring", "price": {"taxIncludedAmount": {"unit": "GBP", "value": float(v["toPrice"])}}}],
+                 "description": f"AgenticTelco MVP: upgraded from Fibre 150 by order {v.get('orderNumber')} ({key}). "
+                                f"£{v['toPrice']} a month from {live}; contract end {keep_end} unchanged."},
+                api="TMF637", parent=sp.span_id), "TMF637 create")      # idempotent on productSerialNumber
+    new_id = sf_id(new["id"], "newAssetId")
+    ok(sf(t, "Fibre 150 terminated with an end date", "PATCH", f"{P}/{cur}", {"status": "terminated", "terminationDate": live},
+          api="TMF637", parent=sp.span_id), "TMF637 terminate")
+    linked = ok(sf(t, "Upgrade productRelationship: Fibre 150 to Fibre 900", "PATCH", f"{P}/{cur}",
+                   {"productRelationship": [{"relationshipType": "Upgrade", "product": {"id": new_id}}]}, api="TMF637", parent=sp.span_id),
+                "TMF637 relationship")   # idempotent: the facade adds the link only once
+    rel_id = next((r["id"] for r in linked.get("productRelationship") or [] if (r.get("product") or {}).get("id") == new_id), None)
+    # Live check of the hidden rule: the org's Custom Assetize Order flow must NOT have created its own product for this order.
     time.sleep(3)
-    flow_assets = soql(t, "Check: Custom Assetize Order created no Asset", f"SELECT Id, Name FROM Asset WHERE AccountId='{acct}' "
-                       f"AND CreatedDate >= {soql_datetime(v['activatedAt'], 'activatedAt')}Z AND Id != '{new_id}'", api="sObject")
-    sp.attrs.update(newAssetId=new_id, oldAssetId=v["currentAssetId"], relationshipId=rel_id, assetizeFlowAssets=len(flow_assets))
-    milestone(key, "AssetChanged", {"old": v["currentAssetId"], "new": new_id, "relationship": rel_id, "flowCreatedAssets": len(flow_assets)})
-    return {"newAssetId": new_id, "relationshipId": rel_id, "flowCreatedAssets": str(len(flow_assets))}
+    since = v["activatedAt"][:19] + "Z"
+    recent = ok(sf(t, "Check: Custom Assetize Order created no product", "GET",
+                   f"{P}?relatedParty.id={acct}&creationDate.gt={since}&limit=50", api="TMF637", parent=sp.span_id), "TMF637 list")
+    flow_assets = [p for p in recent if p["id"] != new_id]
+    sp.attrs.update(newAssetId=new_id, oldAssetId=cur, relationshipId=rel_id, assetizeFlowAssets=len(flow_assets))
+    milestone(key, "AssetChanged", {"old": cur, "new": new_id, "relationship": rel_id, "flowCreatedAssets": len(flow_assets)})
+    return {"newAssetId": new_id, "relationshipId": rel_id or "", "flowCreatedAssets": str(len(flow_assets))}
 
 def fulfilled(v, sp):
     remembered(v["orderExternalId"], "fulfilled", lambda: report(v, sp, "icm:StateComplies", "Intent fulfilled",

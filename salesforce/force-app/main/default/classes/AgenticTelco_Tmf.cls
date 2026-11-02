@@ -1,13 +1,13 @@
 /**
  * AgenticTelco – shared helpers for the custom TMF Open API resources on Salesforce.
- * Custom TMF API on Salesforce (not OOTB). Records written by these APIs always carry the AgenticTelco prefix;
+ * TMF facade within Salesforce (Apex), not Salesforce out of the box. Records written by these APIs always carry the AgenticTelco prefix;
  * existing org records are only read. There is deliberately no DELETE anywhere.
  */
 public with sharing class AgenticTelco_Tmf {
     public static final String PREFIX = 'AgenticTelco';
     public static final String PRICEBOOK = 'AgenticTelco Price Book';
     public static final String CATALOG_PREFIX = 'AgenticTelco%';
-    public static final String SOR_LABEL = 'custom TMF API on Salesforce';
+    public static final String SOR_LABEL = 'TMF facade within Salesforce (Apex)';
 
     public static void respond(Integer status, Object body) {
         RestResponse res = RestContext.response;
