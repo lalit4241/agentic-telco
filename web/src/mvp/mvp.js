@@ -1,5 +1,5 @@
 /* AgenticTelco MVP UI, three audience views over one shared replay:
-   Business View (what the customer gets), Architect View (is it safe, does it fit the estate), Dev View (how it works, layer by layer).
+   What changes for the business (tab 1), How it fits (tab 2, the estate), How it's built (tab 3, layer by layer).
    All tab copy comes from one object (web/src/mvp/ui-copy.json, as CFG.ui); layer panel prose comes from docs/mvp/layer-panels.md (CFG.copy).
    Live mode polls the gateway (/api/state); recorded mode replays a recorded run (final /api/state, filtered by time). */
 (function () {
@@ -97,7 +97,7 @@
     return w;
   }
   function stepAt(W, t) { var k = -1; if (!W) return k; for (var i = 0; i < 6; i++) if (W[i].a != null && W[i].a0 <= t) k = i; return k; }
-  function selStep() {   // the step the Architect and Dev Views show: the selected one, else the replay's current one
+  function selStep() {   // the step tabs 2 and 3 show: the selected one, else the replay's current one
     if (S.step === 'all') return 'all';
     if (S.step != null) return S.step;
     var W = windows(S.full); if (!W) return null;
@@ -152,7 +152,7 @@
       '<header class="hd"><div class="brand">' + (CFG.mark || '') + '<div><div class="brand-name">AgenticTelco</div><div class="brand-sub">TelForce business portal</div></div></div>' +
       '<div class="ttl"><div class="kick">' + esc(H.kicker) + '</div><h1>' + esc(H.title) + '</h1></div>' +
       '<button class="tb" id="b-pres" title="Presenter mode (P)">Presenter</button>' + (LIVE ? '' : '<button class="tb" id="btn-lock" title="Lock">Lock</button>') + '</header>' +
-      '<nav class="tabs" role="tablist">' + (UI.tabs || []).map(function (t) { return '<button role="tab" data-tab="' + t.id + '"><b>' + esc(t.label) + '</b><span>' + esc(t.subtitle) + '</span></button>'; }).join('') + '</nav>' +
+      '<nav class="tabs" role="tablist">' + (UI.tabs || []).map(function (t) { return '<button role="tab" data-tab="' + t.id + '"><b>' + tabIcon(t.id) + esc(t.label) + '</b><span>' + esc(t.subtitle) + '</span></button>'; }).join('') + '</nav>' +
       '<div class="modebar' + (LIVE ? '' : ' rec') + '" id="modebar"></div>' +
       '<main><section id="v-business"></section><section id="v-cio" hidden></section><section id="v-architect" hidden></section></main>' +
       '<div class="dr" id="drawer" aria-hidden="true"></div>' +
@@ -183,6 +183,12 @@
     else { x = +x; S.step = S.step === x ? null : x; }
     archKey = ''; render();
   }
+  var TAB_ICON = {   // thin 24x24 line icons beside each tab heading, inline (offline), one accent colour
+    business: '<path d="M12 20V4M6 10l6-6 6 6"/>',   // upward arrow
+    cio: '<circle cx="5.5" cy="6" r="2.5"/><circle cx="18.5" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 6h8M7 8.2l3.6 7.6M17 8.2l-3.6 7.6"/>',   // connected nodes
+    architect: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/>'   // code brackets
+  };
+  function tabIcon(id) { return TAB_ICON[id] ? '<svg class="tic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + TAB_ICON[id] + '</svg>' : ''; }
   function togglePresenter() { S.presenter = !S.presenter; document.body.classList.toggle('presenter', S.presenter); $('#b-pres').classList.toggle('on', S.presenter); }
 
   function modebar() {
@@ -207,7 +213,7 @@
     if (LIVE && $('#mstat')) $('#mstat').textContent = S.busy ? 'agent working…' : (S.cid ? 'conversation ' + S.cid : '');
   }
 
-  /* ---------- 1. Business View ---------- */
+  /* ---------- 1. What changes for the business ---------- */
   function shellBusiness() {
     $('#v-business').innerHTML = '<div class="bv">' +
       '<div class="jrow"><div class="jl">' + esc(UB.journeysHeading) + '</div><div class="cases">' + CASES.map(function (c, i) { return '<button class="case" data-case="' + c.id + '"><b>' + (i + 1) + '. ' + esc(c.title) + '</b><span>' + esc(c.sub) + '</span></button>'; }).join('') + '</div></div>' +
@@ -222,7 +228,7 @@
   function renderBusiness(v) {
     var cid = S.caseId, kinds = stepKinds(v), sel = S.step;
     $$('.case').forEach(function (b) { b.classList.toggle('on', b.dataset.case === cid); b.disabled = S.busy && LIVE; });
-    var ch = kinds.map(function (c, i) { return '<button class="cv ' + c.k + (sel === i ? ' sel' : '') + '" data-step="' + i + '" title="Show this step in the Architect and Dev Views"><b>' + esc(c.b) + '</b><span>' + esc(c.s) + '</span></button>'; }).join('');
+    var ch = kinds.map(function (c, i) { return '<button class="cv ' + c.k + (sel === i ? ' sel' : '') + '" data-step="' + i + '" title="Show this step in How it fits and How it\'s built"><b>' + esc(c.b) + '</b><span>' + esc(c.s) + '</span></button>'; }).join('');
     if ($('#chev').dataset.k !== ch) { $('#chev').innerHTML = ch; $('#chev').dataset.k = ch; }
     var hint = sel === null || sel === 'all' ? esc(UB.stepHint) + ' <a href="#" data-goto="cio">' + esc(UB.stepHintLink) + ' →</a>'
       : 'Selected: <b>' + esc((STEPS[sel] || {}).label) + '</b> · <a href="#" data-goto="cio">' + esc(UB.stepHintLink) + ' →</a> · <a href="#" data-step="follow">Follow the replay</a>';
@@ -300,7 +306,7 @@
     }
   }
 
-  /* ---------- 2. Architect View: the estate as a layered picture, lit by step ---------- */
+  /* ---------- 2. How it fits: the estate as a layered picture, lit by step ---------- */
   var ICON = {   // simple 24x24 line icons, drawn in code
     person: '<circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
     chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
@@ -418,7 +424,7 @@
       '<button class="pill all' + (S.step === 'all' ? ' sel' : '') + '" data-step="all">' + esc(UC.allSteps) + '</button>';
     if ($('#cstrip').dataset.k !== strip) { $('#cstrip').innerHTML = strip; $('#cstrip').dataset.k = strip; }
     var svg = $('#dsvg'), on = {}, src = null, cap;
-    if (!v || k == null || !W) { svg.classList.remove('active'); cap = S.caseId ? 'Press Play: the layers light up as the replay reaches each step.' : 'Choose a journey on the Business View, then press Play or pick a step: the layers it uses light up here.'; }
+    if (!v || k == null || !W) { svg.classList.remove('active'); cap = S.caseId ? 'Press Play: the layers light up as the replay reaches each step.' : 'Choose a journey in What changes for the business, then press Play or pick a step: the layers it uses light up here.'; }
     else {
       var f = inWin(W, k), selected = S.step !== null;
       src = selected ? S.full : v;   // a selected step shows everything it uses; following the replay shows what has happened so far
@@ -438,7 +444,7 @@
     if ($('#dtree').dataset.k !== tree) { $('#dtree').innerHTML = tree; $('#dtree').dataset.k = tree; $('#dtree').hidden = !tree; }
   }
 
-  /* ---------- 3. Dev View: step timeline on the left, what each layer did in that step on the right ---------- */
+  /* ---------- 3. How it's built: step timeline on the left, what each layer did in that step on the right ---------- */
   function shellArchitect() {
     var g = COPY.glossary || [], M = UA.mapping || [];
     $('#v-architect').innerHTML = '<div class="av3"><div class="agrid3"><aside class="panel atl" id="atl"></aside><div class="alay" id="alay"></div></div>' +
@@ -469,7 +475,7 @@
     if (key === archKey) return; archKey = key;
     var atl = $('#atl'), al = $('#alay');
     if (!v || !W) {
-      atl.innerHTML = '<h3>' + esc(UA.stepsHeading) + '</h3><p class="small">Choose a journey on the Business View (or press 1 to 4), then Play.</p>';
+      atl.innerHTML = '<h3>' + esc(UA.stepsHeading) + '</h3><p class="small">Choose a journey in What changes for the business (or press 1 to 4), then Play.</p>';
       al.innerHTML = '<h3>' + esc(UA.layersHeading) + '</h3>' + LAYER_IDS.map(function (id) { return layerSec(id, '', true); }).join('');
       return;
     }

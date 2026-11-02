@@ -1,13 +1,13 @@
 {
- "_note": "All tab copy for the MVP page in one place (labels, subtitles, Architect View copy, diagram text). Architect View copy is TMForumCTO's final wording (Nov 2026). Layer panel prose stays in docs/mvp/layer-panels.md.",
+ "_note": "All tab copy for the MVP page in one place (labels, subtitles, How it fits copy, diagram text). How it fits copy is TMForumCTO's final wording (Nov 2026). Layer panel prose stays in docs/mvp/layer-panels.md.",
  "header": {
   "kicker": "AGENTICTELCO MVP · BASED ON ZERO GRAVITY ARCHITECTURE",
   "title": "Agent upgrades a Business Customer Service (B2B), on existing systems"
  },
  "tabs": [
-  { "id": "business", "label": "Business View", "subtitle": "What does the customer get?" },
-  { "id": "cio", "label": "Architect View", "subtitle": "Is this safe, and does it fit my estate?" },
-  { "id": "architect", "label": "Dev View", "subtitle": "How does it actually work?" }
+  { "id": "business", "label": "What changes for the business", "subtitle": "An agent handles the upgrade end to end, and policy and workflow keep control" },
+  { "id": "cio", "label": "How it fits", "subtitle": "On the estate you already have, through TM Forum Open APIs" },
+  { "id": "architect", "label": "How it's built", "subtitle": "Every call, action code and record, step by step" }
  ],
  "business": {
   "customer": "Brightwell Design Ltd",
@@ -31,8 +31,8 @@
    { "id": "ordered", "label": "Ordered", "sub": "Order placed", "subSkip": "No order" },
    { "id": "live", "label": "Live", "sub": "Fibre 900 live", "subDelay": "Delayed 2 days, Sam told first", "subSkip": "No change" }
   ],
-  "stepHint": "Selected step lights up the layers in the Architect View.",
-  "stepHintLink": "See it in the Architect View",
+  "stepHint": "Selected step lights up the layers in How it fits.",
+  "stepHintLink": "See it in How it fits",
   "chatEmpty": "Choose a journey above, then press Play. Each starts from Brightwell on Fibre 150 at £27 a month, contract to 28 August 2027.",
   "chatReady": "Press Play to replay the recorded run.",
   "todayHeading": "Today",

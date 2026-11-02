@@ -103,7 +103,7 @@ test('evidence gallery tells the recorded happy-path story (same order, numbered
   assert.ok(cited.length >= 1 && cited.every((n) => n === num), cited.join(',') + ' vs ' + num);
   assert.ok(!CFG.evidence.some((e) => /MVP-[0-9A-F]{8}/.test(e.caption) && !e.caption.includes(ext)));
 });
-test('Dev View says Assetisation done (TMF637); no raw platform status or asset-step wording in the demo UI or recordings', () => {
+test('Tab 3 (How it\'s built) says Assetisation done (TMF637); no raw platform status or asset-step wording in the demo UI or recordings', () => {
   assert.doesNotMatch(html + JSON.stringify(app), /AssetizationFailed|Platform order status|Built-in asset step|no assetization step/);
   assert.strictEqual(CFG.ui.diagram.decomposition.assetStep, 'Assetisation done (TMF637)');
 });
@@ -115,8 +115,8 @@ test('no secrets in the page', () => {
 });
 test('three audience views, all their copy in one object (ui-copy.json)', () => {
   const UI = CFG.ui;
-  assert.deepStrictEqual(UI.tabs.map((t) => t.label), ['Business View', 'Architect View', 'Dev View']);
-  assert.deepStrictEqual(UI.tabs.map((t) => t.subtitle), ['What does the customer get?', 'Is this safe, and does it fit my estate?', 'How does it actually work?']);
+  assert.deepStrictEqual(UI.tabs.map((t) => t.label), ['What changes for the business', 'How it fits', "How it's built"]);
+  assert.deepStrictEqual(UI.tabs.map((t) => t.subtitle), ['An agent handles the upgrade end to end, and policy and workflow keep control', 'On the estate you already have, through TM Forum Open APIs', 'Every call, action code and record, step by step']);
   assert.strictEqual(UI.cio.headline, 'Agentic change, on the estate you already have.');
   assert.deepStrictEqual(UI.cio.cards.map((c) => c.title), ['Agent proposes', 'Policy decides', 'Workflow writes']);
   assert.deepStrictEqual(UI.cio.messages.map((c) => c.title), ['Nothing ripped out', 'No lock-in', 'Controls hold', 'Every step evidenced']);
@@ -124,7 +124,7 @@ test('three audience views, all their copy in one object (ui-copy.json)', () => 
   assert.strictEqual(UI.cio.galleryHeading, 'Proof: the real records in Salesforce');
   assert.deepStrictEqual(UI.business.steps.map((s) => s.label), ['Asks', 'Checks', 'Recommends', 'Agrees', 'Ordered', 'Live']);
   assert.strictEqual(UI.diagram.chips.sf, 'TMF Open API');
-  assert.strictEqual(UI.diagram.chips.facade, undefined);   // the picture shows no facade chip; the Dev View keeps the detail
+  assert.strictEqual(UI.diagram.chips.facade, undefined);   // the picture shows no facade chip; tab 3 keeps the detail
   assert.match(UI.architect.mappingHeading, /conceptual alignment/);
   assert.doesNotMatch(JSON.stringify(UI), /certif|conforman|Salesforce APIs|sObject|hosting|Docker|Ollama|Qwen/i);
 });

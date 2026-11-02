@@ -32,8 +32,10 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const head = await page.textContent('header');
   check('title and heading', head.includes('Agent upgrades a Business Customer Service (B2B), on existing systems') && /AGENTICTELCO MVP · BASED ON ZERO GRAVITY ARCHITECTURE/i.test(head));
   const tabs = await page.$$eval('.tabs button', (a) => a.map((b) => b.textContent));
-  check('three tabs, business first, each with its question', tabs.length === 3 && tabs[0].includes('Business View') && tabs[1].includes('Architect View') && tabs[2].includes('Dev View') && tabs.every((t, i) => t.includes(UI.tabs[i].subtitle)), tabs.join(' | '));
-  check('Business View is the default', await page.isVisible('#v-business') && !(await page.isVisible('#v-cio')));
+  check('three tabs, business first, each with its question', tabs.length === 3 && tabs[0].includes('What changes for the business') && tabs[1].includes('How it fits') && tabs[2].includes("How it's built") && tabs.every((t, i) => t.includes(UI.tabs[i].label)) && tabs.every((t, i) => t.includes(UI.tabs[i].subtitle)), tabs.join(' | '));
+  const tic = await page.$$eval('.tabs button', (a) => a.map((b) => { const i = b.querySelector('b svg.tic'); return i ? [i.querySelectorAll('path,circle').length, getComputedStyle(i).color, b.classList.contains('on'), !!i.querySelector('image,use,[href]')] : null; }));
+  check('each tab heading has an inline line icon (no external refs), accent colour when active', tic.every((x) => x && x[0] > 0 && !x[3]) && tic[0][2] && tic[0][1] !== tic[1][1], JSON.stringify(tic));
+  check('tab 1 (What changes for the business) is the default', await page.isVisible('#v-business') && !(await page.isVisible('#v-cio')));
   check('4 journeys', (await page.$$('.case')).length === 4);
   check('footer, no hosting wording, no model names, no certification claims', await page.evaluate((F) => { const t = document.body.innerText; return t.includes(F) && !/hosting|demo host|docker|ollama|qwen|certified|conformant/i.test(t); }, FOOT));
   check('no "native Salesforce API" anywhere', !/native Salesforce API/.test(await page.content()));
@@ -44,14 +46,14 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const scrollTo = (sel) => page.evaluate((q) => { const e = document.querySelector(q); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 70); }, sel);
   const tab = async (t) => { await page.click(`.tabs button[data-tab="${t}"]`); await page.waitForTimeout(300); };
 
-  // ---- 1. Business View: happy path
+  // ---- 1. What changes for the business: happy path
   await page.click('.case[data-case="happy"]');
   check('modebar says recorded run', /recorded run/i.test(await page.textContent('#modebar')));
   await page.selectOption('#spd', '4'); await page.waitForTimeout(3500); await shot('1-business-happy-start.png');
   check('play advances the step bar', (await chev()).some((x) => /now|done/.test(x)));
-  // while playing, the Architect View lights the layers in use
+  // while playing, How it fits lights the layers in use
   await tab('cio'); await page.waitForTimeout(500);
-  check('Architect View lights layers during the replay', (await page.$$('#dsvg .dn.on')).length >= 2, String((await page.$$('#dsvg .dn.on')).length));
+  check('How it fits lights layers during the replay', (await page.$$('#dsvg .dn.on')).length >= 2, String((await page.$$('#dsvg .dn.on')).length));
   await tab('business');
   await end();
   let c = await chev(), t = await chat(), b = await bizText();
@@ -61,12 +63,12 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('happy: chat has Fibre 900 £45, contract end kept, live', /Fibre 900/.test(t) && /£45/.test(t) && /28 August 2027/.test(t) && /live/i.test(t));
   const out = await page.textContent('#outcome');
   check('happy: outcome card Fibre 900, £45, 28 Aug 2027, order from the recording, live 2 Nov 2026', /Fibre 900 is live/.test(out) && /£45 a month/.test(out) && /28 Aug 2027/.test(out) && out.includes(JSON.parse(fs.readFileSync(path.join(ROOT, 'recordings', 'mvp', 'happy.json'), 'utf8')).state.links.orderNumber) && /2 Nov 2026/.test(out), out);
-  check('happy: Business View line "One upgrade, three services, one router swap."', out.includes(UI.business.orchestrationLine) && UI.business.orchestrationLine === 'One upgrade, three services, one router swap.');
+  check('happy: tab 1 line "One upgrade, three services, one router swap."', out.includes(UI.business.orchestrationLine) && UI.business.orchestrationLine === 'One upgrade, three services, one router swap.');
   check('happy: KPIs derived from the run', (await page.$$('#kpis .kg div')).length === 4 && /request to live/.test(await page.textContent('#kpis')));
-  check('Business View has no layer numbers, APIs or drawers', !/\bL[1-8]\b|TMF\d|API/.test(b) && !(await page.$('#v-business [data-about]')));
+  check('tab 1 has no layer numbers, APIs or drawers', !/\bL[1-8]\b|TMF\d|API/.test(b) && !(await page.$('#v-business [data-about]')));
   await shot('2-business-happy-end.png');
 
-  // ---- step selection drives the Architect and Dev Views
+  // ---- step selection drives tabs 2 and 3
   await page.click('#chev .cv[data-step="4"]');
   check('selecting a step marks it', (await page.$$('#chev .cv.sel')).length === 1);
   await tab('cio');
@@ -105,7 +107,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   await scrollTo('#dtree'); await page.waitForTimeout(300); await shot('11-cio-decomposition-tree.png');
   await scrollTo('#gallery'); await page.waitForTimeout(400); await shot('4-cio-gallery.png');
 
-  // ---- 3. Dev View
+  // ---- 3. How it's built
   await tab('architect');
   check('architect: step timeline with whole journey and 6 steps', (await page.$$('#atl .as')).length === 7);
   check('architect: selected step carries over (Ordered)', /Ordered/.test(await page.textContent('#atl .as.sel')));
@@ -138,7 +140,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] .sec')].find((x) => /^Decomposition/.test(x.textContent)); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 70); });
   await page.waitForTimeout(300); await shot('12-dev-decomposition-plan.png');
   { const dv = l6;
-    check('Dev View: "Assetisation done (TMF637)", no raw platform status or asset-step wording', dv.includes('Assetisation done (TMF637)') && !/AssetizationFailed|Platform order status|asset step|assetization step/i.test(dv)); }
+    check('tab 3 (How it\'s built): "Assetisation done (TMF637)", no raw platform status or asset-step wording', dv.includes('Assetisation done (TMF637)') && !/AssetizationFailed|Platform order status|asset step|assetization step/i.test(dv)); }
   await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] p')].find((x) => x.textContent.startsWith('Assetisation done')); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 420); });
   await page.waitForTimeout(300); await shot('13-dev-plan-installed-product.png');
   const arch = await page.textContent('#v-architect');
@@ -187,6 +189,11 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
       const ov = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       check(`responsive ${w}x${h}: ${tb} fits the width`, ov <= 0, String(ov));
     }
+    // the three tab headings and sublines stay on one line each and the tab bar does not overflow
+    const tl = await page.evaluate(() => { const n = document.querySelector('.tabs'); const lines = (e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight || '16'));
+      return { over: n.scrollWidth - n.clientWidth, right: Math.max(...[...n.children].map((b) => b.getBoundingClientRect().right)) - n.clientWidth, lines: [...n.querySelectorAll('button')].map((b) => [b.querySelector('b'), b.querySelector('span')].map((e) => e.getClientRects().length + ':' + Math.round(e.getBoundingClientRect().height))) }; });
+    check(`responsive ${w}x${h}: tab headings and sublines fit without wrapping`, tl.over <= 0 && tl.right <= 0 && tl.lines.every((x) => x.every((y) => y.startsWith('1:'))), JSON.stringify(tl));
+    if (w === 1280) { await tab('business'); await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(200); await shot('14-tabs-1280.png'); }
   }
   check('no console errors', errors.length === 0, errors.join(' | ').slice(0, 300));
   await browser.close();

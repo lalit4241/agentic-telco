@@ -1,5 +1,5 @@
 {
- "at": "2026-11-02T22:43:29.726Z",
+ "at": "2026-11-02T22:49:45.245Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -34,10 +34,15 @@
   {
    "name": "three tabs, business first, each with its question",
    "ok": true,
-   "detail": "Business ViewWhat does the customer get? | Architect ViewIs this safe, and does it fit my estate? | Dev ViewHow does it actually work?"
+   "detail": "What changes for the businessAn agent handles the upgrade end to end, and policy and workflow keep control | How it fitsOn the estate you already have, through TM Forum Open APIs | How it's builtEvery call, action code and record, step by step"
   },
   {
-   "name": "Business View is the default",
+   "name": "each tab heading has an inline line icon (no external refs), accent colour when active",
+   "ok": true,
+   "detail": "[[1,\"rgb(1, 118, 211)\",true,false],[4,\"color(srgb 0.333922 0.559804 0.756275)\",false,false],[1,\"color(srgb 0.333922 0.559804 0.756275)\",false,false]]"
+  },
+  {
+   "name": "tab 1 (What changes for the business) is the default",
    "ok": true,
    "detail": ""
   },
@@ -67,7 +72,7 @@
    "detail": ""
   },
   {
-   "name": "Architect View lights layers during the replay",
+   "name": "How it fits lights layers during the replay",
    "ok": true,
    "detail": "12"
   },
@@ -97,7 +102,7 @@
    "detail": "What Sam getsFibre 900 is liveOne upgrade, three services, one router swap.ServiceFibre 900Price£45 a monthContract end28 Aug 2027 (unchanged)Order00000176Live2 Nov 2026"
   },
   {
-   "name": "happy: Business View line \"One upgrade, three services, one router swap.\"",
+   "name": "happy: tab 1 line \"One upgrade, three services, one router swap.\"",
    "ok": true,
    "detail": ""
   },
@@ -107,7 +112,7 @@
    "detail": ""
   },
   {
-   "name": "Business View has no layer numbers, APIs or drawers",
+   "name": "tab 1 has no layer numbers, APIs or drawers",
    "ok": true,
    "detail": ""
   },
@@ -287,7 +292,7 @@
    "detail": ""
   },
   {
-   "name": "Dev View: \"Assetisation done (TMF637)\", no raw platform status or asset-step wording",
+   "name": "tab 3 (How it's built): \"Assetisation done (TMF637)\", no raw platform status or asset-step wording",
    "ok": true,
    "detail": ""
   },
@@ -387,6 +392,11 @@
    "detail": "0"
   },
   {
+   "name": "responsive 1280x800: tab headings and sublines fit without wrapping",
+   "ok": true,
+   "detail": "{\"over\":0,\"right\":-194.09375,\"lines\":[[\"1:20\",\"1:17\"],[\"1:20\",\"1:17\"],[\"1:20\",\"1:17\"]]}"
+  },
+  {
    "name": "responsive 1920x1080: business fits the width",
    "ok": true,
    "detail": "0"
@@ -400,6 +410,11 @@
    "name": "responsive 1920x1080: architect fits the width",
    "ok": true,
    "detail": "0"
+  },
+  {
+   "name": "responsive 1920x1080: tab headings and sublines fit without wrapping",
+   "ok": true,
+   "detail": "{\"over\":0,\"right\":-834.09375,\"lines\":[[\"1:20\",\"1:17\"],[\"1:20\",\"1:17\"],[\"1:20\",\"1:17\"]]}"
   },
   {
    "name": "no console errors",

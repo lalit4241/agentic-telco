@@ -69,7 +69,7 @@ function leakCheck(str, pw) {
     console.error('Refusing to write: secret found in output'); process.exit(1);
   }
 }
-const UI = JSON.parse(rd(R('src', 'mvp', 'ui-copy.json')));  // all tab copy (labels, subtitles, Architect View copy, diagram text) in one object
+const UI = JSON.parse(rd(R('src', 'mvp', 'ui-copy.json')));  // all tab copy (labels, subtitles, How it fits copy, diagram text) in one object
 const appJs = (cfg) => 'window.MVP_CFG=' + JSON.stringify(Object.assign({ ui: UI }, cfg)).replace(/<\/script/gi, '<\\/script') + ';\n' + viewer + '\n;\n' + rd(R('src', 'mvp', 'mvp.js'));
 fs.mkdirSync(R('dist'), { recursive: true });
 
