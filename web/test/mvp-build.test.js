@@ -103,6 +103,10 @@ test('evidence gallery tells the recorded happy-path story (same order, numbered
   assert.ok(cited.length >= 1 && cited.every((n) => n === num), cited.join(',') + ' vs ' + num);
   assert.ok(!CFG.evidence.some((e) => /MVP-[0-9A-F]{8}/.test(e.caption) && !e.caption.includes(ext)));
 });
+test('no raw platform order status in the demo UI or recordings (docs and evidence notes only)', () => {
+  assert.doesNotMatch(html + JSON.stringify(app), /AssetizationFailed|Platform order status/);
+  assert.strictEqual(CFG.ui.diagram.decomposition.assetStep, 'Built-in asset step not used: installed product updated by the workflow (TMF637)');
+});
 test('no secrets in the page', () => {
   const s = html + JSON.stringify(app);
   assert.doesNotMatch(s, /client_secret|access_token|refresh_token|ZG_OPERATON_|00D[A-Za-z0-9]{12,15}![A-Za-z0-9._]{20,}|sk-[A-Za-z0-9]{20,}/);

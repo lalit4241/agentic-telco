@@ -137,6 +137,10 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('architect Live: "The TMF641 request and response are simulated inside Salesforce for this demo."', l6.includes('The TMF641 request and response are simulated inside Salesforce for this demo.') && /Network order adapter \(Mocked\)/.test(l6));
   await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] .sec')].find((x) => /^Decomposition/.test(x.textContent)); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 70); });
   await page.waitForTimeout(300); await shot('12-dev-decomposition-plan.png');
+  { const dv = l6;
+    check('Dev View: built-in asset step line, no raw platform status', dv.includes('Built-in asset step not used: installed product updated by the workflow (TMF637)') && !/AssetizationFailed|Platform order status/.test(dv)); }
+  await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] p')].find((x) => x.textContent.startsWith('Built-in asset step not used')); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 420); });
+  await page.waitForTimeout(300); await shot('13-dev-plan-installed-product.png');
   const arch = await page.textContent('#v-architect');
   check('architect: system-of-record line', arch.includes('All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer.'));
   check('architect: Exposed APIs (out of the box, facade, stand-ins mocked)', /Exposed APIs \(TMF-aligned\)/.test(arch) && /Provided by: Salesforce \(out of the box\)/.test(arch) && /Provided by: TMF facade within Salesforce \(Apex\)/.test(arch) && /Legacy stand-in \(mocked\)/.test(arch) && (await page.$$('#exposed tr')).length >= 15);

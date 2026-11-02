@@ -4494,8 +4494,7 @@
      "actionCodesNote": "Action codes are derived from the installed base (TMF637), not by the built-in decomposition.",
      "productInventory": {
       "note": "Installed product (TMF637) has one writer: the L5 workflow's TMF637 update. The plan has no assetization step.",
-      "writer": "L5 workflow (TMF637)",
-      "platformStatus": "AssetizationFailed"
+      "writer": "L5 workflow (TMF637)"
      },
      "fulfillmentPlanId": "13VQH000001W9Fh2AK",
      "networkBreakdownNote": "RFS and resources are the network's own breakdown (x-action extension fields in the TMF641 response)."

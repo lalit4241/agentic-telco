@@ -1,5 +1,5 @@
 {
- "at": "2026-11-02T22:24:21.037Z",
+ "at": "2026-11-02T22:41:28.780Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -283,6 +283,11 @@
   },
   {
    "name": "architect Live: \"The TMF641 request and response are simulated inside Salesforce for this demo.\"",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Dev View: built-in asset step line, no raw platform status",
    "ok": true,
    "detail": ""
   },

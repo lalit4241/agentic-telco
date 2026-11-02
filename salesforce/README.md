@@ -70,7 +70,7 @@ appear only in the TMF641 response (`x-action` extension fields). The idempotenc
 
 Single writer: the installed product (TMF637: Fibre 900 Installed, Fibre 150 Obsolete, Upgrade relationship) is written only
 by the L5 workflow. The plan has no assetization step. The platform still attempts its own assetization after the plan and
-marks the order `AssetizationFailed` (it writes nothing); `x-orchestration.productInventory.platformStatus` shows it.
+marks the order `AssetizationFailed` (it writes nothing); `x-orchestration.productInventory.platformStatus` shows it. The demo UI does not show this raw status (the stack's worker drops it); the Dev View says "Built-in asset step not used: installed product updated by the workflow (TMF637)".
 
 No silent fallback: if no fulfilment plan is created, TMF622 returns `x-orchestration.status=notSubmitted` with an error and
 the L5 workflow stops (BPMN error `NO_FULFILMENT_PLAN`).

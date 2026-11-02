@@ -139,7 +139,8 @@ def plan_summary(x):
                              "stateChange": so.get("stateChange") or [],
                              "items": so.get("items") or [], "networkFulfilment": so.get("networkFulfilment")},
             "actionCodesNote": x.get("actionCodesNote"), "networkBreakdownNote": x.get("networkBreakdownNote"),
-            "productInventory": x.get("productInventory"),
+            # the raw platform order status (OrchestrationSbmsStatus) stays in the docs and evidence notes, not the demo UI
+            "productInventory": {k: v for k, v in (x.get("productInventory") or {}).items() if k != "platformStatus"} or None,
             "networkCalls": len(x.get("networkCalls") or [])}
 
 def oss_submit(v, sp):

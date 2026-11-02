@@ -23,7 +23,7 @@ What order 00000176 shows:
 - **Network breakdown:** the RFS and resources (including RFS Router configuration modify, old router delete, new router add) come back only in the TMF641 response, as x-action fields.
 - **One outbound network interaction:** the TMF641 POST plus 2 GETs. The plan recorded 4 calls: those 3 plus the customer notification. TMF685, TMF639 and TMF638 appear only as network-side data (`x-networkFulfilment`).
 - **One writer for TMF637:** the L5 workflow. It created Fibre 900 Installed (02iQH000003HOp0YAG), set Fibre 150 to Obsolete and added the Upgrade relationship. The plan has no assetization step, and the platform created no asset.
-- **Platform status:** the order shows `OrchestrationSbmsStatus = AssetizationFailed`. This is the platform's own assetization after the plan completes. It fails for the two causes in `salesforce/README.md` and writes nothing.
+- **Platform status:** the order shows `OrchestrationSbmsStatus = AssetizationFailed`. This is the platform's own assetization after the plan completes. It fails for the two causes in `salesforce/README.md` and writes nothing. The raw status stays in these notes only. The demo UI shows "Built-in asset step not used: installed product updated by the workflow (TMF637)" in plain text, with no failure label. Checked by web build test 17/17, e2e 81/81 (preview 13-dev-plan-installed-product.png), and legacy 10/10.
 - **Evidence:** 01–11 in `web/src/mvp/evidence/` (order 00000176). Previews are in `/workspace/agentictelco-mvp-preview/v5/`.
 
 
