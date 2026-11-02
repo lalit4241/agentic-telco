@@ -1,5 +1,5 @@
 {
- "at": "2026-11-02T23:25:41.236Z",
+ "at": "2026-11-02T23:49:52.740Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -99,7 +99,7 @@
   {
    "name": "happy: outcome card Fibre 900, £45, 28 Aug 2027, order from the recording, live 2 Nov 2026",
    "ok": true,
-   "detail": "What Sam getsFibre 900 is liveOne upgrade, three services, one router swap.ServiceFibre 900Price£45 a monthContract end28 Aug 2027 (unchanged)Order00000176Live2 Nov 2026"
+   "detail": "What Sam getsFibre 900 is liveOne upgrade, three services, one router swap.ServiceFibre 900Price£45 a monthContract end28 Aug 2027 (unchanged)Order00000177Live2 Nov 2026"
   },
   {
    "name": "happy: tab 1 line \"One upgrade, three services, one router swap.\"",
@@ -249,7 +249,7 @@
   {
    "name": "call detail: Provided by, TMF tag, request and response",
    "ok": true,
-   "detail": "L6 · SalesforceCatalogue and pricesTMF620 Product Catalog TMF Open API×GET /services/apexrest/agentictelco/tmf620/produc"
+   "detail": "L6 · SalesforcePromotionsTMF671 Promotion TMF Open API×GET /services/apexrest/agentictelco/tmf671/promotionProvided by: "
   },
   {
    "name": "call detail: redacted (no tokens, session ids, login URLs)",

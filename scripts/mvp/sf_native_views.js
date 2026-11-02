@@ -37,6 +37,12 @@ async function shot(page, loc, file, pad = 8) {
   for (const sel of ['button[aria-label*="Expand" i]', 'button[title*="Expand" i]', 'lightning-button-icon[class*="expand"] button']) {
     const b = dv.locator(sel).first(); if (await b.isVisible().catch(() => false)) { await b.click(); await wait(page, 3000); break; }
   }
+  for (let k = 0; k < 4; k++) {   // expand collapsed bundle rows (e.g. Fibre 900) so the bundle components show
+    const c = dv.locator('tr[aria-expanded="false"] lightning-primitive-treegrid-cell-toggle button, tr[aria-expanded="false"] lightning-primitive-treegrid-cell-toggle').first();
+    if (!(await c.isVisible().catch(() => false))) break;
+    await c.click().catch(() => { }); await wait(page, 3000); console.log('expanded a bundle row');
+  }
+  await page.mouse.click(5, 5);
   await shot(page, dv, path.join(out, 'sf-decomposition.png'));
   // 2) Orchestration plan, all steps: wide viewport, then the viewer's own zoom-out until the last step is on screen
   await page.setViewportSize({ width: +(process.env.PLAN_W || 2400), height: 1000 });

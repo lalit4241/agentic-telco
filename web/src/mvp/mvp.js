@@ -509,7 +509,7 @@
     return sfViews() +
       (so.id ? '<p>TMF641 service order <b class="mono">' + esc(so.id) + '</b>: ' + esc((so.stateChange || []).map(function (c) { return c.state; }).join(' → ') || so.state || '') + ' · ' + (so.items || []).map(function (i) { return esc(i.service) + ' ' + actChip(i.action); }).join(' · ') + '</p>' : '') +
       (NF.reservation || NF.serviceInventory ? '<p class="small">Network side (inside the mocked network, not called by Salesforce): ' + [NF.reservation ? esc(NF.reservation.api) + ' reservation ' + esc(NF.reservation.id || '') : '', NF.serviceInventory ? esc(NF.serviceInventory.api) + ' services updated' : '', NF.resourceInventory ? esc(NF.resourceInventory.api) + ' resources updated' : ''].filter(Boolean).join(' · ') + ', returned as data in the TMF641 response.</p>' : '') +
-      (PI.writer ? '<p class="small">' + esc((DT.assetStep || 'Assetisation done (TMF637)') + (PI.routeLabel ? ' - ' + PI.routeLabel : '')) + '</p>' : '') +
+      (PI.writer ? '<p class="small">' + esc(DT.assetStep || 'Assetisation done (TMF637)') + '</p>' : '') +
       '<p class="small">Idempotency key <span class="mono">' + esc(P.idempotencyKey || '') + '</span> (the order) · network order adapter: ' + esc(P.adapterMode || '') + '. ' + SIM_SENTENCE + '</p>';
   }
   var ARCH = {
@@ -747,7 +747,7 @@
       var calls = v.spans.filter(function (s) { return s.layer === 'L6'; });
       b.innerHTML = '<p><span class="chip sf">' + SF_CHIP + '</span><span class="chip st">' + STANDIN_CHIP + '</span> <span class="small">Click a call to see its request and response.</span></p>' +
         apiRows(calls, v, true) + (planOf(v) ? orchPanels(planOf(v)) : '') +
-        '<p class="small">Everything above this layer reaches Salesforce only through TM Forum Open APIs. The L5 workflow writes the quote and the order. The installed product is recorded by one writer, a step in the Salesforce plan (TMF637), and the workflow only reads it back. The Custom Assetize Order flow is left as is; the run checks it created no installed product.</p>';
+        '<p class="small">Everything above this layer reaches Salesforce only through TM Forum Open APIs. The L5 workflow writes the quote and the order, and only reads the installed product back (TMF637).</p>';
     },
     L7: function (b, v) {
       var n = v.network || {}, up = portIs900(v), jeo = (v.jeopardy || []).length && !up, sent = (v.milestones || []).some(function (m) { return m.name === 'SentToOSS'; });

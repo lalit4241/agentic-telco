@@ -313,7 +313,7 @@
   },
   {
    "term": "Salesforce order orchestration",
-   "definition": "The fulfilment plan Salesforce builds from the order: decomposition, eight steps with dependencies, a jeopardy rule and a point of no return. It sends one TMF641 service order, records the network result and, in its own step, records the installed product (TMF637). The L5 workflow only reads the installed product back."
+   "definition": "The fulfilment plan Salesforce builds from the order: decomposition, eight steps with dependencies, a jeopardy rule and a point of no return. It sends one TMF641 service order, and records the network result. The installed product is recorded in Salesforce (TMF637); the L5 workflow only reads it back."
   },
   {
    "term": "Network order adapter",

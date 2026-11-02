@@ -398,6 +398,19 @@ private class AgenticTelco_TmfTest {
         req('GET', '/agentictelco/tmf637/product/' + kids[0].Id, null, null);
         AgenticTelco_TMF637.doGet();
         System.assertEquals(String.valueOf(nw.Id), ((Map<String, Object>) ((Map<String, Object>) resp()).get('x-bundledIn')).get('id'));
+        // TMF622 read-back: the component line references its own installed record, not the replaced bundle
+        req('GET', '/agentictelco/tmf622/productOrder/' + orderId, null, null);
+        AgenticTelco_TMF622.doGet();
+        Integer comps = 0;
+        for (Object x : (List<Object>) ((Map<String, Object>) resp()).get('productOrderItem')) {
+            Map<String, Object> it = (Map<String, Object>) x;
+            if (it.get('x-bundleComponent') == true) {
+                comps++;
+                System.assertEquals(String.valueOf(kids[0].Id), ((Map<String, Object>) it.get('product')).get('id'), JSON.serialize(it));
+            }
+        }
+        System.assertEquals(1, comps);
+        System.assertEquals(null, AgenticTelco_TMF622.componentProduct(null));
         // the step dispatch
         System.assert(AgenticTelco_OrchestrationStep.run(orderId, 'ASSETIZE').startsWith('Installed product recorded'));
         Test.stopTest();

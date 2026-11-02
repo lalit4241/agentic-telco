@@ -79,7 +79,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('CIO: older systems, the network and the network order adapter arrow tagged Mocked', (await page.$$('#dsvg .mk')).length === 5);
   check('CIO: a real arrow from Order Management to the network order adapter, legend says simulated inside Salesforce', !!(await page.$('#dsvg path.de[data-e="sfom-oss"]')) && !(await page.$('#dsvg .tgt')) && /simulated inside Salesforce for this demo/.test(await page.textContent('#v-cio .glegend')));
   const tree = await page.textContent('#dtree');
-  check('CIO: Salesforce\'s own decomposition and orchestration plan screens with captions and the one-line note, no custom tree', (await page.$$('#dtree .sfshot img')).length === 2 && !(await page.$('#dtree .tree')) && /Decomposition \(Salesforce's own screen\)/.test(tree) && /Orchestration plan \(Salesforce's own screen\)/.test(tree) && tree.includes(UI.diagram.decomposition.screensNote) && /FO-0008/.test(tree) && /delete Fibre 150 and add Fibre 900/.test(tree), tree.slice(0, 160));
+  check('CIO: Salesforce\'s own decomposition and orchestration plan screens with captions and the one-line note, no custom tree', (await page.$$('#dtree .sfshot img')).length === 2 && !(await page.$('#dtree .tree')) && /Decomposition \(Salesforce's own screen\)/.test(tree) && /Orchestration plan \(Salesforce's own screen\)/.test(tree) && tree.includes(UI.diagram.decomposition.screensNote) && /FO-0011/.test(tree) && /delete Fibre 150 and add Fibre 900/.test(tree), tree.slice(0, 160));
   const lit = await page.$$eval('#dsvg .dn.on', (a) => a.map((x) => x.dataset.node));
   check('CIO: "Ordered" lights the workflow, the APIs and Salesforce', ['L5', 'api', 'sf'].every((n) => lit.includes(n)), lit.join(','));
   check('CIO: no Exposed APIs list here', !(await page.$('#v-cio #exposed')));
@@ -140,7 +140,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] .sec')].find((x) => /^Decomposition/.test(x.textContent)); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 70); });
   await page.waitForTimeout(300); await shot('12-dev-decomposition-plan.png');
   { const dv = l6;
-    check('tab 3 (How it\'s built): "Assetisation done (TMF637)", no raw platform status or asset-step wording', dv.includes('Assetisation done (TMF637)') && !/AssetizationFailed|Platform order status|asset step|assetization step/i.test(dv)); }
+    check('tab 3 (How it\'s built): "Assetisation done (TMF637)", no raw platform status or asset-step wording', dv.includes('Assetisation done (TMF637)') && !/AssetizationFailed|Platform order status|asset step|assetization step|custom step|built-in step|Assetize Order flow/i.test(dv)); }
   await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] p')].find((x) => x.textContent.startsWith('Assetisation done')); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 420); });
   await page.waitForTimeout(300); await shot('13-dev-plan-installed-product.png');
   const arch = await page.textContent('#v-architect');

@@ -32,17 +32,27 @@ for c in ("happy", "delayed"):
           f"{c}: new asset Installed, InstallDate={na['InstallDate']} (live {live}), UsageEndDate={na['UsageEndDate']}, £{na['Price']}")
     check(oa["Status"] == "Obsolete", f"{c}: Fibre 150 asset {oa['Status']}")
     wrote = json.dumps([sp.get("request") for sp in s["spans"]])
-    check('"terminated"' in wrote and '"active"' in wrote and '"Upgrade"' in wrote,
-          f"{c}: the run itself wrote (TMF637) Fibre 150 -> terminated (Obsolete), Fibre 900 -> active (Installed) and the Upgrade productRelationship (status now {na['Status']})")
+    ac = [m for m in s.get("milestones", []) if m["name"] == "AssetChanged"]
+    if ac and json.dumps(ac[-1]).count('"route"'):
+        # single writer (since the delete+add build): the Salesforce plan records the installed product; the run only reads TMF637
+        t637 = [sp for sp in s["spans"] if "/tmf637/" in (sp.get("path") or "") or "TMF637" in (sp.get("api") or "")]
+        check(t637 and all((sp.get("method") or "GET") == "GET" for sp in t637),
+              f"{c}: the run only read the installed product (TMF637 GET x{len(t637)}, no POST/PATCH); Fibre 150 Obsolete, Fibre 900 {na['Status']}")
+    else:
+        check('"terminated"' in wrote and '"active"' in wrote and '"Upgrade"' in wrote,
+              f"{c}: the run itself wrote (TMF637) Fibre 150 -> terminated (Obsolete), Fibre 900 -> active (Installed) and the Upgrade productRelationship (status now {na['Status']})")
     rel = q(f"select Id, RelationshipType from AssetRelationship where AssetId='{old}' and RelatedAssetId='{new}'")
     check(len(rel) == 1 and rel[0]["RelationshipType"] == "Upgrade", f"{c}: AssetRelationship Upgrade Fibre 150 -> Fibre 900 exists")
     paths = [sp.get("path") or "" for sp in s["spans"]]
     check(not any(re.search(r"/query\b|/sobjects\b|/composite\b", p_) for p_ in paths) and all(sp.get("runtime") != "native Salesforce API" for sp in s["spans"]),
           f"{c}: no SOQL or sObject REST in the trace ({sum(1 for p_ in paths if p_.startswith('/services/'))} Salesforce calls, all TMF)")
-    o = q(f"select Status, OrderNumber, (select Product2.Name, UnitPrice from OrderItems) from Order where Id='{oid}'")[0]
+    o = q(f"select Status, OrderNumber, (select Product2.Name, UnitPrice, Quantity from OrderItems) from Order where Id='{oid}'")[0]
     # since the orchestration build the bundle carries its components (access line, router) at £0 for the decomposition
     its = o["OrderItems"]["records"]; main = [i for i in its if i["Product2"]["Name"].endswith("900")]
-    check(o["Status"] == "Activated" and len(main) == 1 and float(main[0]["UnitPrice"]) == 45.0 and sum(float(i["UnitPrice"]) for i in its) == 45.0,
+    # delete+add (since that build): Fibre 150 is a quantity -1 line; the added lines still total £45 a month
+    added = [i for i in its if float(i.get("Quantity") or 0) >= 0]
+    check(o["Status"] == "Activated" and len(main) == 1 and float(main[0]["UnitPrice"]) == 45.0 and sum(float(i["UnitPrice"]) for i in added) == 45.0
+          and all(i["Product2"]["Name"].endswith("150") for i in its if i not in added),
           f"{c}: order {o['OrderNumber']} {o['Status']} at £45 ({len(its)} line(s): " + ", ".join(f"{i['Product2']['Name']} £{float(i['UnitPrice']):.0f}" for i in its) + ")")
     check(any("TMF671" in (sp.get("api") or "") for sp in s["spans"]), f"{c}: TMF671 promotion read in the trace")
     fca = [m for m in s.get("milestones", []) if m["name"] == "AssetChanged"]

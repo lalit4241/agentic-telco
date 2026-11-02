@@ -77,7 +77,15 @@ line as children, Upgrade relationship) is written by one plan step, chosen at b
 `AgenticTelco_Fulfilment_Setting__mdt.Assetisation_Route__c` (`CUSTOM_STEP`: the AgenticTelco ASSETIZE Apex step;
 `BUILT_IN`: the platform's own assetisation). There is no fallback: if the step fails the plan stops. The L5 workflow only
 reads the installed product back (TMF637 GET) and stops the run if it does not match. The TMF637 POST and PATCH endpoints
-remain but the MVP run does not use them. The Dev View shows one line naming the route.
+remain but the MVP run does not use them. The Dev View shows one neutral line, "Assetisation done (TMF637)", without naming the route.
+
+The route in use is `CUSTOM_STEP`. Salesforce's own OrderToAsset still runs after the plan completes and fails, so orders show
+`OrchestrationSbmsStatus = AssetizationFailed` (error log category OrderToAsset: "The order must have a related Application Usage
+Assignment with an Application Usage Type of RevenueLifecycleManagement or SubscriptionManagement"; the order has the
+SubscriptionManagement one that the existing "Custom Assetize Order" flow needs). It writes nothing. Details and options:
+[decision note](../docs/mvp/decision-assetisation.md).
+
+TODO: Fix OOTB assetisation later (needs Custom Assetize Order flow and RLM changes; Lalit to approve).
 
 No silent fallback: if no fulfilment plan is created, TMF622 returns `x-orchestration.status=notSubmitted` with an error and
 the L5 workflow stops (BPMN error `NO_FULFILMENT_PLAN`).

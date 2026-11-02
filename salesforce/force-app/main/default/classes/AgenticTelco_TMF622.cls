@@ -238,6 +238,7 @@ global with sharing class AgenticTelco_TMF622 {
         for (OrderItemRelationship r : [SELECT MainOrderItemId, AssociatedOrderItemId FROM OrderItemRelationship WHERE MainOrderItem.OrderId IN :ids]) {
             bundleOf.put(r.AssociatedOrderItemId, r.MainOrderItemId);
         }
+        Map<String, Id> ownAsset = componentAssets(os);   // orderId|Product2Id -> the component's own installed record (child Asset)
         List<Map<String, Object>> out = new List<Map<String, Object>>();
         for (Order o : os) {
             String st = state(o);
@@ -258,6 +259,7 @@ global with sharing class AgenticTelco_TMF622 {
                 String rid = replacesId(i.Description);
                 if (rid != null && sfIdOf.containsKey(rid)) rels.add(relationship(sfIdOf.get(rid), 'replaces'));
                 Map<String, Object> product = itemProduct(i.Description);
+                if (isComponentLine(i.Description)) product = componentProduct(ownAsset.get(o.Id + '|' + i.Product2Id));
                 if (product == null && act == 'add' && (i.ServiceDate != null || i.EndDate != null)) {
                     product = new Map<String, Object>{ 'startDate' => i.ServiceDate, 'terminationDate' => i.EndDate, '@type' => 'Product' };
                 }
@@ -506,6 +508,23 @@ global with sharing class AgenticTelco_TMF622 {
             }
         }
         return out;
+    }
+
+    /** Bundle components (router, access line) reference their own installed record: the child Asset recorded for this
+     *  order's new bundle (serial AT-<order key>-n), never the replaced bundle's id. Before it is recorded there is none. */
+    static Map<String, Id> componentAssets(List<Order> os) {
+        Map<String, Id> orderOfSerial = new Map<String, Id>();
+        for (Order o : os) if (o.Name != null && o.Name.startsWith('AgenticTelco PO ')) orderOfSerial.put('AT-' + o.Name.substringAfter('AgenticTelco PO '), o.Id);
+        Map<String, Id> out = new Map<String, Id>();
+        if (orderOfSerial.isEmpty()) return out;
+        for (Asset a : [SELECT Id, Product2Id, Parent.SerialNumber FROM Asset WHERE Parent.SerialNumber IN :orderOfSerial.keySet() AND Name LIKE 'AgenticTelco%']) {
+            out.put(orderOfSerial.get(a.Parent.SerialNumber) + '|' + a.Product2Id, a.Id);
+        }
+        return out;
+    }
+
+    @TestVisible static Map<String, Object> componentProduct(Id assetId) {
+        return assetId == null ? null : AgenticTelco_Tmf.ref(assetId, null, 'Product', AgenticTelco_Tmf.href('tmf637', 'product', assetId));
     }
 
     public static Map<String, Object> itemProduct(String description) {

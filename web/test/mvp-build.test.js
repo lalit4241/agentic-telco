@@ -106,6 +106,7 @@ test('evidence gallery tells the recorded happy-path story (same order, numbered
 test('Tab 3 (How it\'s built) says Assetisation done (TMF637); no raw platform status or asset-step wording in the demo UI or recordings', () => {
   assert.doesNotMatch(html + JSON.stringify(app), /AssetizationFailed|Platform order status|Built-in asset step|no assetization step/);
   assert.strictEqual(CFG.ui.diagram.decomposition.assetStep, 'Assetisation done (TMF637)');
+  assert.doesNotMatch(html, /PI\.routeLabel|custom step in the Salesforce plan|built-in asset step|Custom Assetize Order flow/i, 'the Dev View label stays neutral');
 });
 test('no secrets in the page', () => {
   const s = html + JSON.stringify(app);
