@@ -85,7 +85,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   await page.evaluate(() => window.scrollTo(0, 0));
   check('CIO: diagram caption visible without scrolling at 1440x900', await page.$eval('#dcap', (e) => { const r = e.getBoundingClientRect(); return r.height > 0 && r.bottom <= window.innerHeight; }));
   const msgText = await page.textContent('#v-cio .msgs');
-  check('CIO: four messages with the reworded Controls hold and No lock-in', (await page.$$('#v-cio .msgs .mc')).length === 4 && msgText.includes('Authorisation, overdue balance and availability are checked by policy, never by the AI.') && msgText.includes('Salesforce and the older systems are reached only through TM Forum Open APIs (TMF-aligned).'));
+  check('CIO: four messages with the reworded Controls hold and No lock-in', (await page.$$('#v-cio .msgs .mc')).length === 4 && msgText.includes('Authorisation, overdue balance, availability and the customer\'s go-ahead are all checked before any order, never left to the AI.') && msgText.includes('Salesforce and the older systems are reached only through TM Forum Open APIs (TMF-aligned).'));
   await scrollTo('#v-cio .msgs'); await page.waitForTimeout(300); await shot('10-cio-four-messages.png'); await page.evaluate(() => window.scrollTo(0, 0));
   await page.click('#cstrip .pill[data-step="4"]'); await page.waitForTimeout(200);
   // the diagram opens the layer detail

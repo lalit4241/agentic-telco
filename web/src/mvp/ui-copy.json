@@ -55,7 +55,7 @@
   "messages": [
    { "title": "Nothing ripped out", "text": "Salesforce and the older systems stay as the records." },
    { "title": "No lock-in", "text": "Salesforce and the older systems are reached only through TM Forum Open APIs (TMF-aligned)." },
-   { "title": "Controls hold", "text": "Authorisation, overdue balance and availability are checked by policy, never by the AI." },
+   { "title": "Controls hold", "text": "Authorisation, overdue balance, availability and the customer's go-ahead are all checked before any order, never left to the AI." },
    { "title": "Every step evidenced", "text": "One timeline from request to live service." }
   ],
   "stepsLabel": "Light up a step:",
