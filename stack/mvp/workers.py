@@ -15,7 +15,7 @@ STEP_NAMES = {
     "mvp-binding-check": "Binding policy check + identity", "mvp-quote": "Create quote", "mvp-order": "Place upgrade order",
     "mvp-oss-submit": "Salesforce order orchestration: plan and network service order",
     "mvp-oss-read": "Salesforce order orchestration: wait for network activation", "mvp-jeopardy": "Raise jeopardy (+2 days)",
-    "mvp-activate": "Complete order", "mvp-asset-change": "Asset change", "mvp-intent-fulfilled": "Intent fulfilled",
+    "mvp-activate": "Complete order", "mvp-asset-change": "Check the installed product", "mvp-intent-fulfilled": "Intent fulfilled",
 }
 
 class BpmnErr(Exception):
@@ -79,11 +79,16 @@ def quote(v, sp):
     return {"quoteId": r["id"]}
 
 def order(v, sp):
+    # The upgrade as two linked TMF622 items: delete the installed Fibre 150 and add Fibre 900, which 'replaces' item 1.
+    # The new line keeps the running contract end date; its monthly price applies from the upgrade date.
     body = {"externalId": v["orderExternalId"], "description": f"Upgrade Fibre 150 to {v['toName']} (intent {v['intentId']})",
             "relatedParty": [{"id": v["accountId"], "role": "Customer"}], "quote": [{"id": v.get("quoteId")}],
-            "productOrderItem": [{"id": "1", "action": "modify", "quantity": 1, "productOffering": {"id": v["toOffering"]},
-                                  "productOfferingPrice": {"id": v["toPriceId"]}, "product": {"id": v["currentAssetId"], **term_item(v)}}]}
-    o = ok(sf(v["traceId"], "Place upgrade order (action modify)", "POST", f"{APEX}/tmf622/productOrder", body, api="TMF622",
+            "productOrderItem": [
+                {"id": "1", "action": "delete", "quantity": 1, "product": {"id": v["currentAssetId"]}},
+                {"id": "2", "action": "add", "quantity": 1, "productOffering": {"id": v["toOffering"]},
+                 "productOfferingPrice": {"id": v["toPriceId"]}, "product": term_item(v),
+                 "productOrderItemRelationship": [{"id": "1", "relationshipType": "replaces"}]}]}
+    o = ok(sf(v["traceId"], "Place upgrade order (delete Fibre 150, add Fibre 900)", "POST", f"{APEX}/tmf622/productOrder", body, api="TMF622",
               parent=sp.span_id), "TMF622")
     usage = o.get("x-usageRecord")   # added inside the TMF622 facade while the order is Draft (internal step, see AgenticTelco_TMF622)
     o2 = ok(sf(v["traceId"], "Order in progress", "PATCH", f"{APEX}/tmf622/productOrder/{o['id']}", {"state": "inProgress"},
@@ -139,8 +144,8 @@ def plan_summary(x):
                              "stateChange": so.get("stateChange") or [],
                              "items": so.get("items") or [], "networkFulfilment": so.get("networkFulfilment")},
             "actionCodesNote": x.get("actionCodesNote"), "networkBreakdownNote": x.get("networkBreakdownNote"),
-            # only the writer reaches the demo UI ("Assetisation done (TMF637)"); the raw platform status stays in the docs
-            "productInventory": {k: v for k, v in (x.get("productInventory") or {}).items() if k == "writer"} or None,
+            # only the route and writer reach the demo UI ("Assetisation done (TMF637)"); the raw platform status stays in the docs
+            "productInventory": {k: v for k, v in (x.get("productInventory") or {}).items() if k in ("route", "routeLabel", "writer")} or None,
             "networkCalls": len(x.get("networkCalls") or [])}
 
 def oss_submit(v, sp):
@@ -227,42 +232,51 @@ def activate(v, sp):
     milestone(v["orderExternalId"], "OrderCompleted", {"state": o.get("state"), "sfStatus": o.get("x-sfStatus")})
     return {"activatedAt": datetime.now(timezone.utc).isoformat()}
 
+def asset_check(ok_, what):
+    if not ok_:
+        raise RuntimeError("Installed product check failed (TMF637): " + what + ". The run stops; the workflow writes nothing to the installed base.")
+
 def asset_change(v, sp):
-    """The upgrade on the installed base, through TMF637 Product Inventory only (TMF facade within Salesforce):
-    create the new product, terminate the old one with an end date, and link them with an Upgrade productRelationship."""
+    """Read-back only. The installed product has one writer: the Salesforce plan step (or the built-in asset step, chosen at
+    build time). The workflow checks through TMF637: Fibre 150 terminated on the upgrade date; Fibre 900 active at the new
+    monthly price with the contract end date kept, linked to Fibre 150 (Upgrade) and with its components as children."""
     t, key = v["traceId"], safe_key(v["orderExternalId"], "orderExternalId")
     serial = "AT-" + key
     cur, acct = sf_id(v["currentAssetId"], "currentAssetId"), sf_id(v["accountId"], "accountId")   # checked before they go into a path
     P = f"{APEX}/tmf637/product"
-    old = ok(sf(t, "Read current installed product", "GET", f"{P}/{cur}", api="TMF637", parent=sp.span_id), "TMF637 read")
-    user = next((p["id"] for p in old.get("relatedParty") or [] if p.get("role") == "User"), None)
-    place = [{"id": p["id"]} for p in old.get("place") or []][:1]
-    live = (v.get("liveDate") or date.today().isoformat())[:10]          # billed at the new price from the upgrade (go-live) date
-    keep_end = v.get("contractEnd") or old.get("terminationDate")         # decision: the existing contract end date is kept
-    new = ok(sf(t, "Create Fibre 900 (active) at the same site", "POST", P,
-                {"name": f"{v['toName']} – Brightwell site {v['site']}", "productSerialNumber": serial, "status": "active",
-                 "productOffering": {"id": v["toOffering"]}, "startDate": live, "terminationDate": keep_end, "place": place,
-                 "relatedParty": [{"id": acct, "role": "Customer"}] + ([{"id": user, "role": "User"}] if user else []),
-                 "productPrice": [{"priceType": "recurring", "price": {"taxIncludedAmount": {"unit": "GBP", "value": float(v["toPrice"])}}}],
-                 "description": f"AgenticTelco MVP: upgraded from Fibre 150 by order {v.get('orderNumber')} ({key}). "
-                                f"£{v['toPrice']} a month from {live}; contract end {keep_end} unchanged."},
-                api="TMF637", parent=sp.span_id), "TMF637 create")      # idempotent on productSerialNumber
+    _, x = orch_view(v, sp, "Read the assetisation route (TMF622 x-orchestration)")
+    inv = x.get("productInventory") or {}
+    route, route_label = inv.get("route") or "", inv.get("routeLabel") or ""
+    live = (v.get("liveDate") or date.today().isoformat())[:10]
+    keep_end = (v.get("contractEnd") or "")[:10]
+    old = ok(sf(t, "Read Fibre 150 (terminated)", "GET", f"{P}/{cur}", api="TMF637", parent=sp.span_id), "TMF637 read")
+    found = ok(sf(t, "Read Fibre 900 (active)", "GET", f"{P}?productSerialNumber={serial}&limit=5", api="TMF637", parent=sp.span_id), "TMF637 read")
+    asset_check(len(found) == 1, f"expected one installed product with serial {serial}, found {len(found)}")
+    new = found[0]
     new_id = sf_id(new["id"], "newAssetId")
-    ok(sf(t, "Fibre 150 terminated with an end date", "PATCH", f"{P}/{cur}", {"status": "terminated", "terminationDate": live},
-          api="TMF637", parent=sp.span_id), "TMF637 terminate")
-    linked = ok(sf(t, "Upgrade productRelationship: Fibre 150 to Fibre 900", "PATCH", f"{P}/{cur}",
-                   {"productRelationship": [{"relationshipType": "Upgrade", "product": {"id": new_id}}]}, api="TMF637", parent=sp.span_id),
-                "TMF637 relationship")   # idempotent: the facade adds the link only once
-    rel_id = next((r["id"] for r in linked.get("productRelationship") or [] if (r.get("product") or {}).get("id") == new_id), None)
-    # Live check of the hidden rule: the org's Custom Assetize Order flow must NOT have created its own product for this order.
-    time.sleep(3)
+    price = ((((new.get("productPrice") or [{}])[0]).get("price") or {}).get("taxIncludedAmount") or {}).get("value")
+    pt = ((new.get("productPrice") or [{}])[0]).get("priceType")
+    rel = next((r for r in old.get("productRelationship") or [] if r.get("relationshipType") == "Upgrade"
+                and (r.get("product") or {}).get("id") == new_id), None)
+    kids = [c.get("name") for c in new.get("product") or []]
+    asset_check(old.get("status") == "terminated", f"Fibre 150 status is {old.get('status')}, not terminated")
+    asset_check(str(old.get("terminationDate") or "")[:10] == live, f"Fibre 150 ends {old.get('terminationDate')}, not {live}")
+    asset_check(new.get("status") == "active", f"Fibre 900 status is {new.get('status')}, not active")
+    asset_check(pt == "recurring" and price is not None and float(price) == float(v["toPrice"]), f"Fibre 900 price is {price} ({pt}), not £{v['toPrice']} recurring")
+    asset_check(not keep_end or str(new.get("terminationDate") or "")[:10] == keep_end, f"Fibre 900 ends {new.get('terminationDate')}, not {keep_end}")
+    asset_check(rel is not None, "no Upgrade link from Fibre 150 to Fibre 900")
+    asset_check(len(kids) >= 2, f"Fibre 900 has {len(kids)} component products, expected the router and the access line")
+    # Live check of the hidden rule: nothing else (e.g. the org's Custom Assetize Order flow) created a product for this order.
     since = (v.get("orderPlacedAt") or v["activatedAt"])[:19] + "Z"   # the plan activates the order inside Salesforce, so check from order placement
-    recent = ok(sf(t, "Check: Custom Assetize Order created no product", "GET",
+    recent = ok(sf(t, "Check: no other writer created a product", "GET",
                    f"{P}?relatedParty.id={acct}&creationDate.gt={since}&limit=50", api="TMF637", parent=sp.span_id), "TMF637 list")
-    flow_assets = [p for p in recent if p["id"] != new_id]
-    sp.attrs.update(newAssetId=new_id, oldAssetId=cur, relationshipId=rel_id, assetizeFlowAssets=len(flow_assets))
-    milestone(key, "AssetChanged", {"old": cur, "new": new_id, "relationship": rel_id, "flowCreatedAssets": len(flow_assets)})
-    return {"newAssetId": new_id, "relationshipId": rel_id or "", "flowCreatedAssets": str(len(flow_assets))}
+    others = [p for p in recent if p["id"] != new_id and not p.get("x-bundledIn") and not str(p.get("productSerialNumber") or "").startswith("AT-")]
+    rel_id = rel.get("id")
+    sp.attrs.update(newAssetId=new_id, oldAssetId=cur, relationshipId=rel_id, components=kids, assetisationRoute=route,
+                    assetisationRouteLabel=route_label, assetizeFlowAssets=len(others))
+    milestone(key, "AssetChanged", {"old": cur, "new": new_id, "relationship": rel_id, "components": kids, "route": route,
+              "routeLabel": route_label, "flowCreatedAssets": len(others)})
+    return {"newAssetId": new_id, "relationshipId": rel_id or "", "flowCreatedAssets": str(len(others)), "assetisationRoute": route}
 
 def fulfilled(v, sp):
     remembered(v["orderExternalId"], "fulfilled", lambda: report(v, sp, "icm:StateComplies", "Intent fulfilled",

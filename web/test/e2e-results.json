@@ -1,5 +1,5 @@
 {
- "at": "2026-11-02T22:49:45.245Z",
+ "at": "2026-11-02T23:25:41.236Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -147,9 +147,9 @@
    "detail": ""
   },
   {
-   "name": "CIO: simple decomposition tree Product → CFS → RFS/Resource with action codes",
+   "name": "CIO: Salesforce's own decomposition and orchestration plan screens with captions and the one-line note, no custom tree",
    "ok": true,
-   "detail": "One upgrade, decomposedTMF622 carries the commercial codes on the product and its bundle components. Salesforce order orchestration decomposes the order into cu"
+   "detail": "One upgrade, decomposedThe order carries the upgrade as two linked lines: delete Fibre 150 and add Fibre 900, which replaces it, keeps the contract end date and"
   },
   {
    "name": "CIO: \"Ordered\" lights the workflow, the APIs and Salesforce",
@@ -224,7 +224,7 @@
   {
    "name": "CIO: Salesforce evidence gallery",
    "ok": true,
-   "detail": "11"
+   "detail": "12"
   },
   {
    "name": "architect: step timeline with whole journey and 6 steps",
@@ -282,7 +282,7 @@
    "detail": ""
   },
   {
-   "name": "architect Live: Decomposition panel (level, item, action code, why) and Orchestration plan panel",
+   "name": "architect Live: Salesforce's own decomposition and plan screens (no custom tables), the note, and the TMF641 line",
    "ok": true,
    "detail": "L6Systems of recordWhere is the truth recorded?Real + stand-insAbout this layerTMF Open APILegacy stand-in (mocked)Netwo"
   },

@@ -23,7 +23,7 @@ def test_bpmn_has_the_business_steps_and_a_diagram():
     p = root.find("b:process", ns)
     assert p.get("isExecutable") == "true"
     names = " ".join((e.get("name") or "") for e in p.iter())
-    for step in ["Binding policy check", "Create quote", "Place upgrade order", "Salesforce order orchestration", "jeopardy", "Complete order", "Asset change", "Intent fulfilled"]:
+    for step in ["Binding policy check", "Create quote", "Place upgrade order", "Salesforce order orchestration", "jeopardy", "Complete order", "Check installed product", "Intent fulfilled"]:
         assert re.search(step, names, re.I), step
     assert "bpmndi:BPMNShape" in x
 

@@ -68,9 +68,16 @@ carries the CFS code (`Action` plus `Description` `tmf=<add|modify|delete|noChan
 codes (noChange / modify / modify); the RFS and resources, including router delete + add, are the network's own breakdown and
 appear only in the TMF641 response (`x-action` extension fields). The idempotency key is the order.
 
-Single writer: the installed product (TMF637: Fibre 900 Installed, Fibre 150 Obsolete, Upgrade relationship) is written only
-by the L5 workflow. The plan has no assetization step. The platform still attempts its own assetization after the plan and
-marks the order `AssetizationFailed` (it writes nothing); `x-orchestration.productInventory.platformStatus` shows it. The demo UI does not show this raw status (the stack's worker drops it); the Dev View says "Assetisation done (TMF637)".
+Upgrade as delete + add: TMF622 carries Fibre 150 `delete` and Fibre 900 `add` with a `replaces` relationship; the
+replacement keeps the old contract end date and is priced at the new recurring (monthly) price from the upgrade date. The
+router stays `modify` and the access line `noChange`.
+
+Single writer: the installed product (TMF637: Fibre 150 ended on the upgrade date, Fibre 900 active with its router and access
+line as children, Upgrade relationship) is written by one plan step, chosen at build time by
+`AgenticTelco_Fulfilment_Setting__mdt.Assetisation_Route__c` (`CUSTOM_STEP`: the AgenticTelco ASSETIZE Apex step;
+`BUILT_IN`: the platform's own assetisation). There is no fallback: if the step fails the plan stops. The L5 workflow only
+reads the installed product back (TMF637 GET) and stops the run if it does not match. The TMF637 POST and PATCH endpoints
+remain but the MVP run does not use them. The Dev View shows one line naming the route.
 
 No silent fallback: if no fulfilment plan is created, TMF622 returns `x-orchestration.status=notSubmitted` with an error and
 the L5 workflow stops (BPMN error `NO_FULFILMENT_PLAN`).

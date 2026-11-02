@@ -154,3 +154,5 @@ body.presenter .stephint,body.presenter .glegend,body.presenter .kpis .small{dis
 .act{display:inline-block;padding:0 7px;border-radius:9px;font-size:11px;font-weight:700;font-family:ui-monospace,monospace;background:#eef0f3;color:#475569}
 .act-modify{background:#e0ecff;color:#1e40af}.act-add{background:#dcfce7;color:#14532d}.act-delete{background:#fee2e2;color:#7f1d1d}.act-nochange{background:#f1f5f9;color:#64748b}
 .orl{margin:4px 0 8px;font-weight:600}
+
+.sfshot{margin:6px 0 10px}.sfshot img{display:block;max-width:100%;height:auto;border:1px solid #e2e8f0;border-radius:6px;background:#fff}.sfshot figcaption{margin-top:4px}

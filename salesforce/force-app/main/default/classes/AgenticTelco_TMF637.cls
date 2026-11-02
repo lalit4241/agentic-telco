@@ -6,10 +6,13 @@
  *   GET   /agentictelco/tmf637/product[/{id}]   ?relatedParty.id=&status=&productSerialNumber=&creationDate.gt=&limit=
  *   POST  /agentictelco/tmf637/product          (idempotent on productSerialNumber)
  *   PATCH /agentictelco/tmf637/product/{id}     {status, terminationDate, productRelationship:[{relationshipType, product:{id}}]}
+ * Bundle components (child Assets, ParentId) are returned in the bundle's 'product' list; a component carries
+ * 'x-bundledIn' (its bundle). The MVP's installed product is written by one writer (AgenticTelco_Assetisation); the
+ * L5 workflow only uses GET here. POST and PATCH remain for the older stack paths.
  */
 @RestResource(urlMapping='/agentictelco/tmf637/*')
 global with sharing class AgenticTelco_TMF637 {
-    static final String FIELDS = 'SELECT Id, Name, Status, Description, SerialNumber, Price, InstallDate, UsageEndDate, CreatedDate, AccountId, '
+    static final String FIELDS = 'SELECT Id, Name, Status, Description, SerialNumber, Price, InstallDate, UsageEndDate, CreatedDate, AccountId, ParentId, Parent.Name, '
         + 'Account.Name, ContactId, Contact.Name, Product2Id, Product2.Name, LocationId, Location.Name, Location.ExternalReference, '
         + 'Location.VisitorAddress.Street, Location.VisitorAddress.City, Location.VisitorAddress.PostalCode FROM Asset';
     static final Map<String, String> TO_TMF = new Map<String, String>{
@@ -154,6 +157,14 @@ global with sharing class AgenticTelco_TMF637 {
                 'product' => AgenticTelco_Tmf.ref(other, fwd ? r.RelatedAsset.Name : null, 'Product', AgenticTelco_Tmf.href('tmf637', 'product', other)),
                 '@type' => 'ProductRelationship' });
         }
+        Map<Id, List<Object>> kids = new Map<Id, List<Object>>();
+        for (Asset c : [SELECT Id, Name, Status, ParentId, Product2Id, Product2.Name, InstallDate FROM Asset WHERE ParentId IN :ids ORDER BY Name]) {
+            if (!kids.containsKey(c.ParentId)) kids.put(c.ParentId, new List<Object>());
+            kids.get(c.ParentId).add(new Map<String, Object>{ 'id' => c.Id, 'href' => AgenticTelco_Tmf.href('tmf637', 'product', c.Id), 'name' => c.Name,
+                'status' => status(c.Status), 'startDate' => c.InstallDate,
+                'productOffering' => c.Product2Id == null ? null : AgenticTelco_Tmf.ref(c.Product2Id, c.Product2.Name, 'ProductOffering', AgenticTelco_Tmf.href('tmf620', 'productOffering', c.Product2Id)),
+                '@type' => 'Product' });
+        }
         List<Map<String, Object>> out = new List<Map<String, Object>>();
         for (Asset a : assets) {
             List<Object> parties = new List<Object>{ new Map<String, Object>{ 'id' => a.AccountId, 'name' => a.Account.Name, 'role' => 'Customer', '@referredType' => 'Organization' } };
@@ -175,6 +186,8 @@ global with sharing class AgenticTelco_TMF637 {
                     '@type' => 'ProductPrice' } },
                 'relatedParty' => parties, 'place' => place,
                 'productRelationship' => rels.containsKey(a.Id) ? rels.get(a.Id) : new List<Object>(),
+                'product' => kids.containsKey(a.Id) ? kids.get(a.Id) : new List<Object>(),
+                'x-bundledIn' => a.ParentId == null ? null : AgenticTelco_Tmf.ref(a.ParentId, a.Parent.Name, 'Product', AgenticTelco_Tmf.href('tmf637', 'product', a.ParentId)),
                 'x-runtime' => AgenticTelco_Tmf.SOR_LABEL, '@type' => 'Product' });
         }
         return out;

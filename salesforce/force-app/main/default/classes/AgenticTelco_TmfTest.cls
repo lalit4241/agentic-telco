@@ -297,6 +297,235 @@ private class AgenticTelco_TmfTest {
         Test.stopTest();
     }
 
+    /** Upgrade as delete + add: native Cancel/UpgradeFrom + Add/UpgradeTo, contract end carried over, components on the add line only. */
+    @IsTest
+    static void tmf622DeleteAdd() {
+        Date contractEnd = Date.today().addDays(299);
+        Asset cur = new Asset(Name = 'AgenticTelco Fibre 150 – T site', AccountId = accId(), Product2Id = bundleId(), Status = 'Installed', Quantity = 1, UsageEndDate = contractEnd);
+        insert cur;
+        ProductRelatedComponent prc = [SELECT Id FROM ProductRelatedComponent WHERE ParentProductId = :bundleId() LIMIT 1];
+        prc.IsComponentRequired = true;
+        prc.IsDefaultComponent = true;
+        update prc;
+        Test.startTest();
+        req('POST', '/agentictelco/tmf622/productOrder', null, deleteAddBody('DA-1', cur.Id, '1'));
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(201, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        Map<String, Object> o = (Map<String, Object>) resp();
+        Map<String, Map<String, Object>> byAction = new Map<String, Map<String, Object>>();
+        Map<String, Object> component;
+        for (Object x : (List<Object>) o.get('productOrderItem')) {
+            Map<String, Object> m = (Map<String, Object>) x;
+            if (m.get('x-bundleComponent') == true) component = m; else byAction.put((String) m.get('action'), m);
+        }
+        Map<String, Object> del = byAction.get('delete'), add = byAction.get('add');
+        System.assertEquals(String.valueOf(cur.Id), ((Map<String, Object>) del.get('product')).get('id'));
+        System.assertEquals(1, Integer.valueOf(del.get('quantity')), 'TMF quantity of the deleted line');
+        Map<String, Object> rel = (Map<String, Object>) ((List<Object>) add.get('productOrderItemRelationship'))[0];
+        System.assertEquals('replaces', rel.get('relationshipType'));
+        System.assertEquals(del.get('id'), rel.get('id'), 'add line links to the deleted line');
+        System.assertEquals(String.valueOf(contractEnd), String.valueOf(((Map<String, Object>) add.get('product')).get('terminationDate')), 'contract end carried over');
+        System.assertNotEquals(null, component, 'required component added');
+        Map<String, Object> crel = (Map<String, Object>) ((List<Object>) component.get('productOrderItemRelationship'))[0];
+        System.assertEquals('bundled', crel.get('relationshipType'));
+        System.assertEquals(add.get('id'), crel.get('id'), 'components hang off the add line, not the deleted line');
+        Id orderId = (Id) o.get('id');
+        Map<String, String> types = new Map<String, String>();
+        for (OrderItem oi : [SELECT Description, Quantity, OrderAction.Type, OrderAction.Subtype FROM OrderItem WHERE OrderId = :orderId]) {
+            types.put(AgenticTelco_TMF622.itemAction(oi.Description) + (AgenticTelco_TMF622.isComponentLine(oi.Description) ? '/c' : ''), oi.OrderAction.Type + '/' + oi.OrderAction.Subtype);
+            if (AgenticTelco_TMF622.itemAction(oi.Description) == 'delete') System.assertEquals(-1, oi.Quantity);
+        }
+        System.assertEquals('Cancel/UpgradeFrom', types.get('delete'), JSON.serialize(types));
+        System.assertEquals('Add/UpgradeTo', types.get('add'), JSON.serialize(types));
+        System.assertEquals(3, [SELECT COUNT() FROM OrderItem WHERE OrderId = :orderId], 'no components for the deleted line');
+        // the deleted line's price is not in the order total
+        Map<String, Object> total = (Map<String, Object>) ((List<Object>) o.get('orderTotalPrice'))[0];
+        System.assertEquals(45, (Decimal) ((Map<String, Object>) ((Map<String, Object>) total.get('price')).get('taxIncludedAmount')).get('value'));
+        // replaces must point at a delete item of the same order
+        req('POST', '/agentictelco/tmf622/productOrder', null, deleteAddBody('DA-2', cur.Id, '9'));
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(400, RestContext.response.statusCode);
+        Test.stopTest();
+    }
+
+    /** Assetisation route CUSTOM_STEP: the plan step is the one writer; same result shape as the built-in route. */
+    @IsTest
+    static void assetisationCustomStep() {
+        Date contractEnd = Date.today().addDays(299);
+        Asset cur = new Asset(Name = 'AgenticTelco Fibre 150 – T site', AccountId = accId(), Product2Id = bundleId(), Status = 'Installed', Quantity = 1,
+            Price = 27, InstallDate = Date.today().addDays(-400), UsageEndDate = contractEnd);
+        insert cur;
+        ProductRelatedComponent prc = [SELECT Id FROM ProductRelatedComponent WHERE ParentProductId = :bundleId() LIMIT 1];
+        prc.IsComponentRequired = true;
+        prc.IsDefaultComponent = true;
+        update prc;
+        AgenticTelco_Assetisation.testConfig = new AgenticTelco_Fulfilment_Setting__mdt(Assetisation_Route__c = AgenticTelco_Assetisation.CUSTOM_STEP);
+        System.assertEquals('custom step in the Salesforce plan', AgenticTelco_Assetisation.routeLabel());
+        System.assert(AgenticTelco_Orchestration.kinds().contains('ASSETIZE'));
+        System.assertEquals('AgenticTelco 6. Record the installed product (TMF637)', AgenticTelco_Orchestration.stepName('ASSETIZE'));
+        System.assertEquals('AgenticTelco 8. Complete (order Activated)', AgenticTelco_Orchestration.stepName('COMPLETE'));
+        System.assert(AgenticTelco_Orchestration.assetNote().contains('Record the installed product'));
+        Test.startTest();
+        req('POST', '/agentictelco/tmf622/productOrder', null, deleteAddBody('AS-1', cur.Id, '1'));
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(201, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        Id orderId = (Id) ((Map<String, Object>) resp()).get('id');
+        String out = AgenticTelco_Assetisation.record(orderId);
+        System.assert(out.startsWith('Installed product recorded (TMF637)'), out);
+        Asset old = [SELECT Status, UsageEndDate FROM Asset WHERE Id = :cur.Id];
+        System.assertEquals('Obsolete', old.Status);
+        System.assertEquals(Date.today(), old.UsageEndDate);
+        Asset nw = [SELECT Id, Name, Status, Price, InstallDate, UsageEndDate, SerialNumber FROM Asset WHERE SerialNumber = 'AT-AS-1'];
+        System.assertEquals('Installed', nw.Status);
+        System.assertEquals(45, nw.Price, 'monthly price of the new line');
+        System.assertEquals(Date.today(), nw.InstallDate, 'new price from the upgrade date');
+        System.assertEquals(contractEnd, nw.UsageEndDate, 'contract end carried over');
+        System.assertEquals('AgenticTelco Fibre 900 – T site', nw.Name);
+        List<Asset> kids = [SELECT Id, ParentId, Product2Id FROM Asset WHERE ParentId = :nw.Id];
+        System.assertEquals(1, kids.size(), 'bundle component as child');
+        System.assertEquals(1, [SELECT COUNT() FROM AssetRelationship WHERE AssetId = :cur.Id AND RelatedAssetId = :nw.Id AND RelationshipType = 'Upgrade']);
+        // idempotent
+        AgenticTelco_Assetisation.record(orderId);
+        System.assertEquals(1, [SELECT COUNT() FROM Asset WHERE SerialNumber = 'AT-AS-1']);
+        System.assertEquals(1, [SELECT COUNT() FROM Asset WHERE ParentId = :nw.Id]);
+        System.assertEquals(1, [SELECT COUNT() FROM AssetRelationship WHERE AssetId = :cur.Id AND RelatedAssetId = :nw.Id]);
+        // read-back shape (TMF637)
+        req('GET', '/agentictelco/tmf637/product/' + nw.Id, null, null);
+        AgenticTelco_TMF637.doGet();
+        Map<String, Object> p = (Map<String, Object>) resp();
+        System.assertEquals(1, ((List<Object>) p.get('product')).size(), JSON.serialize(p));
+        System.assertEquals('active', p.get('status'));
+        req('GET', '/agentictelco/tmf637/product/' + kids[0].Id, null, null);
+        AgenticTelco_TMF637.doGet();
+        System.assertEquals(String.valueOf(nw.Id), ((Map<String, Object>) ((Map<String, Object>) resp()).get('x-bundledIn')).get('id'));
+        // the step dispatch
+        System.assert(AgenticTelco_OrchestrationStep.run(orderId, 'ASSETIZE').startsWith('Installed product recorded'));
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void assetisationBuiltInHasNoStep() {
+        AgenticTelco_Assetisation.testConfig = new AgenticTelco_Fulfilment_Setting__mdt(Assetisation_Route__c = AgenticTelco_Assetisation.BUILT_IN);
+        System.assertEquals('built-in asset step', AgenticTelco_Assetisation.routeLabel());
+        System.assert(!AgenticTelco_Orchestration.kinds().contains('ASSETIZE'));
+        System.assertEquals(7, AgenticTelco_Orchestration.kinds().size());
+        System.assertEquals('AgenticTelco 7. Complete (order Activated)', AgenticTelco_Orchestration.stepName('COMPLETE'));
+        System.assert(AgenticTelco_Orchestration.assetNote().contains('built-in asset step'));
+        Test.startTest();
+        Map<String, Object> body = orderBody('BI-1', '24');
+        // the one-time line only: with the RLM usage record the platform re-validates line dates against the
+        // line's selling model, which test-created selling models do not populate on OrderItem
+        List<Object> its = (List<Object>) body.get('productOrderItem');
+        body.put('productOrderItem', new List<Object>{ its[2] });
+        req('POST', '/agentictelco/tmf622/productOrder', null, body);
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(201, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        Id orderId = (Id) ((Map<String, Object>) resp()).get('id');
+        System.assertEquals(1, [SELECT COUNT() FROM AppUsageAssignment WHERE RecordId = :orderId AND AppUsageType = 'RevenueLifecycleManagement']);
+        try {
+            AgenticTelco_Assetisation.record(orderId);
+            System.assert(false, 'must not write under BUILT_IN');
+        } catch (AgenticTelco_Assetisation.AssetisationException e) {
+            System.assert(e.getMessage().contains('BUILT_IN'));
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void assetisationNeedsInstalledProduct() {
+        AgenticTelco_Assetisation.testConfig = new AgenticTelco_Fulfilment_Setting__mdt(Assetisation_Route__c = AgenticTelco_Assetisation.CUSTOM_STEP);
+        Test.startTest();
+        req('POST', '/agentictelco/tmf622/productOrder', null, orderBody('NI-1', '24'));
+        AgenticTelco_TMF622.doPost();
+        Id orderId = (Id) ((Map<String, Object>) resp()).get('id');
+        try {
+            AgenticTelco_Assetisation.record(orderId);
+            System.assert(false, 'a plain add has no installed product to replace');
+        } catch (AgenticTelco_Assetisation.AssetisationException e) {
+            System.assert(e.getMessage().contains('No installed product'), e.getMessage());
+        }
+        Order foreign = new Order(Name = 'Someone else', AccountId = accId(), Status = 'Draft', EffectiveDate = Date.today());
+        insert foreign;
+        try {
+            AgenticTelco_Assetisation.record(foreign.Id);
+            System.assert(false);
+        } catch (AgenticTelco_Assetisation.AssetisationException e) {
+            System.assert(e.getMessage().contains('Not an AgenticTelco order'));
+        }
+        Test.stopTest();
+    }
+
+    static Map<String, Object> deleteAddBody(String ext, Id assetId, String replaces) {
+        return new Map<String, Object>{
+            'externalId' => ext, 'relatedParty' => new List<Object>{ new Map<String, Object>{ 'id' => accId(), 'role' => 'Customer' } },
+            'productOrderItem' => new List<Object>{
+                new Map<String, Object>{ 'id' => '1', 'action' => 'delete', 'product' => new Map<String, Object>{ 'id' => assetId } },
+                new Map<String, Object>{ 'id' => '2', 'action' => 'add', 'productOffering' => new Map<String, Object>{ 'id' => bundleId() },
+                    'product' => new Map<String, Object>{ 'productCharacteristic' => new List<Object>{
+                        new Map<String, Object>{ 'name' => 'AgenticTelco Contract Term', 'value' => '24' } } },
+                    'productOrderItemRelationship' => new List<Object>{ new Map<String, Object>{ 'id' => replaces, 'relationshipType' => 'replaces' } } } } };
+    }
+
+    /** (2) Item states follow the order: acknowledged at creation, then the order's own state (here cancelled). */
+    @IsTest
+    static void tmf622ItemStatesFollowOrder() {
+        Test.startTest();
+        req('POST', '/agentictelco/tmf622/productOrder', null, orderBody('ST-1', '24'));
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(201, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        Map<String, Object> o = (Map<String, Object>) resp();
+        for (Object x : (List<Object>) o.get('productOrderItem')) System.assertEquals(o.get('state'), ((Map<String, Object>) x).get('state'));
+        req('PATCH', '/agentictelco/tmf622/productOrder/' + o.get('id'), null, new Map<String, Object>{ 'state' => 'cancelled' });
+        AgenticTelco_TMF622.doPatch();
+        Map<String, Object> c = (Map<String, Object>) resp();
+        System.assertEquals('cancelled', c.get('state'), JSON.serialize(c));
+        for (Object x : (List<Object>) c.get('productOrderItem')) System.assertEquals('cancelled', ((Map<String, Object>) x).get('state'));
+        Order done = [SELECT Id, Name, OrderNumber, Status, Description, EffectiveDate, CreatedDate, AccountId, Account.Name, TotalAmount FROM Order WHERE Id = :(Id) o.get('id')];
+        done.Status = 'Activated';
+        done.Description = null;
+        for (Object x : (List<Object>) AgenticTelco_TMF622.serialize(new List<Order>{ done })[0].get('productOrderItem')) {
+            System.assertEquals('completed', ((Map<String, Object>) x).get('state'), 'items complete with the order');
+        }
+        Test.stopTest();
+    }
+
+    /** (3) itemPrice and orderTotalPrice carry priceType; recurring prices are monthly. */
+    @IsTest
+    static void tmf622PriceType() {
+        System.assertEquals('recurring', AgenticTelco_TMF622.priceType('TermDefined'));
+        System.assertEquals('recurring', AgenticTelco_TMF622.priceType('Evergreen'));
+        System.assertEquals('recurring', AgenticTelco_TMF622.priceType(new OrderItem()));
+        System.assertEquals('oneTime', AgenticTelco_TMF622.priceType('OneTime'));
+        System.assertEquals('month', AgenticTelco_TMF622.price('recurring', 45).get('recurringChargePeriod'));
+        System.assertEquals(false, AgenticTelco_TMF622.price('oneTime', 49).containsKey('recurringChargePeriod'));
+        Test.startTest();
+        req('POST', '/agentictelco/tmf622/productOrder', null, orderBody('PT-1', '24'));
+        AgenticTelco_TMF622.doPost();
+        System.assertEquals(201, RestContext.response.statusCode, RestContext.response.responseBody.toString());
+        Map<String, Object> o = (Map<String, Object>) resp();
+        Set<String> types = new Set<String>();
+        for (Object x : (List<Object>) o.get('productOrderItem')) {
+            Map<String, Object> ip = (Map<String, Object>) ((List<Object>) ((Map<String, Object>) x).get('itemPrice'))[0];
+            types.add((String) ip.get('priceType'));
+            if (ip.get('priceType') == 'recurring') System.assertEquals('month', ip.get('recurringChargePeriod'));
+        }
+        System.assert(types.contains('recurring') && types.contains('oneTime'), JSON.serialize(types));
+        String total = JSON.serialize(o.get('orderTotalPrice'));
+        System.assert(total.contains('"priceType":"recurring"') && total.contains('"recurringChargePeriod":"month"') && total.contains('"priceType":"oneTime"'), total);
+        Test.stopTest();
+    }
+
+    /** (4) is covered by tmf622DeleteAdd: components 'bundled' to the add line, the add line 'replaces' the deleted line. */
+    @IsTest
+    static void tmf622Markers() {
+        System.assertEquals('delete', AgenticTelco_TMF622.itemAction('AgenticTelco item 1 action=delete product=02i000000000001 {}'));
+        System.assertEquals('02i000000000001', AgenticTelco_TMF622.itemProduct('AgenticTelco item 1 action=delete product=02i000000000001 {}').get('id'));
+        System.assertEquals('1', AgenticTelco_TMF622.replacesId('AgenticTelco item 2 replaces=1 {}'));
+        System.assertEquals(null, AgenticTelco_TMF622.replacesId('AgenticTelco item 2 {}'));
+        System.assertEquals(null, AgenticTelco_TMF622.replacesOf(new Map<String, Object>{ 'productOrderItemRelationship' => new List<Object>{
+            new Map<String, Object>{ 'id' => '1', 'relationshipType' => 'reliesOn' } } }));
+    }
+
     @IsTest
     static void tmf622Errors() {
         Test.startTest();

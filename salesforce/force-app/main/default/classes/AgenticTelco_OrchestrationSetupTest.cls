@@ -17,11 +17,12 @@ private class AgenticTelco_OrchestrationSetupTest {
         String first = AgenticTelco_OrchestrationSetup.run();
         String again = AgenticTelco_OrchestrationSetup.run();
         Test.stopTest();
-        System.assert(first.contains('CFS products created: 4') && first.contains('decomposition rules created: 4') && first.contains('step definitions created: 7')
+        Integer n = AgenticTelco_Orchestration.kinds().size();
+        System.assert(first.contains('CFS products created: 4') && first.contains('decomposition rules created: 4') && first.contains('step definitions created: ' + n) && first.contains('step dependencies created: ' + (n - 1))
             && first.contains('CFS classification created') && first.contains('CFS speed attribute created') && first.contains('jeopardy rule created')
             && first.contains('scenario created') && first.contains('step group created'), first);
         System.assert(again.contains('CFS products created: 0') && again.contains('decomposition rules created: 0') && again.contains('step definitions created: 0')
             && again.contains('step dependencies created: 0') && !again.contains('scenario created'), again);
-        System.assertEquals(6, [SELECT COUNT() FROM FulfillmentStepDependencyDef WHERE FulfillmentStepDefinition.StepDefinitionGroup.Name = :AgenticTelco_Orchestration.GROUP_NAME]);
+        System.assertEquals(n - 1, [SELECT COUNT() FROM FulfillmentStepDependencyDef WHERE FulfillmentStepDefinition.StepDefinitionGroup.Name = :AgenticTelco_Orchestration.GROUP_NAME]);
     }
 }

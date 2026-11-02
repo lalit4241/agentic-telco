@@ -9,29 +9,44 @@
 public with sharing class AgenticTelco_Orchestration {
     public static final String SUBMIT_FLOW = 'AgenticTelco_Submit_Order_To_Orchestration';
     public static final String GROUP_NAME = 'AgenticTelco Fibre Upgrade Fulfilment';
-    public static final List<String> KINDS = new List<String>{ 'VALIDATE_RESERVE', 'SUBMIT', 'AWAIT', 'PONR', 'SERVICES', 'NOTIFY', 'COMPLETE' };
-    public static final Map<String, String> STEP_NAMES = new Map<String, String>{
-        'VALIDATE_RESERVE' => 'AgenticTelco 1. Validate and set action codes (installed base, TMF637)',
-        'SUBMIT' => 'AgenticTelco 2. Send network service order (TMF641)',
-        'AWAIT' => 'AgenticTelco 3. Wait for network activation (TMF641)',
-        'PONR' => 'AgenticTelco 4. Point of no return',
-        'SERVICES' => 'AgenticTelco 5. Record the network result (TMF641 response)',
-        'NOTIFY' => 'AgenticTelco 6. Notify the customer',
-        'COMPLETE' => 'AgenticTelco 7. Complete (order Activated)' };
+    /** Plan steps in order. ASSETIZE is in the plan only for assetisation route CUSTOM_STEP (build-time setting, AgenticTelco_Assetisation). */
+    public static List<String> kinds() {
+        List<String> k = new List<String>{ 'VALIDATE_RESERVE', 'SUBMIT', 'AWAIT', 'PONR', 'SERVICES' };
+        if (AgenticTelco_Assetisation.route() == AgenticTelco_Assetisation.CUSTOM_STEP) k.add('ASSETIZE');
+        k.addAll(new List<String>{ 'NOTIFY', 'COMPLETE' });
+        return k;
+    }
+    public static final Map<String, String> STEP_LABELS = new Map<String, String>{
+        'VALIDATE_RESERVE' => 'Validate and set action codes (installed base, TMF637)',
+        'SUBMIT' => 'Send network service order (TMF641)',
+        'AWAIT' => 'Wait for network activation (TMF641)',
+        'PONR' => 'Point of no return',
+        'SERVICES' => 'Record the network result (TMF641 response)',
+        'ASSETIZE' => 'Record the installed product (TMF637)',
+        'NOTIFY' => 'Notify the customer',
+        'COMPLETE' => 'Complete (order Activated)' };
     public static final Map<String, String> STEP_FLOWS = new Map<String, String>{
         'VALIDATE_RESERVE' => 'AgenticTelco_Step_Validate_Reserve',
         'SUBMIT' => 'AgenticTelco_Step_Send_Service_Order',
         'AWAIT' => 'AgenticTelco_Step_Await_Activation',
         'SERVICES' => 'AgenticTelco_Step_Update_Services',
+        'ASSETIZE' => 'AgenticTelco_Step_Record_Installed_Product',
         'NOTIFY' => 'AgenticTelco_Step_Notify_Customer',
         'COMPLETE' => 'AgenticTelco_Step_Complete_Order' };
 
     public static final String CODES_NOTE = 'Action codes are derived from the installed base (TMF637), not by the built-in decomposition.';
     public static final String NETWORK_NOTE = 'RFS and resources are the network\'s own breakdown (x-action extension fields in the TMF641 response).';
     public static final String NO_PLAN = 'No fulfilment plan was created for this order, so the run stops here (no fallback route).';
-    public static final String ASSET_NOTE = 'Installed product (TMF637) has one writer: the L5 workflow\'s TMF637 update. The plan has no assetization step.';
+    public static String assetNote() {
+        return AgenticTelco_Assetisation.route() == AgenticTelco_Assetisation.CUSTOM_STEP
+            ? 'Installed product (TMF637) has one writer: plan step \'' + stepName('ASSETIZE') + '\'. The L5 workflow only reads it back.'
+            : 'Installed product (TMF637) has one writer: the built-in asset step. The L5 workflow only reads it back.';
+    }
 
-    public static String stepName(String kind) { return STEP_NAMES.containsKey(kind) ? STEP_NAMES.get(kind) : kind; }
+    public static String stepName(String kind) {
+        Integer i = kinds().indexOf(kind);
+        return i < 0 || !STEP_LABELS.containsKey(kind) ? kind : 'AgenticTelco ' + (i + 1) + '. ' + STEP_LABELS.get(kind);
+    }
 
     @TestVisible static Boolean skipFlowInTest = false;
 
@@ -55,7 +70,9 @@ public with sharing class AgenticTelco_Orchestration {
             'adapterNote' => AgenticTelco_NetworkAdapters.mode() == AgenticTelco_NetworkAdapters.MOCK
                 ? 'The TMF641 request and response are simulated inside Salesforce for this demo.' : 'TMF calls go to the network through a named credential.',
             'idempotencyKey' => AgenticTelco_OrchestrationStep.idempotencyKey(o), 'actionCodesNote' => CODES_NOTE, 'networkBreakdownNote' => NETWORK_NOTE,
-            'productInventory' => new Map<String, Object>{ 'writer' => 'L5 workflow (TMF637)', 'note' => ASSET_NOTE, 'platformStatus' => o.OrchestrationSbmsStatus } };
+            'productInventory' => new Map<String, Object>{ 'route' => AgenticTelco_Assetisation.route(), 'routeLabel' => AgenticTelco_Assetisation.routeLabel(),
+                'writer' => AgenticTelco_Assetisation.route() == AgenticTelco_Assetisation.CUSTOM_STEP ? 'Salesforce plan step (TMF637)' : 'Built-in asset step',
+                'note' => assetNote(), 'platformStatus' => o.OrchestrationSbmsStatus } };
         if (o.FulfillmentPlanId == null) {
             v.put('status', 'notSubmitted'); v.put('error', NO_PLAN); v.put('steps', new List<Object>()); v.put('decomposition', new List<Object>()); return v;
         }

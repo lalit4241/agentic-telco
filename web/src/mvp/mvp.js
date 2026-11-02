@@ -438,7 +438,7 @@
     $$('.dn', svg).forEach(function (g) { var id = g.dataset.node; g.classList.toggle('on', !!on[id]); g.classList.toggle('hot', !!(hot[id] || (id === 'api' && hot.L6))); });
     $$('.de', svg).forEach(function (p) { var e = p.dataset.e.split('-'); p.classList.toggle('on', !!(on[e[0]] && on[e[1]])); });
     if ($('#dcap').innerHTML !== cap) $('#dcap').innerHTML = cap;
-    var P = planOf(v), DT = UD.decomposition || {}, tree = P && (P.decomposition || []).length ? '<h3>' + esc(DT.heading) + '</h3><p class="small">' + esc(DT.intro) + '</p>' + decompTree(P) + '<p class="small">' + esc(DT.note) + '</p>' : '';
+    var P = planOf(v), DT = UD.decomposition || {}, tree = P ? '<h3>' + esc(DT.heading) + '</h3><p class="small">' + esc(DT.intro) + '</p>' + sfViews() : '';
     var legacy = !P && v && (v.milestones || []).some(function (m) { return m.name === 'SentToOSS' && !(m.body || {}).via; });
     if (legacy) tree = '<p class="note fallback"><b>' + esc(DT.fallbackRoute || 'fallback route') + '</b>: this recorded run sent the order to the legacy OSS stand-in, not through Salesforce order orchestration. The live workflow no longer falls back: with no fulfilment plan it stops with a clear error.</p>';
     if ($('#dtree').dataset.k !== tree) { $('#dtree').innerHTML = tree; $('#dtree').dataset.k = tree; $('#dtree').hidden = !tree; }
@@ -505,21 +505,11 @@
   }
   function quote(m) { return '<blockquote class="q2">' + linkify(m.content) + '<span class="small"> · ' + hm(T(m.at)) + '</span></blockquote>'; }
   function orchPanels(P) {
-    var so = P.serviceOrder || {}, st = P.steps || [], DT = UD.decomposition || {}, PI = P.productInventory || {}, NF = so.networkFulfilment || {};
-    return '<div class="sec">Decomposition (' + esc(P.engine || 'Salesforce order orchestration') + ')</div>' +
-      '<p class="small codesnote"><b>' + esc(P.actionCodesNote || 'Action codes are derived from the installed base (TMF637), not by the built-in decomposition.') + '</b> ' +
-      esc(P.networkBreakdownNote || 'RFS and resources are the network\'s own breakdown (x-action extension fields in the TMF641 response).') + '</p>' +
-      spanRows(P.decomposition || [], [['Level', function (r) { return '<span class="lv">' + esc(r.level) + '</span>'; }], ['Item', function (r) { return '<b>' + esc(r.item) + '</b>'; }],
-        ['Action code', function (r) { return actChip(r.action); }],
-        ['Why', function (r) { return esc(r.why) + '<div class="small">' + esc(r.where) + '</div>'; }]]) +
-      '<div class="sec">Orchestration plan <span class="mono small">' + esc(P.fulfillmentPlanId || '') + '</span> · ' + esc(P.planState || P.status || '') + '</div>' +
-      spanRows(st.map(function (x, i) { return Object.assign({ n: i + 1 }, x); }), [['#', function (x) { return x.n; }], ['Step', function (x) { return esc(x.name) + (x.message ? '<div class="small">' + esc(x.message) + '</div>' : ''); }],
-        ['State', function (x) { return '<span class="lab ' + (x.state === 'Completed' ? 'real' : 'mock') + '">' + esc(x.state) + '</span>' + (x.jeopardy && x.jeopardy !== 'On Time' ? ' <span class="warn">' + esc(x.jeopardy) + '</span>' : ''); }],
-        ['Depends on', function (x) { return esc((x.dependsOn || []).join(', ') || '—'); }],
-        ['Started · done', function (x) { return (x.startedAt ? hm(T(x.startedAt)) : '—') + ' · ' + (x.completedAt ? hm(T(x.completedAt)) : '—'); }]]) +
+    var so = P.serviceOrder || {}, DT = UD.decomposition || {}, PI = P.productInventory || {}, NF = so.networkFulfilment || {};
+    return sfViews() +
       (so.id ? '<p>TMF641 service order <b class="mono">' + esc(so.id) + '</b>: ' + esc((so.stateChange || []).map(function (c) { return c.state; }).join(' → ') || so.state || '') + ' · ' + (so.items || []).map(function (i) { return esc(i.service) + ' ' + actChip(i.action); }).join(' · ') + '</p>' : '') +
       (NF.reservation || NF.serviceInventory ? '<p class="small">Network side (inside the mocked network, not called by Salesforce): ' + [NF.reservation ? esc(NF.reservation.api) + ' reservation ' + esc(NF.reservation.id || '') : '', NF.serviceInventory ? esc(NF.serviceInventory.api) + ' services updated' : '', NF.resourceInventory ? esc(NF.resourceInventory.api) + ' resources updated' : ''].filter(Boolean).join(' · ') + ', returned as data in the TMF641 response.</p>' : '') +
-      (PI.writer ? '<p class="small">' + esc(DT.assetStep || 'Assetisation done (TMF637)') + '</p>' : '') +
+      (PI.writer ? '<p class="small">' + esc((DT.assetStep || 'Assetisation done (TMF637)') + (PI.routeLabel ? ' - ' + PI.routeLabel : '')) + '</p>' : '') +
       '<p class="small">Idempotency key <span class="mono">' + esc(P.idempotencyKey || '') + '</span> (the order) · network order adapter: ' + esc(P.adapterMode || '') + '. ' + SIM_SENTENCE + '</p>';
   }
   var ARCH = {
@@ -630,14 +620,14 @@
   var SIM_SENTENCE = 'The TMF641 request and response are simulated inside Salesforce for this demo.';
   function planOf(v) { var m = ((v && v.milestones) || []).filter(function (x) { return x.name === 'FulfilmentPlan'; }).pop(); return m ? m.body || {} : null; }
   function actChip(a) { return '<span class="act act-' + esc(String(a || '').toLowerCase()) + '">' + esc(a || '—') + '</span>'; }
-  function decompTree(P) {   // Product -> CFS -> RFS / Resource, each with its action code
-    var rows = P.decomposition || [], prod = rows.filter(function (r) { return r.level === 'Product'; }), out = [], cur = null;
-    var comps = rows.filter(function (r) { return r.level === 'Product component'; });
-    rows.forEach(function (r) { if (r.level === 'CFS') { cur = { r: r, kids: [] }; out.push(cur); } else if (r.level !== 'Product' && r.level !== 'Product component' && cur) cur.kids.push(r); });
-    var li = function (r, lv) { return '<span class="lv">' + esc(lv || r.level) + '</span> <b>' + esc(r.item) + '</b> ' + actChip(r.action); };
-    return '<ul class="tree">' + prod.map(function (p) {
-      return '<li>' + li(p, 'Product') + '<ul>' + comps.map(function (c) { return '<li>' + li(c, 'Product component') + '</li>'; }).join('') + out.map(function (c) { return '<li>' + li(c.r, 'CFS') + (c.kids.length ? '<ul>' + c.kids.map(function (k) { return '<li>' + li(k) + '</li>'; }).join('') + '</ul>' : '') + '</li>'; }).join('') + '</ul></li>';
-    }).join('') + '</ul>';
+  // Salesforce's own screens (evidence gallery captures): the native decomposition view and the whole orchestration plan.
+  function sfShot(re) { return (CFG.evidence || []).filter(function (e) { return re.test(e.file); })[0]; }
+  function sfViews() {
+    var DT = UD.decomposition || {}, shots = [[/decomposition/, DT.decompositionShot || 'Decomposition'], [/fulfilment-plan/, DT.planShot || 'Orchestration plan']];
+    return shots.map(function (x) {
+      var e = sfShot(x[0]); if (!e) return '';
+      return '<div class="sec">' + esc(x[1]) + '</div><figure class="sfshot"><img src="' + e.src + '" alt="' + esc(e.caption) + '" loading="lazy"><figcaption class="small">' + esc(e.caption) + '</figcaption></figure>';
+    }).join('') + '<p class="small codesnote">' + esc(DT.screensNote || '') + '</p>';
   }
   function tmfTag(s) { var m = String(s.api || '').match(/^(TMF\d+)\s*(.*)$/); return m ? '<span class="tmf"><b>' + esc(m[1]) + '</b> ' + esc(m[2]) + '</span>' : '<span class="mono small">' + esc(/ollama/i.test(s.api || '') ? 'Model API' : (s.api || '')) + '</span>'; }
   function shortPath(p) { return String(p || '').replace(/^\/services\/apexrest\/agentictelco/, '…/apexrest/agentictelco').replace(/^\/services\/data\/v\d+\.\d+\/connect\/comms/, '…/connect/comms'); }
@@ -757,7 +747,7 @@
       var calls = v.spans.filter(function (s) { return s.layer === 'L6'; });
       b.innerHTML = '<p><span class="chip sf">' + SF_CHIP + '</span><span class="chip st">' + STANDIN_CHIP + '</span> <span class="small">Click a call to see its request and response.</span></p>' +
         apiRows(calls, v, true) + (planOf(v) ? orchPanels(planOf(v)) : '') +
-        '<p class="small">Everything above this layer reaches Salesforce only through TM Forum Open APIs. Only the L5 workflow writes (quote, order, installed-product change). The Custom Assetize Order flow is left as is; the run checks it created no installed product.</p>';
+        '<p class="small">Everything above this layer reaches Salesforce only through TM Forum Open APIs. The L5 workflow writes the quote and the order. The installed product is recorded by one writer, a step in the Salesforce plan (TMF637), and the workflow only reads it back. The Custom Assetize Order flow is left as is; the run checks it created no installed product.</p>';
     },
     L7: function (b, v) {
       var n = v.network || {}, up = portIs900(v), jeo = (v.jeopardy || []).length && !up, sent = (v.milestones || []).some(function (m) { return m.name === 'SentToOSS'; });
@@ -806,8 +796,8 @@
       ['TMF671', 'Promotion', 'GET', '/services/apexrest/agentictelco/tmf671/promotion', 'Promotions in the org'],
       ['TMF632', 'Party', 'GET', '/services/apexrest/agentictelco/tmf632/organization/{id}', 'Organization with contacts and their roles'],
       ['TMF637', 'Product Inventory', 'GET', '/services/apexrest/agentictelco/tmf637/product?relatedParty.id=', 'Installed products of a customer, with site and contract end'],
-      ['TMF637', 'Product Inventory', 'POST', '/services/apexrest/agentictelco/tmf637/product', 'Create an installed product (idempotent on serial number)'],
-      ['TMF637', 'Product Inventory', 'PATCH', '/services/apexrest/agentictelco/tmf637/product/{id}', 'Status, end date, Upgrade productRelationship'],
+      ['TMF637', 'Product Inventory', 'POST', '/services/apexrest/agentictelco/tmf637/product', 'Create an installed product (idempotent on serial number); not used by the MVP run'],
+      ['TMF637', 'Product Inventory', 'PATCH', '/services/apexrest/agentictelco/tmf637/product/{id}', 'Status, end date, Upgrade productRelationship; not used by the MVP run'],
       ['TMF648', 'Quote', 'POST · PATCH · GET', '/services/apexrest/agentictelco/tmf648/quote', 'Quote and quote lines'],
       ['TMF622', 'Product Order', 'POST · PATCH · GET', '/services/apexrest/agentictelco/tmf622/productOrder', 'Order and order items; adds the usage record internally']] },
     { g: 'Legacy stand-ins (mocked)', c: 'st', rows: [

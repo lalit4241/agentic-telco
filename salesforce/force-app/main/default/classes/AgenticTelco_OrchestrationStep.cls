@@ -13,6 +13,8 @@
  *   AWAIT             TMF641 state until completed (acknowledged -> inProgress -> completed)
  *   SERVICES          record the network result from the completed TMF641 response (the network keeps its own resource
  *                     and service inventories, TMF639 and TMF638). No network call.
+ *   ASSETIZE          record the installed product (TMF637): the one writer of the Assets, only in the plan for assetisation
+ *                     route CUSTOM_STEP (AgenticTelco_Assetisation). Fails the step (and stops the run) on any error.
  *   NOTIFY            the customer notification (recorded on the order)
  *   COMPLETE          order Activated
  */
@@ -66,7 +68,7 @@ public with sharing class AgenticTelco_OrchestrationStep {
         String bName;
         for (OrderItem oi : [SELECT Product2Id, Product2.Name, Description FROM OrderItem WHERE OrderId = :orderId ORDER BY CreatedDate, Id]) {
             Map<String, Object> p = AgenticTelco_TMF622.itemProduct(oi.Description);
-            if (newProduct == null && !AgenticTelco_TMF622.isComponentLine(oi.Description)) { newProduct = oi.Product2Id; bName = oi.Product2.Name; }
+            if (newProduct == null && !AgenticTelco_TMF622.isComponentLine(oi.Description) && AgenticTelco_TMF622.itemAction(oi.Description) != 'delete') { newProduct = oi.Product2Id; bName = oi.Product2.Name; }
             if (p != null && aId == null) aId = Id.valueOf((String) p.get('id'));
         }
         if (aId != null) for (Asset a : [SELECT Product2Id FROM Asset WHERE Id = :aId]) oldProduct = a.Product2Id;
@@ -85,6 +87,7 @@ public with sharing class AgenticTelco_OrchestrationStep {
             else if (kind == 'SUBMIT') out = s.submit();
             else if (kind == 'AWAIT') out = s.awaitActivation();
             else if (kind == 'SERVICES') out = s.services();
+            else if (kind == 'ASSETIZE') out = AgenticTelco_Assetisation.record(orderId);
             else if (kind == 'NOTIFY') out = s.notifyCustomer();
             else if (kind == 'COMPLETE') out = s.complete();
             else throw new AgenticTelco_NetworkAdapters.AdapterException('Unknown AgenticTelco step kind ' + kind);

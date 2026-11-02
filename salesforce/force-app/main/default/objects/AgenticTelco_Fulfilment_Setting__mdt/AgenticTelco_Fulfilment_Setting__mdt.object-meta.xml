@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>AgenticTelco Fulfilment Setting</label>
+    <pluralLabel>AgenticTelco Fulfilment Settings</pluralLabel>
+    <visibility>Public</visibility>
+    <description>Build-time choices for AgenticTelco fulfilment, read when the plan is set up (AgenticTelco_OrchestrationSetup), never switched at run time. Assetisation route: CUSTOM_STEP (an AgenticTelco step in the Salesforce plan writes the installed product) or BUILT_IN (the platform's own asset step). One route only, no fallback.</description>
+</CustomObject>

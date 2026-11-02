@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Assetisation_Route__c</fullName><label>Assetisation route</label><type>Picklist</type><fieldManageability>DeveloperControlled</fieldManageability>
+    <description>CUSTOM_STEP: step 'Record the installed product (TMF637)' in the AgenticTelco plan writes the assets. BUILT_IN: the platform's built-in asset step (needs the org changes listed in docs). Chosen at build time; the setup builds the plan for this route.</description>
+    <valueSet><restricted>true</restricted><valueSetDefinition><sorted>false</sorted>
+        <value><fullName>CUSTOM_STEP</fullName><default>true</default><label>Custom step in the Salesforce plan</label></value>
+        <value><fullName>BUILT_IN</fullName><default>false</default><label>Built-in asset step</label></value>
+    </valueSetDefinition></valueSet>
+</CustomField>

@@ -4,10 +4,11 @@
  "03-order-00000176.jpg": "Order 00000176 for Brightwell Design Ltd is Activated at £45.00. It has three lines: Fibre 900 (AT-FIBRE-900, quantity 1, £45.00), with its two bundle components, Wi-Fi 6 Router (quantity 1) and Fibre Access Line (quantity 0).",
  "04-order-00000176-lines-and-history.jpg": "The three order products on order 00000176. The Fibre Access Line has quantity 0 because Salesforce requires 0 on a No Change line. The order history shows Draft, then Submitted, then Activated, all on 02/11/2026 at 22:17.",
  "05-fulfilment-order-cfs.jpg": "Salesforce order orchestration's built-in decomposition created fulfilment order FO-0007, one of three for order 00000176, each holding one AgenticTelco CFS product.",
- "06-fulfilment-plan.jpg": "Fulfilment plan 000000008 for order 00000176 (source AgenticTelco PO MVP-630A0842) is Completed. Steps 1 to 5 are shown, all Completed, with step 4 as the Milestone (point of no return). Steps 6 and 7 are to the right.",
- "07-tmf641-step.jpg": "Step 2, Send network service order (TMF641), is a Completed Auto Task run by the flow AgenticTelco_Step_Send_Service_Order. It is On Time, with 0 retry attempts, at 22:17 on 02/11/2026.",
- "08-fibre150-after-obsolete.jpg": "After: Fibre 150 at site 4471 (serial AT-PI-B4471, installed 28/08/2025, £27.00) is Obsolete, with usage ending 02/11/2026.",
- "09-fibre900-installed.jpg": "Fibre 900 at site 4471 is Installed at £45.00 from 02/11/2026 and keeps the 28/08/2027 contract end. The record says it replaced Fibre 150 through order 00000176 (MVP-630A0842). The L5 workflow wrote it through TMF637.",
- "10-upgrade-relationship.jpg": "Fibre 150 and Fibre 900 at Brightwell site 4471 are linked as an Upgrade from 02/11/2026 at 22:18.",
- "11-agentictelco-apex-rest-classes.jpg": "The TMF facade is a handful of small Apex classes within Salesforce itself, with no separate integration tier."
+ "06-decomposition-00000176.jpg": "Salesforce's own decomposition view for order 00000176. Order products: Fibre 900 and the Wi-Fi 6 Router are Amend (UpgradeTo), the Fibre Access Line is No Change. Decomposed line items: CFS Fibre Access (FO-0007) No Change, CFS Fibre Broadband (FO-0008) Amend, CFS Managed Router (FO-0009) Amend.",
+ "07-fulfilment-plan.jpg": "The whole fulfilment plan 000000008 for order 00000176 (source AgenticTelco PO MVP-630A0842) is Completed: all seven AgenticTelco steps are Completed, each an Auto Task except step 4, the Milestone (point of no return).",
+ "08-tmf641-step.jpg": "Step 2, Send network service order (TMF641), is a Completed Auto Task run by the flow AgenticTelco_Step_Send_Service_Order. It is On Time, with 0 retry attempts, at 22:17 on 02/11/2026.",
+ "09-fibre150-after-obsolete.jpg": "After: Fibre 150 at site 4471 (serial AT-PI-B4471, installed 28/08/2025, £27.00) is Obsolete, with usage ending 02/11/2026.",
+ "10-fibre900-installed.jpg": "Fibre 900 at site 4471 is Installed at £45.00 from 02/11/2026 and keeps the 28/08/2027 contract end. The record says it replaced Fibre 150 through order 00000176 (MVP-630A0842). The L5 workflow wrote it through TMF637.",
+ "11-upgrade-relationship.jpg": "Fibre 150 and Fibre 900 at Brightwell site 4471 are linked as an Upgrade from 02/11/2026 at 22:18.",
+ "12-agentictelco-apex-rest-classes.jpg": "The TMF facade is a handful of small Apex classes within Salesforce itself, with no separate integration tier."
 }

@@ -1,13 +1,18 @@
 /**
- * Idempotent setup of the AgenticTelco records for Salesforce order orchestration (new AgenticTelco_ records only;
- * nothing existing is edited):
+ * Idempotent setup of the AgenticTelco records for Salesforce order orchestration (AgenticTelco_ records only; nothing
+ * outside them is edited; AgenticTelco records are updated, never deleted):
  *   - CFS technical products (customer facing services) and the built-in decomposition rules from the commercial products
  *       AT-FIBRE-* (bundle)   -> AgenticTelco CFS Fibre Broadband
  *       AT-ACCESS-LINE        -> AgenticTelco CFS Fibre Access
  *       AT-ROUTER-WIFI6       -> AgenticTelco CFS Managed Router
  *       AT-INSTALL            -> AgenticTelco CFS Installation (only when installation is on the order)
- *   - step group 'AgenticTelco Fibre Upgrade Fulfilment': 7 plan-scope steps chained by dependencies, step 4 a milestone
- *     (point of no return), a jeopardy rule on the activation wait, and a fulfilment scenario (Add;Amend) for the CFS_NAMES.
+ *     CFS Fibre Broadband is decomposed once per order (DecompositionScope Order, quantity AlwaysOne), so an upgrade sent
+ *     as delete Fibre 150 + add Fibre 900 still gives ONE broadband CFS line (action code set by step 1 from the installed base).
+ *   - step group 'AgenticTelco Fibre Upgrade Fulfilment': plan-scope steps chained by dependencies (AgenticTelco_Orchestration.kinds():
+ *     8 steps for assetisation route CUSTOM_STEP, with 'Record the installed product (TMF637)' after the network result; 7 for
+ *     BUILT_IN), step 4 a milestone (point of no return), a jeopardy rule on the activation wait, and a fulfilment scenario
+ *     (Add;Amend) for the CFS_NAMES. When the chain changes, our own dependency records are re-pointed (updated, not deleted).
+ *     The route is read here, at build time (AgenticTelco_Fulfilment_Setting__mdt), never at run time.
  * Run: sf apex run -o sfcomms  with  System.debug(AgenticTelco_OrchestrationSetup.run());
  */
 public with sharing class AgenticTelco_OrchestrationSetup {
@@ -36,6 +41,11 @@ public with sharing class AgenticTelco_OrchestrationSetup {
         insert newCfs;
         log.add('CFS products created: ' + newCfs.size());
         speedAttribute(cfsProducts.get(AgenticTelco_OrchestrationStep.CFS_BB).Id, clsId, log);
+        Product2 bb = [SELECT Id, DecompositionScope, FulfillmentQtyCalcMethod FROM Product2 WHERE Id = :cfsProducts.get(AgenticTelco_OrchestrationStep.CFS_BB).Id];
+        if (bb.DecompositionScope != 'Order' || bb.FulfillmentQtyCalcMethod != 'AlwaysOne') {
+            update new Product2(Id = bb.Id, DecompositionScope = 'Order', FulfillmentQtyCalcMethod = 'AlwaysOne');
+            log.add('CFS Fibre Broadband set to one line per order');
+        }
 
         // decomposition rules from the commercial products
         Map<String, String> src = new Map<String, String>();   // commercial ProductCode -> CFS code
@@ -64,7 +74,8 @@ public with sharing class AgenticTelco_OrchestrationSetup {
         Map<String, FulfillmentStepDefinition> defs = new Map<String, FulfillmentStepDefinition>();
         List<FulfillmentStepDefinition> renamed = new List<FulfillmentStepDefinition>();
         Map<String, String> nameByFlow = new Map<String, String>();
-        for (String k : AgenticTelco_Orchestration.STEP_FLOWS.keySet()) nameByFlow.put(AgenticTelco_Orchestration.STEP_FLOWS.get(k), AgenticTelco_Orchestration.stepName(k));
+        List<String> kinds = AgenticTelco_Orchestration.kinds();
+        for (String k : kinds) if (AgenticTelco_Orchestration.STEP_FLOWS.containsKey(k)) nameByFlow.put(AgenticTelco_Orchestration.STEP_FLOWS.get(k), AgenticTelco_Orchestration.stepName(k));
         for (FulfillmentStepDefinition d : [SELECT Id, Name, FlowDefinitionName FROM FulfillmentStepDefinition WHERE StepDefinitionGroupId = :g.Id]) {
             String want = nameByFlow.get(d.FlowDefinitionName);
             if (want != null && want != d.Name) { d.Name = want; renamed.add(d); }   // our own steps, renamed when a step's job changes
@@ -73,7 +84,7 @@ public with sharing class AgenticTelco_OrchestrationSetup {
         update renamed;
         if (!renamed.isEmpty()) log.add('step definitions renamed: ' + renamed.size());
         List<FulfillmentStepDefinition> newDefs = new List<FulfillmentStepDefinition>();
-        for (String k : AgenticTelco_Orchestration.KINDS) {
+        for (String k : kinds) {
             String n = AgenticTelco_Orchestration.stepName(k);
             if (defs.containsKey(n)) continue;
             FulfillmentStepDefinition d = new FulfillmentStepDefinition(Name = n, StepDefinitionGroupId = g.Id, Scope = 'Plan', UsageType = 'Fulfillment',
@@ -84,20 +95,33 @@ public with sharing class AgenticTelco_OrchestrationSetup {
         }
         insert newDefs;
         log.add('step definitions created: ' + newDefs.size());
-        Set<String> haveDep = new Set<String>();
-        for (FulfillmentStepDependencyDef d : [SELECT FulfillmentStepDefinitionId, DependsOnStepDefinitionId FROM FulfillmentStepDependencyDef WHERE FulfillmentStepDefinition.StepDefinitionGroupId = :g.Id]) {
-            haveDep.add(d.FulfillmentStepDefinitionId + '>' + d.DependsOnStepDefinitionId);
+        Map<Id, List<FulfillmentStepDependencyDef>> depsOf = new Map<Id, List<FulfillmentStepDependencyDef>>();
+        for (FulfillmentStepDependencyDef d : [SELECT Id, Name, FulfillmentStepDefinitionId, DependsOnStepDefinitionId FROM FulfillmentStepDependencyDef
+                                               WHERE FulfillmentStepDefinition.StepDefinitionGroupId = :g.Id ORDER BY CreatedDate]) {
+            if (!depsOf.containsKey(d.FulfillmentStepDefinitionId)) depsOf.put(d.FulfillmentStepDefinitionId, new List<FulfillmentStepDependencyDef>());
+            depsOf.get(d.FulfillmentStepDefinitionId).add(d);
         }
         List<FulfillmentStepDependencyDef> deps = new List<FulfillmentStepDependencyDef>();
-        for (Integer i = 1; i < AgenticTelco_Orchestration.KINDS.size(); i++) {
-            FulfillmentStepDefinition cur = defs.get(AgenticTelco_Orchestration.stepName(AgenticTelco_Orchestration.KINDS[i]));
-            FulfillmentStepDefinition prev = defs.get(AgenticTelco_Orchestration.stepName(AgenticTelco_Orchestration.KINDS[i - 1]));
-            if (haveDep.contains(cur.Id + '>' + prev.Id)) continue;
-            deps.add(new FulfillmentStepDependencyDef(Name = ('AgenticTelco step ' + (i + 1) + ' after step ' + i), FulfillmentStepDefinitionId = cur.Id,
-                DependsOnStepDefinitionId = prev.Id, DependencyScope = 'Plan'));
+        List<FulfillmentStepDependencyDef> repointed = new List<FulfillmentStepDependencyDef>();
+        for (Integer i = 1; i < kinds.size(); i++) {
+            FulfillmentStepDefinition cur = defs.get(AgenticTelco_Orchestration.stepName(kinds[i]));
+            FulfillmentStepDefinition prev = defs.get(AgenticTelco_Orchestration.stepName(kinds[i - 1]));
+            String depName = 'AgenticTelco step ' + (i + 1) + ' after step ' + i;
+            List<FulfillmentStepDependencyDef> have = depsOf.containsKey(cur.Id) ? depsOf.get(cur.Id) : new List<FulfillmentStepDependencyDef>();
+            if (have.isEmpty()) {
+                deps.add(new FulfillmentStepDependencyDef(Name = depName, FulfillmentStepDefinitionId = cur.Id, DependsOnStepDefinitionId = prev.Id, DependencyScope = 'Plan'));
+            } else if (have[0].DependsOnStepDefinitionId != prev.Id || have[0].Name != depName) {
+                repointed.add(new FulfillmentStepDependencyDef(Id = have[0].Id, Name = depName, DependsOnStepDefinitionId = prev.Id));   // our own record, re-pointed
+            }
         }
         insert deps;
+        update repointed;
         log.add('step dependencies created: ' + deps.size());
+        if (!repointed.isEmpty()) log.add('step dependencies re-pointed: ' + repointed.size());
+        String assetFlow = AgenticTelco_Orchestration.STEP_FLOWS.get('ASSETIZE');
+        if (!kinds.contains('ASSETIZE')) for (FulfillmentStepDefinition d : defs.values()) if (d.FlowDefinitionName == assetFlow) {
+            log.add('WARNING: assetisation route is BUILT_IN but step \'' + d.Name + '\' is still in the step group; remove it (a deletion, needs approval) before the next order');
+        }
 
         // jeopardy rule on the activation wait
         String awaitFlow = AgenticTelco_Orchestration.STEP_FLOWS.get('AWAIT');

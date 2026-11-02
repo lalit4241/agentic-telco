@@ -13,7 +13,7 @@ Business key = order external ID, so a rerun cannot double-write. Timers run on 
     <bpmn:startEvent id="Start" name="Upgrade proposed (Intent recorded)"><bpmn:outgoing>F1</bpmn:outgoing></bpmn:startEvent>
     <bpmn:serviceTask id="T_Binding" name="Binding policy check (OPA) + identity check" operaton:type="external" operaton:topic="mvp-binding-check"><bpmn:incoming>F1</bpmn:incoming><bpmn:outgoing>F2</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:serviceTask id="T_Quote" name="Create quote [TMF648]" operaton:type="external" operaton:topic="mvp-quote"><bpmn:incoming>F2</bpmn:incoming><bpmn:outgoing>F3</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:serviceTask id="T_Order" name="Place upgrade order, action modify [TMF622]" operaton:type="external" operaton:topic="mvp-order"><bpmn:incoming>F3</bpmn:incoming><bpmn:outgoing>F4</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="T_Order" name="Place upgrade order: delete Fibre 150, add Fibre 900 [TMF622]" operaton:type="external" operaton:topic="mvp-order"><bpmn:incoming>F3</bpmn:incoming><bpmn:outgoing>F4</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:serviceTask id="T_OssSubmit" name="Salesforce order orchestration: decompose, send network order [TMF641]" operaton:type="external" operaton:topic="mvp-oss-submit"><bpmn:incoming>F4</bpmn:incoming><bpmn:outgoing>F5</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:intermediateCatchEvent id="Timer_Batch" name="Wait for the fulfilment plan"><bpmn:incoming>F5</bpmn:incoming><bpmn:outgoing>F6</bpmn:outgoing>
       <bpmn:timerEventDefinition><bpmn:timeDuration>PT4S</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:intermediateCatchEvent>
@@ -23,7 +23,7 @@ Business key = order external ID, so a rerun cannot double-write. Timers run on 
     <bpmn:intermediateCatchEvent id="Timer_Delay" name="Wait 2 days (revised date)"><bpmn:incoming>F11</bpmn:incoming><bpmn:outgoing>F12</bpmn:outgoing>
       <bpmn:timerEventDefinition><bpmn:timeDuration>PT8S</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:intermediateCatchEvent>
     <bpmn:serviceTask id="T_Activate" name="Complete order [TMF622]" operaton:type="external" operaton:topic="mvp-activate"><bpmn:incoming>F8</bpmn:incoming><bpmn:outgoing>F9</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:serviceTask id="T_Asset" name="Asset change: 150 Obsolete, 900 Installed, Upgrade link [TMF637]" operaton:type="external" operaton:topic="mvp-asset-change"><bpmn:incoming>F9</bpmn:incoming><bpmn:outgoing>F13</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="T_Asset" name="Check installed product: 150 ended, 900 active, Upgrade link [TMF637 read]" operaton:type="external" operaton:topic="mvp-asset-change"><bpmn:incoming>F9</bpmn:incoming><bpmn:outgoing>F13</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:serviceTask id="T_Fulfilled" name="Intent fulfilled [TMF921 report]" operaton:type="external" operaton:topic="mvp-intent-fulfilled"><bpmn:incoming>F13</bpmn:incoming><bpmn:outgoing>F14</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:endEvent id="End_Live" name="Fibre 900 live"><bpmn:incoming>F14</bpmn:incoming></bpmn:endEvent>
     <bpmn:boundaryEvent id="Err_Policy" name="Policy blocked" attachedToRef="T_Binding"><bpmn:outgoing>F20</bpmn:outgoing><bpmn:errorEventDefinition errorRef="Error_PolicyBlocked" /></bpmn:boundaryEvent>
