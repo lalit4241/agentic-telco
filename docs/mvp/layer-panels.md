@@ -60,7 +60,7 @@ Sam types the problem in plain words in the business portal. The agent turns it 
 ## L2 Agent
 
 **Question**: What should we offer and why?
-**Tech**: LangGraph (MIT), MCP SDK (MIT), local model Qwen3-4B-Instruct-2507 (Apache 2.0) via Ollama
+**Tech**: LangGraph (MIT), MCP SDK (MIT), an open-weight language model (Apache 2.0)
 **Status**: Real
 
 One agent reads the facts it is given, recommends Fibre 900 and explains why in plain words. It has three tools: get the context, request the upgrade and check the order status. It proposes only. It cannot write to Salesforce or any other system of record.
