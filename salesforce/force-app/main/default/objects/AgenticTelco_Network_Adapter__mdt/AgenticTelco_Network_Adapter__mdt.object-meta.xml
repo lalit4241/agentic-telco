@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>AgenticTelco Network Adapter</label>
+    <pluralLabel>AgenticTelco Network Adapters</pluralLabel>
+    <visibility>Public</visibility>
+    <description>Selects the implementation of AgenticTelco_NetworkOrderAdapter used by the orchestration steps: Mock (simulated inside Salesforce for this demo) or Callout (HTTP through the named credential).</description>
+</CustomObject>

@@ -3,6 +3,29 @@
 The MVP ("Agent upgrades a Business Customer Service (B2B), on existing systems") ran live on this host on 30 Oct 2026, 17:04–17:09 UK time (GMT): Brightwell Design Ltd, Fibre 150 (£27) → Fibre 900 (£45), against the Salesforce org `sfcomms` (instance GBR58). Start it with `./run.sh mvp-up`; re-record and verify with `./run.sh mvp-record`.
 
 ## MVP summary
+## MVP build: Salesforce order orchestration (TMF622 → plan → one TMF641), 2 Nov 2026
+
+Hero run: **order 00000176** (MVP-630A0842) for Brightwell Design Ltd. The plan, 13VQH000001W9Fh2AK, Completed at 22:17 UK time (GMT). Its service order SO-00000176 went acknowledged → inProgress → completed. Orders 00000174 and 00000175 were not re-run.
+
+| Suite | Command | Result |
+|---|---|---|
+| Apex (sfcomms, RunSpecifiedTests: OrchestrationTest, OrchestrationE2ETest, OrchestrationSetupTest, TmfTest) | `sf project deploy start … --test-level RunSpecifiedTests` | **20/20 passed**, deploy 0AfQH00000Q7hyv0AB (previous deploy 0AfQH00000Q7hpF0AR). Coverage on the new classes is 100%: Orchestration 119/119, OrchestrationStep 164/164, OrchestrationSetup 98/98, NetworkAdapters 12/12, MockNetworkAdapter 119/119, CalloutNetworkAdapter 17/17. |
+| OPA policy | `.tools/bin/opa test stack/mvp/policy` | **10/10 passed** |
+| Python unit | `.venv/bin/python -m pytest -q` | **53 passed**, 13 skipped |
+| Web build (MVP) | `cd web && npm test` | **16/16 passed** |
+| Legacy web build | `cd web && npm run test:legacy` | **10/10 passed** |
+| Playwright e2e (MVP) | `cd web && SHOTS=… node test/mvp-e2e.js` | **80/80 passed** |
+| Recordings checked against the org | `PYTHONPATH=. .venv/bin/python scripts/mvp/verify_recordings.py` | **ALL PASS** |
+
+What order 00000176 shows:
+- **TMF622 (commercial codes):** Fibre 900 is modify (OrderAction Amend/UpgradeTo). The Wi-Fi 6 Router component is modify (Amend). The Fibre Access Line component is noChange (OrderAction No Change, quantity 0; the platform requires 0 on a No Change line).
+- **TMF641 (one code per CFS):** Fibre Access service noChange, Fibre Broadband service modify, Managed Router service modify.
+- **Network breakdown:** the RFS and resources (including RFS Router configuration modify, old router delete, new router add) come back only in the TMF641 response, as x-action fields.
+- **One outbound network interaction:** the TMF641 POST plus 2 GETs. The plan recorded 4 calls: those 3 plus the customer notification. TMF685, TMF639 and TMF638 appear only as network-side data (`x-networkFulfilment`).
+- **One writer for TMF637:** the L5 workflow. It created Fibre 900 Installed (02iQH000003HOp0YAG), set Fibre 150 to Obsolete and added the Upgrade relationship. The plan has no assetization step, and the platform created no asset.
+- **Platform status:** the order shows `OrchestrationSbmsStatus = AssetizationFailed`. This is the platform's own assetization after the plan completes. It fails for the two causes in `salesforce/README.md` and writes nothing.
+- **Evidence:** 01–11 in `web/src/mvp/evidence/` (order 00000176). Previews are in `/workspace/agentictelco-mvp-preview/v5/`.
+
 
 Latest run: 30 Oct 2026, 18:00–18:11 UK time (GMT), happy path re-recorded 21:12, after the "TMF Open APIs only" change: everything above L6 reaches Salesforce only through TM Forum Open APIs (Salesforce's own TMF APIs plus the `AgenticTelco_` Apex facades); no SOQL and no sObject REST.
 

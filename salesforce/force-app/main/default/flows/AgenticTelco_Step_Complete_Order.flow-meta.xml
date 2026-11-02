@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Run_Step</name>
+        <label>Run AgenticTelco step</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>AgenticTelco_OrchestrationStep</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>orderId</name>
+            <value><elementReference>planSourceIdentifierId</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>stepKind</name>
+            <value><stringValue>COMPLETE</stringValue></value>
+        </inputParameters>
+        <nameSegment>AgenticTelco_OrchestrationStep</nameSegment>
+        <outputParameters>
+            <assignToReference>summary</assignToReference>
+            <name>summary</name>
+        </outputParameters>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <description>AgenticTelco orchestration step (COMPLETE) of the Salesforce order orchestration plan. Set the order to Activated.</description>
+    <environments>Default</environments>
+    <interviewLabel>AgenticTelco Step 7 Complete Order {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>AgenticTelco Step 7 Complete Order</label>
+    <processMetadataValues><name>BuilderType</name><value><stringValue>LightningFlowBuilder</stringValue></value></processMetadataValues>
+    <processMetadataValues><name>CanvasMode</name><value><stringValue>AUTO_LAYOUT_CANVAS</stringValue></value></processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector><targetReference>Run_Step</targetReference></connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <description>Order id passed in from the fulfillment engine</description>
+        <name>planSourceIdentifierId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>summary</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+</Flow>

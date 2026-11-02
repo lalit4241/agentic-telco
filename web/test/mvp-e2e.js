@@ -60,7 +60,8 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('happy: Sam Taylor, Operations Director', /Sam Taylor/.test(b) && /Operations Director/.test(b));
   check('happy: chat has Fibre 900 £45, contract end kept, live', /Fibre 900/.test(t) && /£45/.test(t) && /28 August 2027/.test(t) && /live/i.test(t));
   const out = await page.textContent('#outcome');
-  check('happy: outcome card Fibre 900, £45, 28 Aug 2027, order 00000173, live 31 Oct 2026', /Fibre 900 is live/.test(out) && /£45 a month/.test(out) && /28 Aug 2027/.test(out) && /00000173/.test(out) && /31 Oct 2026/.test(out), out);
+  check('happy: outcome card Fibre 900, £45, 28 Aug 2027, order from the recording, live 2 Nov 2026', /Fibre 900 is live/.test(out) && /£45 a month/.test(out) && /28 Aug 2027/.test(out) && out.includes(JSON.parse(fs.readFileSync(path.join(ROOT, 'recordings', 'mvp', 'happy.json'), 'utf8')).state.links.orderNumber) && /2 Nov 2026/.test(out), out);
+  check('happy: Business View line "One upgrade, three services, one router swap."', out.includes(UI.business.orchestrationLine) && UI.business.orchestrationLine === 'One upgrade, three services, one router swap.');
   check('happy: KPIs derived from the run', (await page.$$('#kpis .kg div')).length === 4 && /request to live/.test(await page.textContent('#kpis')));
   check('Business View has no layer numbers, APIs or drawers', !/\bL[1-8]\b|TMF\d|API/.test(b) && !(await page.$('#v-business [data-about]')));
   await shot('2-business-happy-end.png');
@@ -72,8 +73,11 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const cio = await page.evaluate(() => document.getElementById('v-cio').innerText);
   check('CIO: headline, 3 cards, 4 messages verbatim', cio.includes(UI.cio.headline) && UI.cio.cards.every((x) => cio.includes(x.title) && cio.includes(x.text)) && UI.cio.messages.every((x) => cio.includes(x.title) && cio.includes(x.text)));
   check('CIO: banner', /Agent proposes.*Policy decides.*Workflow writes/s.test(await page.textContent('#v-cio .banner')) && (await page.textContent('#v-cio .banner')).includes('never writes to a system of record'));
-  check('CIO: 5 groups and the Salesforce chip, no facade wording in the diagram', (await page.$$('#dsvg .dg')).length === 5 && /TMF Open API \(Salesforce\)/.test(await page.textContent('#dsvg')) && !/facade/i.test(await page.textContent('#dsvg')));
-  check('CIO: older systems and the network tagged Mocked', (await page.$$('#dsvg .mk')).length === 4);
+  check('CIO: 5 groups and the Salesforce chip, no facade wording in the diagram', (await page.$$('#dsvg .dg')).length === 5 && /TMF Open API/.test(await page.textContent('#dsvg')) && !/\(Salesforce\)/.test(await page.textContent('#dsvg')) && !/facade/i.test(await page.textContent('#dsvg')));
+  check('CIO: older systems, the network and the network order adapter arrow tagged Mocked', (await page.$$('#dsvg .mk')).length === 5);
+  check('CIO: a real arrow from Order Management to the network order adapter, legend says simulated inside Salesforce', !!(await page.$('#dsvg path.de[data-e="sfom-oss"]')) && !(await page.$('#dsvg .tgt')) && /simulated inside Salesforce for this demo/.test(await page.textContent('#v-cio .glegend')));
+  const tree = await page.textContent('#dtree');
+  check('CIO: simple decomposition tree Product → CFS → RFS/Resource with action codes', (await page.$$('#dtree .tree li')).length >= 10 && /Wi-Fi 6 Router\s*modify/.test(tree) && /Fibre Access Line\s*noChange/.test(tree) && /Fibre Broadband service \(CFS\)\s*modify/.test(tree) && /Fibre Access service \(CFS\)\s*noChange/.test(tree) && /Managed Router service \(CFS\)\s*modify/.test(tree) && /Router configuration\s*modify/.test(tree) && !/nativeAction|Amend|UpgradeTo/.test(tree) && /removed\s*delete/.test(tree) && /installed\s*add/.test(tree), tree.slice(0, 160));
   const lit = await page.$$eval('#dsvg .dn.on', (a) => a.map((x) => x.dataset.node));
   check('CIO: "Ordered" lights the workflow, the APIs and Salesforce', ['L5', 'api', 'sf'].every((n) => lit.includes(n)), lit.join(','));
   check('CIO: no Exposed APIs list here', !(await page.$('#v-cio #exposed')));
@@ -89,7 +93,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   await scrollTo('#v-cio .msgs'); await page.waitForTimeout(300); await shot('10-cio-four-messages.png'); await page.evaluate(() => window.scrollTo(0, 0));
   await page.click('#cstrip .pill[data-step="4"]'); await page.waitForTimeout(200);
   // the diagram opens the layer detail
-  for (const [node, L, want] of [['L1', 'L1', /intent/i], ['L2', 'L2', /token/i], ['L3', 'L3', /001QH00002La125YAB/], ['L4', 'L4', /policy|authorised/i], ['L5', 'L5', /Operaton|BPMN/i], ['api', 'L6', /TMF Open API \(Salesforce\)/], ['L7', 'L7', /900/], ['L8', 'L8', /trace/i]]) {
+  for (const [node, L, want] of [['L1', 'L1', /intent/i], ['L2', 'L2', /token/i], ['L3', 'L3', /001QH00002La125YAB/], ['L4', 'L4', /policy|authorised/i], ['L5', 'L5', /Operaton|BPMN/i], ['api', 'L6', /TMF Open API[\s\S]*Decomposition[\s\S]*Orchestration plan/], ['L7', 'L7', /900/], ['L8', 'L8', /trace/i]]) {
     await page.click(`#dsvg .dn[data-node="${node}"]`); await page.waitForTimeout(L === 'L5' ? 1200 : 300);
     const d = await page.textContent('#drawer');
     check(`CIO: ${node} opens the ${L} detail with run data`, (await page.isVisible('#drawer.open')) && want.test(d));
@@ -98,6 +102,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   }
   const figs = await page.$$('#v-cio figure.ev');
   check('CIO: Salesforce evidence gallery', figs.length >= 6 && (await page.textContent('#gallery h2')) === 'Proof: the real records in Salesforce', String(figs.length));
+  await scrollTo('#dtree'); await page.waitForTimeout(300); await shot('11-cio-decomposition-tree.png');
   await scrollTo('#gallery'); await page.waitForTimeout(400); await shot('4-cio-gallery.png');
 
   // ---- 3. Dev View
@@ -109,7 +114,7 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('architect Ordered: policy binding decision, BPMN, TMF order calls', /binding/i.test(al) && !!(await page.$('#alay .lsec[data-layer="L5"] .djs-container')) && /TMF622/.test(al), '');
   await page.waitForTimeout(800);
   await scrollTo('#alay .lsec[data-layer="L5"]'); await shot('6-architect-ordered-workflow-apis.png');
-  const callRow = await page.$('#alay .lsec[data-layer="L6"] tr.call:has-text("TMF Open API (Salesforce)")');
+  const callRow = await page.$('#alay .lsec[data-layer="L6"] tr.call:has-text("TMF Open API")');
   await callRow.click(); await page.waitForSelector('#calld.open');
   const cd = await page.textContent('#calld');
   check('call detail: Provided by, TMF tag, request and response', /Provided by: (Salesforce \(out of the box\)|TMF facade within Salesforce \(Apex\))/.test(cd) && /TMF\d{3}/.test(cd) && /Request/.test(cd) && /Response/.test(cd), cd.slice(0, 120));
@@ -127,12 +132,18 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   al = await page.textContent('#alay');
   check('architect Live: network change and audit', /900/.test(await page.textContent('#alay .lsec[data-layer="L7"]')) && !(await page.$('#alay .lsec[data-layer="L7"].idle')));
   await scrollTo('#alay .lsec[data-layer="L7"]'); await shot('8-architect-live-network.png');
+  const l6 = await page.textContent('#alay .lsec[data-layer="L6"]');
+  check('architect Live: Decomposition panel (level, item, action code, why) and Orchestration plan panel', /Decomposition \(Salesforce order orchestration\)/.test(l6) && /LevelItemAction codeWhy/.test(l6) && /Orchestration plan/.test(l6) && /Point of no return/.test(l6) && /acknowledged → inProgress → completed/.test(l6), l6.slice(0, 120));
+  check('architect Live: "The TMF641 request and response are simulated inside Salesforce for this demo."', l6.includes('The TMF641 request and response are simulated inside Salesforce for this demo.') && /Network order adapter \(Mocked\)/.test(l6));
+  await page.evaluate(() => { const e = [...document.querySelectorAll('#alay .lsec[data-layer="L6"] .sec')].find((x) => /^Decomposition/.test(x.textContent)); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - 70); });
+  await page.waitForTimeout(300); await shot('12-dev-decomposition-plan.png');
   const arch = await page.textContent('#v-architect');
   check('architect: system-of-record line', arch.includes('All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer.'));
   check('architect: Exposed APIs (out of the box, facade, stand-ins mocked)', /Exposed APIs \(TMF-aligned\)/.test(arch) && /Provided by: Salesforce \(out of the box\)/.test(arch) && /Provided by: TMF facade within Salesforce \(Apex\)/.test(arch) && /Legacy stand-in \(mocked\)/.test(arch) && (await page.$$('#exposed tr')).length >= 15);
+  check('architect: Exposed APIs list the network order adapter (Mocked) with TMF685, TMF639, TMF641, TMF638', /Network order adapter \(Mocked\)/.test(await page.textContent('#exposed')) && ['TMF685', 'TMF639', 'TMF641', 'TMF638'].every((x) => (arch.match(new RegExp(x, 'g')) || []).length >= 1));
   check('architect: ODA/eTOM/SID panel is "conceptual alignment", never certified', /conceptual alignment/.test(arch) && (await page.$$('#oda tr')).length >= 8 && !/certif|conforman/i.test(arch));
-  check('architect: 27 glossary terms', (await page.$$('#gl .gt')).length === 27, String((await page.$$('#gl .gt')).length));
-  await page.fill('#glf', 'jeopardy'); check('glossary filter', (await page.$$('#gl .gt')).length >= 1 && (await page.$$('#gl .gt')).length < 27);
+  check('architect: 31 glossary terms', (await page.$$('#gl .gt')).length === 31, String((await page.$$('#gl .gt')).length));
+  await page.fill('#glf', 'jeopardy'); check('glossary filter', (await page.$$('#gl .gt')).length >= 1 && (await page.$$('#gl .gt')).length < 31);
   await page.fill('#glf', '');
   await scrollTo('#exposed'); await shot('5-architect-exposed-apis.png');
 

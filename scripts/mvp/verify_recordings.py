@@ -40,7 +40,10 @@ for c in ("happy", "delayed"):
     check(not any(re.search(r"/query\b|/sobjects\b|/composite\b", p_) for p_ in paths) and all(sp.get("runtime") != "native Salesforce API" for sp in s["spans"]),
           f"{c}: no SOQL or sObject REST in the trace ({sum(1 for p_ in paths if p_.startswith('/services/'))} Salesforce calls, all TMF)")
     o = q(f"select Status, OrderNumber, (select Product2.Name, UnitPrice from OrderItems) from Order where Id='{oid}'")[0]
-    check(o["Status"] == "Activated" and all(float(i["UnitPrice"]) == 45.0 for i in o["OrderItems"]["records"]), f"{c}: order {o['OrderNumber']} {o['Status']} at £45")
+    # since the orchestration build the bundle carries its components (access line, router) at £0 for the decomposition
+    its = o["OrderItems"]["records"]; main = [i for i in its if i["Product2"]["Name"].endswith("900")]
+    check(o["Status"] == "Activated" and len(main) == 1 and float(main[0]["UnitPrice"]) == 45.0 and sum(float(i["UnitPrice"]) for i in its) == 45.0,
+          f"{c}: order {o['OrderNumber']} {o['Status']} at £45 ({len(its)} line(s): " + ", ".join(f"{i['Product2']['Name']} £{float(i['UnitPrice']):.0f}" for i in its) + ")")
     check(any("TMF671" in (sp.get("api") or "") for sp in s["spans"]), f"{c}: TMF671 promotion read in the trace")
     fca = [m for m in s.get("milestones", []) if m["name"] == "AssetChanged"]
     check(bool(fca) and json.dumps(fca[-1]).count('"flowCreatedAssets": 0') == 1, f"{c}: Custom_Assetize_Order created no assets (flowCreatedAssets = 0)")

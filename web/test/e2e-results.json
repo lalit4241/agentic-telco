@@ -1,5 +1,5 @@
 {
- "at": "2026-11-02T17:40:01.829Z",
+ "at": "2026-11-02T22:24:21.037Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -34,10 +34,10 @@
   {
    "name": "three tabs, business first, each with its question",
    "ok": true,
-   "detail": "Business viewWhat does the customer get? | CIO viewIs this safe, and does it fit my estate? | Chief Architect viewHow does it actually work?"
+   "detail": "Business ViewWhat does the customer get? | Architect ViewIs this safe, and does it fit my estate? | Dev ViewHow does it actually work?"
   },
   {
-   "name": "business view is the default",
+   "name": "Business View is the default",
    "ok": true,
    "detail": ""
   },
@@ -67,9 +67,9 @@
    "detail": ""
   },
   {
-   "name": "CIO view lights layers during the replay",
+   "name": "Architect View lights layers during the replay",
    "ok": true,
-   "detail": "8"
+   "detail": "12"
   },
   {
    "name": "happy: step bar Asks..Live, all done, Live green",
@@ -92,9 +92,14 @@
    "detail": ""
   },
   {
-   "name": "happy: outcome card Fibre 900, £45, 28 Aug 2027, order 00000173, live 31 Oct 2026",
+   "name": "happy: outcome card Fibre 900, £45, 28 Aug 2027, order from the recording, live 2 Nov 2026",
    "ok": true,
-   "detail": "What Sam getsFibre 900 is liveServiceFibre 900Price£45 a monthContract end28 Aug 2027 (unchanged)Order00000173Live31 Oct 2026"
+   "detail": "What Sam getsFibre 900 is liveOne upgrade, three services, one router swap.ServiceFibre 900Price£45 a monthContract end28 Aug 2027 (unchanged)Order00000176Live2 Nov 2026"
+  },
+  {
+   "name": "happy: Business View line \"One upgrade, three services, one router swap.\"",
+   "ok": true,
+   "detail": ""
   },
   {
    "name": "happy: KPIs derived from the run",
@@ -102,7 +107,7 @@
    "detail": ""
   },
   {
-   "name": "business view has no layer numbers, APIs or drawers",
+   "name": "Business View has no layer numbers, APIs or drawers",
    "ok": true,
    "detail": ""
   },
@@ -122,19 +127,29 @@
    "detail": ""
   },
   {
-   "name": "CIO: 5 groups and the two chips in the diagram",
+   "name": "CIO: 5 groups and the Salesforce chip, no facade wording in the diagram",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "CIO: older systems and the network tagged Mocked",
+   "name": "CIO: older systems, the network and the network order adapter arrow tagged Mocked",
    "ok": true,
    "detail": ""
+  },
+  {
+   "name": "CIO: a real arrow from Order Management to the network order adapter, legend says simulated inside Salesforce",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: simple decomposition tree Product → CFS → RFS/Resource with action codes",
+   "ok": true,
+   "detail": "One upgrade, decomposedTMF622 carries the commercial codes on the product and its bundle components. Salesforce order orchestration decomposes the order into cu"
   },
   {
    "name": "CIO: \"Ordered\" lights the workflow, the APIs and Salesforce",
    "ok": true,
-   "detail": "customer,L2,L3,L5,api,sf,billing,avail,L8"
+   "detail": "customer,L2,L3,L5,api,sf,sfcust,sfcat,sfcpq,sfom,billing,avail,L8"
   },
   {
    "name": "CIO: no Exposed APIs list here",
@@ -144,7 +159,7 @@
   {
    "name": "CIO: \"Checks\" lights the context and policy layers and the older systems",
    "ok": true,
-   "detail": "L2,L4,L3,api,sf,billing,avail,L8"
+   "detail": "L2,L4,L3,api,sf,sfcust,sfcat,sfcpq,sfom,billing,avail,L8"
   },
   {
    "name": "CIO: diagram caption visible without scrolling at 1440x900",
@@ -204,7 +219,7 @@
   {
    "name": "CIO: Salesforce evidence gallery",
    "ok": true,
-   "detail": "7"
+   "detail": "11"
   },
   {
    "name": "architect: step timeline with whole journey and 6 steps",
@@ -229,7 +244,7 @@
   {
    "name": "call detail: Provided by, TMF tag, request and response",
    "ok": true,
-   "detail": "L6 · SalesforceInstalled service, site and contract endTMF637 Product Inventory TMF Open API (Salesforce)×GET /services/"
+   "detail": "L6 · SalesforceCatalogue and pricesTMF620 Product Catalog TMF Open API×GET /services/apexrest/agentictelco/tmf620/produc"
   },
   {
    "name": "call detail: redacted (no tokens, session ids, login URLs)",
@@ -262,6 +277,16 @@
    "detail": ""
   },
   {
+   "name": "architect Live: Decomposition panel (level, item, action code, why) and Orchestration plan panel",
+   "ok": true,
+   "detail": "L6Systems of recordWhere is the truth recorded?Real + stand-insAbout this layerTMF Open APILegacy stand-in (mocked)Netwo"
+  },
+  {
+   "name": "architect Live: \"The TMF641 request and response are simulated inside Salesforce for this demo.\"",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "name": "architect: system-of-record line",
    "ok": true,
    "detail": ""
@@ -272,14 +297,19 @@
    "detail": ""
   },
   {
+   "name": "architect: Exposed APIs list the network order adapter (Mocked) with TMF685, TMF639, TMF641, TMF638",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "name": "architect: ODA/eTOM/SID panel is \"conceptual alignment\", never certified",
    "ok": true,
    "detail": ""
   },
   {
-   "name": "architect: 27 glossary terms",
+   "name": "architect: 31 glossary terms",
    "ok": true,
-   "detail": "27"
+   "detail": "31"
   },
   {
    "name": "glossary filter",

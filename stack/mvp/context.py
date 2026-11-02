@@ -122,7 +122,7 @@ def build_pack(trace, contact_id, account_id, parent=None):
     jobs = {
         "org": lambda: tmf_ok(sf(trace, "Organization and contact roles", "GET", f"{APEX}/tmf632/organization/{account_id}", api="TMF632"), "TMF632"),
         "customer": lambda: sf(trace, "Customer", "GET", f"{CC}/customermanagement/v4/customer/{account_id}", api="TMF629").json(),
-        "products": lambda: tmf_ok(sf(trace, "Installed service, site and contract end", "GET",
+        "products": lambda: tmf_ok(sf(trace, "Installed product, site and contract end", "GET",
                                       f"{APEX}/tmf637/product?relatedParty.id={account_id}&status=active&limit=1", api="TMF637"), "TMF637"),
         "offers": lambda: offerings(trace),
         "promos": lambda: promotions(trace),
@@ -136,7 +136,7 @@ def build_pack(trace, contact_id, account_id, parent=None):
         res = {k: f.result() for k, f in fut.items()}
     prod = (res["products"] or [None])[0]
     if prod:   # Salesforce's own TMF637 resource for the same installed product (serial number)
-        inv = sf(trace, "Installed service (Salesforce TMF637)", "GET", f"{CC}/productinventorymanagement/v5/productinventory/{prod['id']}", api="TMF637").json()
+        inv = sf(trace, "Installed product (Salesforce TMF637)", "GET", f"{CC}/productinventorymanagement/v5/productinventory/{prod['id']}", api="TMF637").json()
     me = next((p for p in (res["org"] or {}).get("relatedParty", []) if p.get("id") == contact_id), {})
     role = me.get("role")
     place = ((prod or {}).get("place") or [{}])[0]

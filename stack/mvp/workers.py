@@ -6,14 +6,15 @@ so a rerun after a crash replays instead of writing twice."""
 import json, os, sys, time, traceback
 from datetime import date, datetime, timezone
 import httpx
-from stack.mvp.common import (sf_id, safe_key, q, q1, J, Span, sf, APEX, url, traceparent, init_schema, OPERATON_URL)
+from stack.mvp.common import (sf_id, safe_key, q, q1, J, Span, sf, APEX, url, traceparent, init_schema, OPERATON_URL, tmf)
 from stack.l5_orchestrator.engine import creds
 
 WORKER_ID = f"mvp-l5-worker-{os.getpid()}"
 LOCK_MS = 120000
 STEP_NAMES = {
     "mvp-binding-check": "Binding policy check + identity", "mvp-quote": "Create quote", "mvp-order": "Place upgrade order",
-    "mvp-oss-submit": "Send to legacy OSS", "mvp-oss-read": "Read OSS batch result", "mvp-jeopardy": "Raise jeopardy (+2 days)",
+    "mvp-oss-submit": "Salesforce order orchestration: plan and network service order",
+    "mvp-oss-read": "Salesforce order orchestration: wait for network activation", "mvp-jeopardy": "Raise jeopardy (+2 days)",
     "mvp-activate": "Complete order", "mvp-asset-change": "Asset change", "mvp-intent-fulfilled": "Intent fulfilled",
 }
 
@@ -87,17 +88,113 @@ def order(v, sp):
     usage = o.get("x-usageRecord")   # added inside the TMF622 facade while the order is Draft (internal step, see AgenticTelco_TMF622)
     o2 = ok(sf(v["traceId"], "Order in progress", "PATCH", f"{APEX}/tmf622/productOrder/{o['id']}", {"state": "inProgress"},
                api="TMF622", parent=sp.span_id), "TMF622 PATCH")
-    milestone(v["orderExternalId"], "OrderInProgress", {"productOrderId": o["id"], "orderNumber": o.get("x-orderNumber"), "state": o2.get("state"), "usageRecord": usage})
-    return {"productOrderId": o["id"], "orderNumber": o.get("x-orderNumber") or ""}
+    orch = o2.get("x-orchestration") or {}
+    plan = orch.get("fulfillmentPlanId") or ""
+    sp.attrs.update(orchestration=orch.get("status"), fulfillmentPlanId=plan, orchestrationError=orch.get("error"))
+    milestone(v["orderExternalId"], "OrderInProgress", {"productOrderId": o["id"], "orderNumber": o.get("x-orderNumber"), "state": o2.get("state"), "usageRecord": usage,
+              "fulfillmentPlanId": plan or None, "orchestration": orch.get("status")})
+    # Salesforce order orchestration runs the plan (decomposition, TMF641 through the network order adapter). No silent fallback:
+    # if no fulfilment plan was created, the run stops here with a clear error (BPMN end event "Stopped: no fulfilment plan").
+    if not plan:
+        milestone(v["orderExternalId"], "OrchestrationNotStarted", {"productOrderId": o["id"], "orderNumber": o.get("x-orderNumber"),
+                  "error": orch.get("error") or "No fulfilment plan was created", "route": "stopped (no fallback route)"})
+        raise BpmnErr("NO_FULFILMENT_PLAN", "Salesforce order orchestration created no fulfilment plan for order " + str(o.get("x-orderNumber") or o["id"])
+                      + ": " + str(orch.get("error") or "no plan") + " The run stops (no fallback route).")
+    return {"productOrderId": o["id"], "orderNumber": o.get("x-orderNumber") or "", "fulfillmentPlanId": plan,
+            "fulfilment": "salesforce", "orderPlacedAt": datetime.now(timezone.utc).isoformat()}
+
+# ---- Salesforce order orchestration (the plan runs inside Salesforce; the workflow only reads it through TMF622) ----------------------
+ORCH_POLL_S, ORCH_WAIT_S = 3, 120
+
+def orch_view(v, sp, step):
+    o = ok(sf(v["traceId"], step, "GET", f"{APEX}/tmf622/productOrder/{v['productOrderId']}", api="TMF622", parent=sp.span_id), "TMF622 GET")
+    return o, (o.get("x-orchestration") or {})
+
+def network_spans(v, sp, x, seen):
+    """One L7 audit row per network call the plan made (TMF641 only: POST plus status reads), as recorded by the network order adapter."""
+    for c in x.get("networkCalls") or []:
+        if c.get("name") in seen:
+            continue
+        seen.add(c.get("name"))
+        api = c.get("api") or ""
+        if not api.startswith("TMF") or " /" not in (c.get("operation") or ""):
+            continue  # e.g. the customer notification step: recorded on the order, not a network call
+        mocked = (c.get("mode") or x.get("adapterMode")) == "Mock"
+        meth, _, path = (c.get("operation") or "").partition(" ")
+        with Span(v["traceId"], "L6", "Network order adapter" + (" (Mocked)" if mocked else ""), c.get("step") or api,
+                  runtime="Salesforce order orchestration → network order adapter" + (" (Mocked)" if mocked else ""),
+                  api=tmf(api) if api.startswith("TMF") else api, method=meth or None, path=path or None, parent=sp.span_id,
+                  request=c.get("request"), attrs={"networkId": c.get("networkId"), "state": c.get("state"), "adapterMode": c.get("mode") or x.get("adapterMode"),
+                  "simulated": x.get("adapterNote") if mocked else None, "at": c.get("at"), "tmf": api}) as n:
+            n.status, n.response = int(float(c.get("statusCode") or 200)), c.get("response") or {"state": c.get("state"), "id": c.get("networkId")}
+
+def plan_summary(x):
+    """Compact copy of TMF622 x-orchestration for the web views (decomposition with action codes, plan steps, the TMF641 order)."""
+    so = x.get("serviceOrder") or {}
+    return {"engine": x.get("engine"), "fulfillmentPlanId": x.get("fulfillmentPlanId"), "status": x.get("status"), "planState": x.get("planState"),
+            "adapterMode": x.get("adapterMode"), "adapterNote": x.get("adapterNote"), "idempotencyKey": x.get("idempotencyKey"),
+            "decomposition": x.get("decomposition") or [],
+            "steps": [{k: st.get(k) for k in ("name", "state", "jeopardy", "message", "startedAt", "completedAt", "dependsOn")} for st in x.get("steps") or []],
+            "serviceOrder": {"id": so.get("id"), "state": so.get("state"), "externalId": so.get("externalId"),
+                             "stateChange": so.get("stateChange") or [],
+                             "items": so.get("items") or [], "networkFulfilment": so.get("networkFulfilment")},
+            "actionCodesNote": x.get("actionCodesNote"), "networkBreakdownNote": x.get("networkBreakdownNote"),
+            "productInventory": x.get("productInventory"),
+            "networkCalls": len(x.get("networkCalls") or [])}
 
 def oss_submit(v, sp):
+    if v.get("fulfilment") == "salesforce":
+        seen, x, t0 = set(), {}, time.time()
+        while time.time() - t0 < ORCH_WAIT_S:
+            _, x = orch_view(v, sp, "Read the fulfilment plan (TMF622 x-orchestration)")
+            if x.get("serviceOrder") or x.get("status") in ("failed", "completed"):
+                break
+            time.sleep(ORCH_POLL_S)
+        so = x.get("serviceOrder") or {}
+        sp.attrs.update(engine=x.get("engine"), fulfillmentPlanId=x.get("fulfillmentPlanId"), planState=x.get("planState"), adapterMode=x.get("adapterMode"),
+                        serviceOrderId=so.get("id"), idempotencyKey=x.get("idempotencyKey"),
+                        decomposition=[f"{r.get('level')} {r.get('item')}: {r.get('action')}" for r in x.get("decomposition") or []])
+        if x.get("status") == "failed":
+            raise RuntimeError("Salesforce order orchestration step failed: " + "; ".join(s.get("message") or s.get("name") for s in x.get("steps") or [] if s.get("state") == "Failed"))
+        if not so:
+            raise RuntimeError("Salesforce order orchestration: no TMF641 service order yet (plan " + str(x.get("planState")) + ")")
+        milestone(v["orderExternalId"], "SentToOSS", {"serviceOrderId": so.get("id"), "via": "Salesforce order orchestration", "adapterMode": x.get("adapterMode"),
+                  "fulfillmentPlanId": x.get("fulfillmentPlanId"), "items": len(so.get("serviceOrderItem") or []), "expectedCompletionDate": date.today().isoformat()})
+        return {"serviceOrderId": so.get("id") or ""}
     r = httpx.post(f"{url('standins')}/tmf-api/serviceOrdering/v4/serviceOrder", headers={"traceparent": traceparent(v["traceId"], sp.span_id)},
+
                    json={"externalId": v["orderExternalId"], "site": v["site"], "toCapacityMbps": int(v["toSpeed"]),
                          "productOrder": {"id": v["productOrderId"]}}, timeout=30).json()
     milestone(v["orderExternalId"], "SentToOSS", {"serviceOrderId": r["id"], "expectedCompletionDate": r["expectedCompletionDate"]})
     return {"serviceOrderId": r["id"]}
 
 def oss_read(v, sp):
+    if v.get("fulfilment") == "salesforce":
+        seen, x, t0 = set(), {}, time.time()
+        while time.time() - t0 < ORCH_WAIT_S:
+            _, x = orch_view(v, sp, "Read the fulfilment plan (TMF622 x-orchestration)")
+            if x.get("status") in ("failed", "completed"):
+                break
+            time.sleep(ORCH_POLL_S)
+        network_spans(v, sp, x, seen)
+        steps = x.get("steps") or []
+        late = [s for s in steps if (s.get("jeopardy") or "On Time") not in ("On Time", "")]
+        so = x.get("serviceOrder") or {}
+        sp.attrs.update(planState=x.get("planState"), orchestration=x.get("status"), serviceOrderState=so.get("state"),
+                        stateChange=[c.get("state") for c in so.get("stateChange") or []], jeopardySteps=[s.get("name") for s in late])
+        if x.get("status") == "failed":
+            raise RuntimeError("Salesforce order orchestration step failed: " + "; ".join(s.get("message") or s.get("name") for s in steps if s.get("state") == "Failed"))
+        if x.get("status") != "completed":
+            if late and v.get("jeopardyRaised") != "yes":
+                return {"ossState": "jeopardy", "liveDate": "", "ossJeopardy": json.dumps({"jeopardyType": "Late", "name": "Plan step late",
+                        "message": "Salesforce order orchestration step late: " + ", ".join(s.get("name") for s in late), "revisedDays": 2})}
+            raise RuntimeError(f"Salesforce order orchestration still {x.get('status')} after {ORCH_WAIT_S}s; retrying")
+        milestone(v["orderExternalId"], "FulfilmentPlan", plan_summary(x))
+        for c in so.get("stateChange") or []:
+            milestone(v["orderExternalId"], "ServiceOrder" + (c.get("state") or "").capitalize(), {"serviceOrderId": so.get("id"), "state": c.get("state"), "at": c.get("changeDate")})
+        milestone(v["orderExternalId"], "PortReserved", {"name": "PortReserved", "message": "Bandwidth profile 150 → 900 Mbps on the access port; router swapped (TMF641 completed)",
+                  "serviceOrderId": so.get("id"), "via": "Salesforce order orchestration", "adapterMode": x.get("adapterMode")})
+        return {"ossState": "completed", "liveDate": date.today().isoformat(), "ossJeopardy": ""}
     o = httpx.get(f"{url('standins')}/tmf-api/serviceOrdering/v4/serviceOrder", params={"externalId": v["orderExternalId"]},
                   headers={"traceparent": traceparent(v["traceId"], sp.span_id)}, timeout=30).json()[0]
     state = "completed" if o["state"] == "completed" else ("jeopardy" if o["jeopardyAlert"] and v.get("jeopardyRaised") != "yes" else "inProgress")
@@ -136,7 +233,7 @@ def asset_change(v, sp):
     serial = "AT-" + key
     cur, acct = sf_id(v["currentAssetId"], "currentAssetId"), sf_id(v["accountId"], "accountId")   # checked before they go into a path
     P = f"{APEX}/tmf637/product"
-    old = ok(sf(t, "Read current installed service", "GET", f"{P}/{cur}", api="TMF637", parent=sp.span_id), "TMF637 read")
+    old = ok(sf(t, "Read current installed product", "GET", f"{P}/{cur}", api="TMF637", parent=sp.span_id), "TMF637 read")
     user = next((p["id"] for p in old.get("relatedParty") or [] if p.get("role") == "User"), None)
     place = [{"id": p["id"]} for p in old.get("place") or []][:1]
     live = (v.get("liveDate") or date.today().isoformat())[:10]          # billed at the new price from the upgrade (go-live) date
@@ -158,7 +255,7 @@ def asset_change(v, sp):
     rel_id = next((r["id"] for r in linked.get("productRelationship") or [] if (r.get("product") or {}).get("id") == new_id), None)
     # Live check of the hidden rule: the org's Custom Assetize Order flow must NOT have created its own product for this order.
     time.sleep(3)
-    since = v["activatedAt"][:19] + "Z"
+    since = (v.get("orderPlacedAt") or v["activatedAt"])[:19] + "Z"   # the plan activates the order inside Salesforce, so check from order placement
     recent = ok(sf(t, "Check: Custom Assetize Order created no product", "GET",
                    f"{P}?relatedParty.id={acct}&creationDate.gt={since}&limit=50", api="TMF637", parent=sp.span_id), "TMF637 list")
     flow_assets = [p for p in recent if p["id"] != new_id]
@@ -199,6 +296,8 @@ def handle(t):
                    "variables": {"failureReason": {"value": e.msg, "type": "String"}}})
             if e.code == "POLICY_BLOCKED":
                 report(v, sp, "icm:StateDegrades", "Intent not progressed: stopped by policy", {"reason": e.msg})
+            if e.code == "NO_FULFILMENT_PLAN":
+                report(v, sp, "icm:StateDegrades", "Intent not progressed: no fulfilment plan (run stopped, no fallback route)", {"reason": e.msg})
         except Exception as e:
             traceback.print_exc()
             sp.status = 500

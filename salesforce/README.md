@@ -40,8 +40,45 @@ Everything above the systems-of-record layer reaches Salesforce only through TM 
 REST (enforced by `tests/test_mvp_unit.py::test_mvp_stack_issues_no_soql_or_sobject_rest` and the runtime guard
 `stack/mvp/common.py:provided_by`). Out of the box: TMF629 Customer and TMF637 Product Inventory GET by id
 (`/services/data/vNN/connect/comms/...`). Everything else goes through the facades above. On screen every Salesforce
-call reads "TMF Open API (Salesforce)"; the call detail says "Provided by: Salesforce (out of the box)" or
+call reads "TMF Open API"; the call detail says "Provided by: Salesforce (out of the box)" or
 "Provided by: TMF facade within Salesforce (Apex)".
 
 The pre-MVP L6 adapter (`stack/l6_salesforce_adapter`) and the one-time org seeding script (`seed/customers/seed_brightwell.py`)
 are setup / legacy tooling and still use the sObject API; the MVP stack does not call them.
+
+## Salesforce order orchestration (fulfilment of the TMF622 order)
+
+TMF622 `PATCH state=inProgress` submits the order to Salesforce order orchestration (`AgenticTelco_Orchestration.submit`,
+through the `AgenticTelco_Submit_Order_To_Orchestration` flow). Setup (`AgenticTelco_OrchestrationSetup.run()`, idempotent, new AgenticTelco
+records only) creates:
+
+- CFS technical products (customer facing services) and built-in decomposition rules (ProductFulfillmentDecompRule) from the
+  commercial products: Fibre bundle → **CFS Fibre Broadband**, access line → **CFS Fibre Access**, router → **CFS Managed Router**
+  (CPE), installation → **CFS Installation** (only when installation is on the order).
+- Step group *AgenticTelco Fibre Upgrade Fulfilment*: 7 plan-scope steps chained by dependencies (1 validate and set action
+  codes from the installed base (TMF637) → 2 send network service order TMF641 → 3 wait for network activation (jeopardy rule:
+  2 days, threshold 1 day) → 4 point of no return (milestone) → 5 record the network result (TMF641 response) → 6 notify the customer →
+  7 complete, order Activated), and the scenario
+  *AgenticTelco Fibre Upgrade Scenario* (Add;Amend).
+
+Action codes: TMF622 carries the commercial codes (bundle `Amend/UpgradeTo` = modify; each bundle component gets its own
+OrderAction: Fibre Access Line `No Change` with Quantity 0, Wi-Fi 6 Router `Amend/UpgradeTo`). Each FulfillmentOrderLineItem
+carries the CFS code (`Action` plus `Description` `tmf=<add|modify|delete|noChange>;why=...`), derived from the installed base
+(TMF637), not by the built-in decomposition (which gives add for every line). TMF641 `serviceOrderItem.action` carries the CFS
+codes (noChange / modify / modify); the RFS and resources, including router delete + add, are the network's own breakdown and
+appear only in the TMF641 response (`x-action` extension fields). The idempotency key is the order.
+
+Single writer: the installed product (TMF637: Fibre 900 Installed, Fibre 150 Obsolete, Upgrade relationship) is written only
+by the L5 workflow. The plan has no assetization step. The platform still attempts its own assetization after the plan and
+marks the order `AssetizationFailed` (it writes nothing); `x-orchestration.productInventory.platformStatus` shows it.
+
+No silent fallback: if no fulfilment plan is created, TMF622 returns `x-orchestration.status=notSubmitted` with an error and
+the L5 workflow stops (BPMN error `NO_FULFILMENT_PLAN`).
+
+The network is reached through one interface, `AgenticTelco_NetworkOrderAdapter`, with one outbound interaction: TMF641
+(POST plus status reads). Reservation (TMF685) and the network's inventories (TMF638 services, TMF639 resources) are on the
+network side and come back as `x-networkFulfilment` data in the TMF641 response; the mode comes from the custom metadata
+`AgenticTelco_Network_Adapter__mdt` (`Mock` → `AgenticTelco_MockNetworkAdapter`, `Callout` → `AgenticTelco_CalloutNetworkAdapter`).
+The TMF641 request and response are simulated inside Salesforce for this demo (Mock). Every call is logged in
+`AgenticTelco_Network_Call__c`; `GET /tmf622/productOrder/{id}` returns them with the plan, steps and decomposition in
+`x-orchestration`.

@@ -83,7 +83,7 @@
     if (bRec != null && users[1]) { bAgree = T(users[1].at); var cm = first(function (s) { return s.layer === 'L1' && /Customer message/.test(s.step); }, bRec); if (cm != null) bAgree = Math.min(bAgree, cm); }
     var bOrder = bAgree == null ? null : first(function (s) { return /Binding policy check/.test(s.step) || s.component === 'Operaton worker'; }, bAgree);
     if (bOrder != null) (full.bpmn || []).forEach(function (a) { if (a.id === 'T_Binding') bOrder = Math.min(bOrder, T(a.start)); });
-    var bLive = bOrder == null ? null : first(function (s) { return /OSS/.test(s.step); }, bOrder);
+    var bLive = bOrder == null ? null : first(function (s) { return /OSS|order orchestration/.test(s.step); }, bOrder);
     var starts = [t0, bChecks, bRec, bAgree, bOrder, bLive], w = [];
     for (var i = 0; i < 6; i++) {
       var a = starts[i]; if (a == null || isNaN(a)) { w.push({ a: null, b: null }); continue; }
@@ -260,7 +260,7 @@
     var rows = [['Service', esc(prod.replace(/^AgenticTelco /, ''))], ['Price', '£' + esc(off.monthlyPriceGBP || 45) + ' a month'], ['Contract end', esc(f.contractShort) + ' <span class="muted">(unchanged)</span>']];
     if (S.caseId !== 'delayed' && v.links && v.links.orderNumber) rows.push(['Order', '<span class="mono">' + esc(v.links.orderNumber) + '</span>']);
     var ld = liveDate(v); rows.push(['Live', esc(ld || '') + (S.caseId === 'delayed' ? ' <span class="muted">(' + delayDays(v) + ' days later than planned; customer told first)</span>' : '')]);
-    return '<div class="big ok">' + esc(prod.replace(/^AgenticTelco /, '')) + ' is live</div><dl>' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>';
+    return '<div class="big ok">' + esc(prod.replace(/^AgenticTelco /, '')) + ' is live</div>' + (planOf(v) ? '<p class="orl">' + esc(UB.orchestrationLine) + '</p>' : '') + '<dl>' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>';
   }
   function delayDays(v) {
     var j = (S.full.jeopardy || [])[0], s = (S.full.milestones || []).filter(function (m) { return m.name === 'SentToOSS'; })[0];
@@ -330,7 +330,7 @@
   var DGROUPS = { understand: [136, 16, 360, 188, '--l2'], know: [512, 16, 360, 188, '--l4'], act: [888, 16, 168, 188, '--l5'], connect: [136, 220, 920, 284, '--l6'], prove: [1072, 16, 192, 488, '--l8'] };
   var DEDGES = [['customer', 'L1', 'M120 122H148'], ['L1', 'L2', 'M304 122H328'], ['L2', 'L4', 'M484 122H524'], ['L4', 'L3', 'M680 122H704'],
     ['L1', 'L5', 'M226 188V212H972V188'], ['L4', 'api', 'M602 188V256'], ['L5', 'api', 'M972 212V256'], ['L3', 'L8', 'M782 56V8H1168V56'],
-    ['api', 'sf', 'M324 312V340'], ['api', 'billing', 'M608 312V366'], ['api', 'avail', 'M780 312V366'], ['api', 'oss', 'M952 312V366'], ['oss', 'L7', 'M1032 425H1084']];
+    ['api', 'sf', 'M324 312V340'], ['api', 'billing', 'M608 312V366'], ['api', 'avail', 'M780 312V366'], ['api', 'oss', 'M952 312V366'], ['oss', 'L7', 'M1032 425H1084'], ['sfom', 'oss', 'M438 486V514H952V484']];
   function wrapText(s, max) { var w = String(s || '').split(' '), out = [], cur = ''; w.forEach(function (x) { if ((cur + ' ' + x).trim().length > max && cur) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); if (cur) out.push(cur); return out; }
   function icon(name, x, y, s, col) { return '<g class="ic" transform="translate(' + x + ' ' + y + ') scale(' + (s / 24) + ')" fill="none" stroke="' + col + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</g>'; }
   function diagramSvg() {
@@ -368,8 +368,9 @@
       }
       h += '</g>';
     });
-    var TG = UD.target || {};   // target state only: never part of a run, never lit
-    h += '<g class="tgt" aria-hidden="true"><path d="M438 486V514H952V484" marker-end="url(#aht)"/><rect x="560" y="507" width="300" height="16" rx="8"/><text x="710" y="519" text-anchor="middle">' + esc(TG.label) + ' · ' + esc(TG.tag) + '</text></g>';
+    var OR = UD.orchestration || {};   // Salesforce order orchestration sends the network order through the network order adapter (mocked)
+    h += '<g class="olbl"><rect x="540" y="506" width="290" height="17" rx="8"/><text x="685" y="518" text-anchor="middle">' + esc(OR.label) + '</text></g>' +
+      '<g class="mk"><rect x="838" y="506" width="54" height="17" rx="8"/><text x="865" y="518" text-anchor="middle">' + esc(OR.tag || chips.mocked || 'Mocked') + '</text></g>';
     return h + '</svg>';
   }
   function shellCio() {
@@ -379,7 +380,8 @@
       '<div class="banner"><div class="big">' + esc(UC.banner).replace(/ · /g, '<i>·</i>') + '</div><div class="small">' + esc(UC.bannerSmall) + '</div></div>' +
       '<div class="c3">' + (UC.cards || []).map(function (c, i) { return '<div class="cc"><div class="ci">' + '<svg viewBox="0 0 24 24" width="26" height="26">' + icon(['agent', 'shield', 'flow'][i], 0, 0, 24, 'currentColor') + '</svg></div><div><b>' + esc(c.title) + '</b><p>' + esc(c.text) + '</p></div></div>'; }).join('') + '</div>' +
       '<div class="cmain"><div class="panel dgm"><div class="strip" id="cstrip"></div><div class="dcap" id="dcap"></div>' + diagramSvg() +
-      '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '<div class="tl"><b>' + esc((UD.target || {}).legendTitle) + '</b> ' + esc((UD.target || {}).legend) + '</div></div></div>' +
+      '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '<div class="tl"><b>' + esc((UD.orchestration || {}).legendTitle) + '</b> ' + esc((UD.orchestration || {}).legend) + '</div></div>' +
+      '<div class="dtree" id="dtree"></div></div>' +
       '<div class="msgs">' + (UC.messages || []).map(function (m) { return '<div class="mc"><b>' + esc(m.title) + '</b><p>' + esc(m.text) + '</p></div>'; }).join('') + '</div></div>' +
       '<div class="gal" id="gallery"><h2>' + esc(UC.galleryHeading) + '</h2><p class="small">' + esc(UC.galleryIntro) + '</p>' +
       (ev.length ? '<div class="evg">' + ev.map(function (e, i) { return '<figure class="ev"><img loading="lazy" alt="' + esc(e.caption) + '" src="' + e.src + '"><figcaption><b>' + (i + 1) + '.</b> ' + esc(e.caption) + '</figcaption></figure>'; }).join('') + '</div>' : '<p class="small">No screenshots in this build.</p>') + '</div></div>';
@@ -393,7 +395,7 @@
       if (s.layer === 'L1' && /Customer message/.test(s.step)) on.customer = 1;
       if (s.layer === 'L6') {
         on.api = 1; var r = (s.runtime || '') + ' ' + s.step + ' ' + (s.component || '');
-        if (/Salesforce/.test(s.runtime || '')) {
+        if (isSfRt(s.runtime) || /Salesforce/.test(s.runtime || '')) {
           on.sf = 1; var a = s.api || '';
           if (/TMF620/.test(a)) on.sfcat = 1;
           if (/TMF648|TMF671/.test(a)) on.sfcpq = 1;
@@ -401,10 +403,12 @@
           if (/TMF629|TMF632/.test(a)) on.sfcust = 1;
         }
         if (/Billing|Payment/i.test(r)) on.billing = 1; if (/Availability/i.test(r)) on.avail = 1; if (/OSS/.test(r)) on.oss = 1;
+        if (/network order adapter/i.test(r)) { on.sfom = 1; on.oss = 1; }
       }
     });
     if (msgs.length) on.customer = 1;
     if (mss.some(function (m) { return /SentToOSS|PortReserved|Jeopardy|Live/.test(m.name); })) on.L7 = 1;
+    if (mss.some(function (m) { return (m.name === 'SentToOSS' && (m.body || {}).via) || m.name === 'FulfilmentPlan'; })) { on.sfom = 1; on.oss = 1; on.sf = 1; on.api = 1; }
     return on;
   }
   function inWin(W, k) { var w = k === 'all' ? { a: -Infinity, b: Infinity } : W[k]; return function (x) { var t = T(x); return w.a != null && t >= w.a && t < w.b; }; }
@@ -428,6 +432,10 @@
     $$('.dn', svg).forEach(function (g) { var id = g.dataset.node; g.classList.toggle('on', !!on[id]); g.classList.toggle('hot', !!(hot[id] || (id === 'api' && hot.L6))); });
     $$('.de', svg).forEach(function (p) { var e = p.dataset.e.split('-'); p.classList.toggle('on', !!(on[e[0]] && on[e[1]])); });
     if ($('#dcap').innerHTML !== cap) $('#dcap').innerHTML = cap;
+    var P = planOf(v), DT = UD.decomposition || {}, tree = P && (P.decomposition || []).length ? '<h3>' + esc(DT.heading) + '</h3><p class="small">' + esc(DT.intro) + '</p>' + decompTree(P) + '<p class="small">' + esc(DT.note) + '</p>' : '';
+    var legacy = !P && v && (v.milestones || []).some(function (m) { return m.name === 'SentToOSS' && !(m.body || {}).via; });
+    if (legacy) tree = '<p class="note fallback"><b>' + esc(DT.fallbackRoute || 'fallback route') + '</b>: this recorded run sent the order to the legacy OSS stand-in, not through Salesforce order orchestration. The live workflow no longer falls back: with no fulfilment plan it stops with a clear error.</p>';
+    if ($('#dtree').dataset.k !== tree) { $('#dtree').innerHTML = tree; $('#dtree').dataset.k = tree; $('#dtree').hidden = !tree; }
   }
 
   /* ---------- 3. Dev View: step timeline on the left, what each layer did in that step on the right ---------- */
@@ -473,7 +481,7 @@
         var rng = w.a0 == null ? 'not in this journey' : hm(w.a0) + (w.b !== Infinity ? ' – ' + hm(w.b) : '');
         var head = '<button class="as ' + c.k + (k === i ? ' sel' : '') + '" data-step="' + i + '"><b>' + (i + 1) + '. ' + esc(c.b) + '</b><span>' + esc(rng) + (sp.length ? ' · ' + sp.length + ' entries · ' + Object.keys(lays).sort().join(' ') : '') + '</span></button>';
         if (k !== i || !sp.length) return head;
-        return head + '<table class="t asp">' + sp.slice().sort(byStart).map(function (s) { return '<tr' + (isCall(s) ? ' class="call" data-sid="' + esc(s.span_id) + '" tabindex="0" title="Open the request and response"' : '') + '><td><span class="lyn" style="--c:var(--' + s.layer.toLowerCase() + ')">' + s.layer + '</span></td><td>' + esc(s.step) + '</td><td class="small">' + ms(s) + '</td></tr>'; }).join('') + '</table>';
+        return head + '<table class="t asp">' + sp.slice().sort(byStart).map(function (s) { return '<tr' + (isCall(s) ? ' class="call" data-sid="' + esc(s.span_id) + '" tabindex="0" title="Open the request and response"' : '') + '><td><span class="lyn" style="--c:var(--' + s.layer.toLowerCase() + ')">' + s.layer + '</span></td><td>' + esc(s.step) + (/^Legacy OSS/.test(s.step) ? ' <span class="lab mock">' + esc((UD.decomposition || {}).fallbackRoute || 'fallback route') + '</span>' : '') + '</td><td class="small">' + ms(s) + '</td></tr>'; }).join('') + '</table>';
       }).join('');
     if (k == null) { al.innerHTML = '<h3>' + esc(UA.layersHeading) + '</h3><p class="small">Press Play, or pick a step on the left.</p>'; return; }
     var wv = winView(k), lbl = k === 'all' ? UC.allSteps : (STEPS[k] || {}).label;
@@ -490,6 +498,24 @@
     return '<section class="lsec" data-layer="' + id + '" style="--c:var(--' + id.toLowerCase() + ')"><div class="lh"><span class="n">' + id + '</span><b>' + esc(l.name) + '</b><span class="q">' + esc(l.question) + '</span><span class="lab ' + sk[0] + '" title="' + esc(l.status) + '">' + sk[1] + '</span><button class="tb sm" data-about="' + id + '">' + esc(UA.about) + '</button></div><div class="lb"></div></section>';
   }
   function quote(m) { return '<blockquote class="q2">' + linkify(m.content) + '<span class="small"> · ' + hm(T(m.at)) + '</span></blockquote>'; }
+  function orchPanels(P) {
+    var so = P.serviceOrder || {}, st = P.steps || [], DT = UD.decomposition || {}, PI = P.productInventory || {}, NF = so.networkFulfilment || {};
+    return '<div class="sec">Decomposition (' + esc(P.engine || 'Salesforce order orchestration') + ')</div>' +
+      '<p class="small codesnote"><b>' + esc(P.actionCodesNote || 'Action codes are derived from the installed base (TMF637), not by the built-in decomposition.') + '</b> ' +
+      esc(P.networkBreakdownNote || 'RFS and resources are the network\'s own breakdown (x-action extension fields in the TMF641 response).') + '</p>' +
+      spanRows(P.decomposition || [], [['Level', function (r) { return '<span class="lv">' + esc(r.level) + '</span>'; }], ['Item', function (r) { return '<b>' + esc(r.item) + '</b>'; }],
+        ['Action code', function (r) { return actChip(r.action); }],
+        ['Why', function (r) { return esc(r.why) + '<div class="small">' + esc(r.where) + '</div>'; }]]) +
+      '<div class="sec">Orchestration plan <span class="mono small">' + esc(P.fulfillmentPlanId || '') + '</span> · ' + esc(P.planState || P.status || '') + '</div>' +
+      spanRows(st.map(function (x, i) { return Object.assign({ n: i + 1 }, x); }), [['#', function (x) { return x.n; }], ['Step', function (x) { return esc(x.name) + (x.message ? '<div class="small">' + esc(x.message) + '</div>' : ''); }],
+        ['State', function (x) { return '<span class="lab ' + (x.state === 'Completed' ? 'real' : 'mock') + '">' + esc(x.state) + '</span>' + (x.jeopardy && x.jeopardy !== 'On Time' ? ' <span class="warn">' + esc(x.jeopardy) + '</span>' : ''); }],
+        ['Depends on', function (x) { return esc((x.dependsOn || []).join(', ') || '—'); }],
+        ['Started · done', function (x) { return (x.startedAt ? hm(T(x.startedAt)) : '—') + ' · ' + (x.completedAt ? hm(T(x.completedAt)) : '—'); }]]) +
+      (so.id ? '<p>TMF641 service order <b class="mono">' + esc(so.id) + '</b>: ' + esc((so.stateChange || []).map(function (c) { return c.state; }).join(' → ') || so.state || '') + ' · ' + (so.items || []).map(function (i) { return esc(i.service) + ' ' + actChip(i.action); }).join(' · ') + '</p>' : '') +
+      (NF.reservation || NF.serviceInventory ? '<p class="small">Network side (inside the mocked network, not called by Salesforce): ' + [NF.reservation ? esc(NF.reservation.api) + ' reservation ' + esc(NF.reservation.id || '') : '', NF.serviceInventory ? esc(NF.serviceInventory.api) + ' services updated' : '', NF.resourceInventory ? esc(NF.resourceInventory.api) + ' resources updated' : ''].filter(Boolean).join(' · ') + ', returned as data in the TMF641 response.</p>' : '') +
+      (PI.writer ? '<p class="small">Installed product (TMF637): written only by ' + esc(PI.writer) + '. ' + esc(PI.note || '') + (PI.platformStatus ? ' Platform order status: <span class="mono">' + esc(PI.platformStatus) + '</span>.' : '') + '</p>' : '') +
+      '<p class="small">Idempotency key <span class="mono">' + esc(P.idempotencyKey || '') + '</span> (the order) · network order adapter: ' + esc(P.adapterMode || '') + '. ' + SIM_SENTENCE + '</p>';
+  }
   var ARCH = {
     L1: function (b, w, e) {
       var sp = w.spans.filter(function (s) { return s.layer === 'L1'; }), um = w.messages.filter(function (m) { return m.role === 'user'; });
@@ -547,7 +573,9 @@
     },
     L6: function (b, w, e) {
       var calls = w.spans.filter(function (s) { return s.layer === 'L6'; }); if (!calls.length) return false;
-      b.innerHTML = '<p><span class="chip sf">' + SF_CHIP + '</span><span class="chip st">' + STANDIN_CHIP + '</span> <span class="small">Click a call to see its TMF request and response.</span></p>' + apiRows(calls, e, true);
+      b.innerHTML = '<p><span class="chip sf">' + SF_CHIP + '</span><span class="chip st">' + STANDIN_CHIP + '</span>' + (calls.some(function (s) { return /network order adapter/i.test(s.runtime || ''); }) ? '<span class="chip st">' + NET_CHIP + '</span>' : '') + ' <span class="small">Click a call to see its TMF request and response.</span></p>' + apiRows(calls, e, true);
+      var P = planOf(w);
+      if (P) b.insertAdjacentHTML('beforeend', orchPanels(P));
       return true;
     },
     L7: function (b, w, e) {
@@ -587,9 +615,24 @@
   }
   function spanRows(list, cols) { return '<table class="t"><tr>' + cols.map(function (c) { return '<th>' + c[0] + '</th>'; }).join('') + '</tr>' + list.map(function (s) { return '<tr>' + cols.map(function (c) { return '<td>' + c[1](s) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; }
   function ms(s) { return s.running ? '<span class="warn">running…</span>' : (s.duration_ms >= 1000 ? (s.duration_ms / 1000).toFixed(1) + ' s' : Math.round(s.duration_ms) + ' ms'); }
-  /* Every Salesforce call reads 'TMF Open API (Salesforce)'; who provides it (out of the box or the TMF facade) is shown in the call detail only. */
-  var SF_CHIP = 'TMF Open API (Salesforce)', STANDIN_CHIP = 'Legacy stand-in (mocked)';
-  function rtChip(s) { var r = s.runtime || ''; if (/TMF Open API \(Salesforce\)/.test(r)) return '<span class="chip sf">' + SF_CHIP + '</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">' + STANDIN_CHIP + '</span>'; return '<span class="chip ours">' + esc(rtName(r)) + '</span>'; }
+  /* Every Salesforce call reads 'TMF Open API'; who provides it (out of the box or the TMF facade) is shown in the call detail only.
+     Recordings made before the chip rename carry 'TMF Open API (Salesforce)' and show the same chip. */
+  var SF_CHIP = 'TMF Open API', STANDIN_CHIP = 'Legacy stand-in (mocked)', NET_CHIP = 'Network order adapter (Mocked)';
+  function isSfRt(r) { return /^TMF Open API( \(Salesforce\))?$/.test(r || ''); }
+  function rtChip(s) { var r = s.runtime || ''; if (isSfRt(r)) return '<span class="chip sf">' + SF_CHIP + '</span>'; if (/network order adapter/i.test(r)) return '<span class="chip st">' + NET_CHIP + '</span>'; if (/stand-in/i.test(r)) return '<span class="chip st">' + STANDIN_CHIP + '</span>'; return '<span class="chip ours">' + esc(rtName(r)) + '</span>'; }
+  /* Salesforce order orchestration: the compact x-orchestration the workflow recorded when the plan completed (FulfilmentPlan milestone) */
+  var SIM_SENTENCE = 'The TMF641 request and response are simulated inside Salesforce for this demo.';
+  function planOf(v) { var m = ((v && v.milestones) || []).filter(function (x) { return x.name === 'FulfilmentPlan'; }).pop(); return m ? m.body || {} : null; }
+  function actChip(a) { return '<span class="act act-' + esc(String(a || '').toLowerCase()) + '">' + esc(a || '—') + '</span>'; }
+  function decompTree(P) {   // Product -> CFS -> RFS / Resource, each with its action code
+    var rows = P.decomposition || [], prod = rows.filter(function (r) { return r.level === 'Product'; }), out = [], cur = null;
+    var comps = rows.filter(function (r) { return r.level === 'Product component'; });
+    rows.forEach(function (r) { if (r.level === 'CFS') { cur = { r: r, kids: [] }; out.push(cur); } else if (r.level !== 'Product' && r.level !== 'Product component' && cur) cur.kids.push(r); });
+    var li = function (r, lv) { return '<span class="lv">' + esc(lv || r.level) + '</span> <b>' + esc(r.item) + '</b> ' + actChip(r.action); };
+    return '<ul class="tree">' + prod.map(function (p) {
+      return '<li>' + li(p, 'Product') + '<ul>' + comps.map(function (c) { return '<li>' + li(c, 'Product component') + '</li>'; }).join('') + out.map(function (c) { return '<li>' + li(c.r, 'CFS') + (c.kids.length ? '<ul>' + c.kids.map(function (k) { return '<li>' + li(k) + '</li>'; }).join('') + '</ul>' : '') + '</li>'; }).join('') + '</ul></li>';
+    }).join('') + '</ul>';
+  }
   function tmfTag(s) { var m = String(s.api || '').match(/^(TMF\d+)\s*(.*)$/); return m ? '<span class="tmf"><b>' + esc(m[1]) + '</b> ' + esc(m[2]) + '</span>' : '<span class="mono small">' + esc(/ollama/i.test(s.api || '') ? 'Model API' : (s.api || '')) + '</span>'; }
   function shortPath(p) { return String(p || '').replace(/^\/services\/apexrest\/agentictelco/, '…/apexrest/agentictelco').replace(/^\/services\/data\/v\d+\.\d+\/connect\/comms/, '…/connect/comms'); }
   function isCall(s) { return s.method && s.path; }
@@ -607,7 +650,7 @@
     if (typeof x === 'string') return x.replace(/\b00D[A-Za-z0-9]{12,15}![A-Za-z0-9._-]+/g, '[redacted]').replace(/https?:\/\/[A-Za-z0-9.-]+\.(?:my\.)?(?:salesforce|force|cloudforce|salesforce-setup|visualforce)\.com[^\s"']*/g, function (u) { return /\/lightning\/r\//.test(u) && !/frontdoor|sid=/.test(u) ? u : '[instance]' + u.replace(/^https?:\/\/[^\/]+/, '').split('?')[0]; });
     return x;
   }
-  function providedBy(s) { var a = s.attributes || {}; if (a.providedBy) return a.providedBy; return /apexrest\/agentictelco/.test(s.path || '') ? 'TMF facade within Salesforce (Apex)' : /connect\/comms/.test(s.path || '') ? 'Salesforce (out of the box)' : /stand-in/i.test(s.runtime || '') ? STANDIN_CHIP : rtName(s.runtime); }
+  function providedBy(s) { var a = s.attributes || {}; if (a.providedBy) return a.providedBy; return /apexrest\/agentictelco/.test(s.path || '') ? 'TMF facade within Salesforce (Apex)' : /connect\/comms/.test(s.path || '') ? 'Salesforce (out of the box)' : /stand-in/i.test(s.runtime || '') ? STANDIN_CHIP : /network order adapter/i.test(s.runtime || '') ? 'Salesforce order orchestration, through the network order adapter (Mocked: simulated inside Salesforce for this demo)' : rtName(s.runtime); }
   function openCall(sid) {
     var v = view(S.full, S.t) || S.full; if (!v) return;
     var s = (v.spans || []).filter(function (x) { return x.span_id === sid; })[0]; if (!s) return;
@@ -633,7 +676,7 @@
     if (/Place upgrade order|Order in progress|Complete order/.test(s.step) && has('OrderInProgress')) return a(L.order, maskNum('Order ' + (L.orderNumber || '')));
     if (/Create Fibre 900/.test(s.step) && has('AssetChanged')) return a(L.newAsset, 'Fibre 900 asset');
     if (/productRelationship/.test(s.step) && has('AssetChanged')) return a(L.relationship, 'Upgrade link');
-    if (/Fibre 150 terminated|Read current installed service|^Installed service/.test(s.step)) return a(L.oldAsset, 'Fibre 150 asset');
+    if (/Fibre 150 terminated|Read current installed (service|product)|^Installed (service|product)/.test(s.step)) return a(L.oldAsset, 'Fibre 150 asset');
     if (/^Customer$|Organization and contact roles|Contact role on the account|Who can order/.test(s.step)) return a(L.account, 'Account');
     return '';
   }
@@ -707,11 +750,12 @@
     L6: function (b, v) {
       var calls = v.spans.filter(function (s) { return s.layer === 'L6'; });
       b.innerHTML = '<p><span class="chip sf">' + SF_CHIP + '</span><span class="chip st">' + STANDIN_CHIP + '</span> <span class="small">Click a call to see its request and response.</span></p>' +
-        apiRows(calls, v, true) +
+        apiRows(calls, v, true) + (planOf(v) ? orchPanels(planOf(v)) : '') +
         '<p class="small">Everything above this layer reaches Salesforce only through TM Forum Open APIs. Only the L5 workflow writes (quote, order, installed-product change). The Custom Assetize Order flow is left as is; the run checks it created no installed product.</p>';
     },
     L7: function (b, v) {
       var n = v.network || {}, up = portIs900(v), jeo = (v.jeopardy || []).length && !up, sent = (v.milestones || []).some(function (m) { return m.name === 'SentToOSS'; });
+      var orch = (v.milestones || []).some(function (m) { return (m.name === 'SentToOSS' && (m.body || {}).via) || m.name === 'FulfilmentPlan'; });
       var col = up ? '#16a34a' : jeo ? '#c2410c' : '#64748b';
       b.innerHTML = '<p><span class="lab mock">mocked, operator\'s digital core (network and edge)</span> <span class="small">network view is our illustration</span></p>' +
         '<svg class="net" viewBox="0 0 640 200" role="img" aria-label="Network view of site 4471">' +
@@ -719,7 +763,7 @@
         '<line x1="160" y1="100" x2="420" y2="100" stroke="' + col + '" stroke-width="' + (up ? 7 : 3) + '" stroke-dasharray="' + (sent && !up ? '8 6' : '0') + '"/><text x="320" y="30" text-anchor="middle" font-size="11" fill="#555">fibre path: ' + esc([].concat(n.fibrePath || ['MH exchange OLT-07', 'Splitter cabinet MH-C12', 'Brightwell, 1 Fibre Way']).join(' → ')) + '</text>' +
         '<rect x="420" y="70" width="80" height="60" rx="8" fill="#fff" stroke="' + col + '" stroke-width="2"/><text x="460" y="96" text-anchor="middle" font-size="12" font-weight="700">' + (up ? '900' : '150') + ' Mbps</text><text x="460" y="113" text-anchor="middle" font-size="10" fill="#555">access port</text><text x="460" y="146" text-anchor="middle" font-size="9.5" fill="#777">' + esc((n.accessPort || {}).id || 'MH-OLT-07/1/14') + '</text>' +
         '<line x1="500" y1="100" x2="530" y2="100" stroke="#64748b" stroke-width="3"/><rect x="530" y="60" width="100" height="80" rx="10" fill="#eef4ff" stroke="#0176d3"/><text x="580" y="92" text-anchor="middle" font-size="12" font-weight="700">Site 4471</text><text x="580" y="110" text-anchor="middle" font-size="11" fill="#555">Brightwell</text><text x="580" y="125" text-anchor="middle" font-size="11" fill="#555">Martlesham</text>' +
-        '<text x="320" y="180" text-anchor="middle" font-size="12" fill="' + col + '">' + (up ? 'Port upgraded 150 → 900 when the OSS step completed' : jeo ? 'No 900 Mbps port free: the order is in jeopardy (+2 days)' : sent ? 'Order sent to the legacy OSS, waiting for the overnight batch' : 'Today: Fibre 150 on this port') + '</text></svg>' +
+        '<text x="320" y="180" text-anchor="middle" font-size="12" fill="' + col + '">' + (up ? (orch ? 'Bandwidth profile 150 → 900 and router swapped when the TMF641 order completed' : 'Port upgraded 150 → 900 when the legacy OSS step completed (fallback route, recorded run)') : jeo ? 'No 900 Mbps port free: the order is in jeopardy (+2 days)' : sent ? (orch ? 'TMF641 order sent by Salesforce order orchestration (network order adapter, mocked)' : 'Fallback route (recorded run): order sent to the legacy OSS, waiting for the overnight batch') : 'Today: Fibre 150 on this port') + '</text></svg>' +
         '<div class="sec">Platform (target state, mocked)</div><p>' + PLATFORM + '</p><p class="small">Provided by the operator\'s digital core, mocked in the MVP.</p>' +
         '<p class="small">The records about the network (inventory, site, OSS order) stay in L6; L7 is the network and platform itself.</p>';
     },
@@ -764,12 +808,18 @@
       ['TMF666', 'Account', 'GET', '/tmf-api/accountManagement/v4/billingAccount/{id}', 'Billing B balance'],
       ['TMF679', 'Product Offering Qualification', 'GET', '/tmf-api/productOfferingQualification/v5/availability/{addressKey}', 'What can be delivered at the site'],
       ['TMF639', 'Resource Inventory', 'GET', '/tmf-api/resourceInventoryManagement/v4/site/{id}', 'Exchange and access port'],
-      ['TMF641', 'Service Order', 'POST · GET', '/tmf-api/serviceOrdering/v4/serviceOrder', 'Legacy OSS, overnight batch'],
-      ['—', 'Payment link', 'POST', '/payment/link', 'Overdue-balance payment link (not a TMF API)']] }];
+      ['TMF641', 'Service Order', 'POST · GET', '/tmf-api/serviceOrdering/v4/serviceOrder', 'Legacy OSS, overnight batch: fallback route, only in the recorded delayed journey (the live workflow stops if there is no fulfilment plan)'],
+      ['—', 'Payment link', 'POST', '/payment/link', 'Overdue-balance payment link (not a TMF API)']] },
+    { g: 'Network order adapter (Mocked), called by Salesforce order orchestration', c: 'net', rows: [
+      ['TMF641', 'Service Order', 'POST · GET', '/tmf-api/serviceOrdering/v4/serviceOrder', 'The one outbound network interaction: one service order with an action code per CFS (acknowledged → inProgress → completed)']] },
+    { g: 'Network side, inside the mocked network (not called by Salesforce; shown as data in the TMF641 response)', c: 'netside', rows: [
+      ['TMF685', 'Resource Pool Management', '—', 'x-networkFulfilment.reservation', 'The network reserves the access port capacity and the new router'],
+      ['TMF639', 'Resource Inventory', '—', 'x-networkFulfilment.resourceInventory', 'The network updates its own resources'],
+      ['TMF638', 'Service Inventory', '—', 'x-networkFulfilment.serviceInventory', 'The network records its installed services']] }];
   function exposedApis() {
     return '<div class="ph boxh"><h2>' + esc(UA.apisHeading || 'Exposed APIs (TMF-aligned)') + '</h2></div><div class="panel boxb" id="exposed">' +
       EXPOSED.map(function (g) {
-        return '<div class="sec">' + (g.c === 'st' ? '<span class="chip st">' + STANDIN_CHIP + '</span>' : '<span class="chip sf">' + SF_CHIP + '</span> Provided by: ' + esc(g.g)) + '</div><table class="t api"><tr><th>TMF API</th><th>Method</th><th>Path</th><th>Used for</th></tr>' +
+        return '<div class="sec">' + (g.c === 'st' ? '<span class="chip st">' + STANDIN_CHIP + '</span>' : g.c === 'net' ? '<span class="chip st">' + NET_CHIP + '</span> ' + esc(g.g) + '. ' + SIM_SENTENCE : g.c === 'netside' ? '<span class="chip st">' + NET_CHIP + '</span> ' + esc(g.g) + '.' : '<span class="chip sf">' + SF_CHIP + '</span> Provided by: ' + esc(g.g)) + '</div><table class="t api"><tr><th>TMF API</th><th>Method</th><th>Path</th><th>Used for</th></tr>' +
           g.rows.map(function (r) { return '<tr><td><span class="tmf"><b>' + r[0] + '</b> ' + esc(r[1]) + '</span></td><td><span class="mth">' + esc(r[2]) + '</span></td><td class="mono small">' + esc(r[3]) + '</td><td>' + esc(r[4]) + '</td></tr>'; }).join('') + '</table>';
       }).join('') + '<p class="small">TMF-aligned resource shapes. The facade classes (AgenticTelco_TMF6nn) only map data; the rules live in the policy and the workflow.</p></div>';
   }

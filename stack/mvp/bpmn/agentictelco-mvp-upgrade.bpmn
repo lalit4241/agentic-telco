@@ -5,6 +5,7 @@
   exporter="AgenticTelco (hand-authored, adapted from broadband-upgrade-saga.bpmn)" exporterVersion="2.0">
   <bpmn:error id="Error_PolicyBlocked" name="Policy blocked (binding OPA deny)" errorCode="POLICY_BLOCKED" />
   <bpmn:error id="Error_Identity" name="Identity not certain" errorCode="IDENTITY_REVIEW" />
+  <bpmn:error id="Error_NoPlan" name="No fulfilment plan (Salesforce order orchestration)" errorCode="NO_FULFILMENT_PLAN" />
   <bpmn:process id="agentictelcoMvpUpgrade" name="L5 · Business broadband upgrade (MVP)" isExecutable="true" operaton:historyTimeToLive="P30D">
     <bpmn:documentation>AgenticTelco MVP, L5 Deterministic Execution. The agent may only START this process (via the intent service) and READ it.
 Every system-of-record write happens here, after the binding policy check. No DMN: the rule lives once, in OPA. No step calls a model.
@@ -13,13 +14,13 @@ Business key = order external ID, so a rerun cannot double-write. Timers run on 
     <bpmn:serviceTask id="T_Binding" name="Binding policy check (OPA) + identity check" operaton:type="external" operaton:topic="mvp-binding-check"><bpmn:incoming>F1</bpmn:incoming><bpmn:outgoing>F2</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:serviceTask id="T_Quote" name="Create quote [TMF648]" operaton:type="external" operaton:topic="mvp-quote"><bpmn:incoming>F2</bpmn:incoming><bpmn:outgoing>F3</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:serviceTask id="T_Order" name="Place upgrade order, action modify [TMF622]" operaton:type="external" operaton:topic="mvp-order"><bpmn:incoming>F3</bpmn:incoming><bpmn:outgoing>F4</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:serviceTask id="T_OssSubmit" name="Send to legacy OSS [TMF641]" operaton:type="external" operaton:topic="mvp-oss-submit"><bpmn:incoming>F4</bpmn:incoming><bpmn:outgoing>F5</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:intermediateCatchEvent id="Timer_Batch" name="Wait for overnight OSS batch"><bpmn:incoming>F5</bpmn:incoming><bpmn:outgoing>F6</bpmn:outgoing>
+    <bpmn:serviceTask id="T_OssSubmit" name="Salesforce order orchestration: decompose, send network order [TMF641]" operaton:type="external" operaton:topic="mvp-oss-submit"><bpmn:incoming>F4</bpmn:incoming><bpmn:outgoing>F5</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Timer_Batch" name="Wait for the fulfilment plan"><bpmn:incoming>F5</bpmn:incoming><bpmn:outgoing>F6</bpmn:outgoing>
       <bpmn:timerEventDefinition><bpmn:timeDuration>PT4S</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:intermediateCatchEvent>
-    <bpmn:serviceTask id="T_OssRead" name="Read OSS batch result" operaton:type="external" operaton:topic="mvp-oss-read"><bpmn:incoming>F6</bpmn:incoming><bpmn:incoming>F12</bpmn:incoming><bpmn:outgoing>F7</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gw_Oss" name="Port reserved?"><bpmn:incoming>F7</bpmn:incoming><bpmn:outgoing>F8</bpmn:outgoing><bpmn:outgoing>F10</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="T_OssRead" name="Read fulfilment plan result [TMF622]" operaton:type="external" operaton:topic="mvp-oss-read"><bpmn:incoming>F6</bpmn:incoming><bpmn:incoming>F12</bpmn:incoming><bpmn:outgoing>F7</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gw_Oss" name="Network order completed?"><bpmn:incoming>F7</bpmn:incoming><bpmn:outgoing>F8</bpmn:outgoing><bpmn:outgoing>F10</bpmn:outgoing></bpmn:exclusiveGateway>
     <bpmn:serviceTask id="T_Jeopardy" name="Raise jeopardy, revised date +2 days (intent at risk)" operaton:type="external" operaton:topic="mvp-jeopardy"><bpmn:incoming>F10</bpmn:incoming><bpmn:outgoing>F11</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:intermediateCatchEvent id="Timer_Delay" name="Wait 2 days for a free port"><bpmn:incoming>F11</bpmn:incoming><bpmn:outgoing>F12</bpmn:outgoing>
+    <bpmn:intermediateCatchEvent id="Timer_Delay" name="Wait 2 days (revised date)"><bpmn:incoming>F11</bpmn:incoming><bpmn:outgoing>F12</bpmn:outgoing>
       <bpmn:timerEventDefinition><bpmn:timeDuration>PT8S</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:intermediateCatchEvent>
     <bpmn:serviceTask id="T_Activate" name="Complete order [TMF622]" operaton:type="external" operaton:topic="mvp-activate"><bpmn:incoming>F8</bpmn:incoming><bpmn:outgoing>F9</bpmn:outgoing></bpmn:serviceTask>
     <bpmn:serviceTask id="T_Asset" name="Asset change: 150 Obsolete, 900 Installed, Upgrade link [TMF637]" operaton:type="external" operaton:topic="mvp-asset-change"><bpmn:incoming>F9</bpmn:incoming><bpmn:outgoing>F13</bpmn:outgoing></bpmn:serviceTask>
@@ -29,6 +30,8 @@ Business key = order external ID, so a rerun cannot double-write. Timers run on 
     <bpmn:endEvent id="End_Blocked" name="Stopped by policy (no writes)"><bpmn:incoming>F20</bpmn:incoming></bpmn:endEvent>
     <bpmn:boundaryEvent id="Err_Identity" name="Identity not certain" attachedToRef="T_Binding"><bpmn:outgoing>F21</bpmn:outgoing><bpmn:errorEventDefinition errorRef="Error_Identity" /></bpmn:boundaryEvent>
     <bpmn:endEvent id="End_Review" name="Raised for human review"><bpmn:incoming>F21</bpmn:incoming></bpmn:endEvent>
+    <bpmn:boundaryEvent id="Err_NoPlan" name="No fulfilment plan" attachedToRef="T_Order"><bpmn:outgoing>F22</bpmn:outgoing><bpmn:errorEventDefinition errorRef="Error_NoPlan" /></bpmn:boundaryEvent>
+    <bpmn:endEvent id="End_NoPlan" name="Stopped: no fulfilment plan (no fallback route)"><bpmn:incoming>F22</bpmn:incoming></bpmn:endEvent>
     <bpmn:sequenceFlow id="F1" sourceRef="Start" targetRef="T_Binding" />
     <bpmn:sequenceFlow id="F2" sourceRef="T_Binding" targetRef="T_Quote" />
     <bpmn:sequenceFlow id="F3" sourceRef="T_Quote" targetRef="T_Order" />
@@ -37,7 +40,7 @@ Business key = order external ID, so a rerun cannot double-write. Timers run on 
     <bpmn:sequenceFlow id="F6" sourceRef="Timer_Batch" targetRef="T_OssRead" />
     <bpmn:sequenceFlow id="F7" sourceRef="T_OssRead" targetRef="Gw_Oss" />
     <bpmn:sequenceFlow id="F8" name="yes" sourceRef="Gw_Oss" targetRef="T_Activate"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${ossState == 'completed'}</bpmn:conditionExpression></bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="F10" name="no free port" sourceRef="Gw_Oss" targetRef="T_Jeopardy"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${ossState != 'completed'}</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F10" name="jeopardy" sourceRef="Gw_Oss" targetRef="T_Jeopardy"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${ossState != 'completed'}</bpmn:conditionExpression></bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="F11" sourceRef="T_Jeopardy" targetRef="Timer_Delay" />
     <bpmn:sequenceFlow id="F12" sourceRef="Timer_Delay" targetRef="T_OssRead" />
     <bpmn:sequenceFlow id="F9" sourceRef="T_Activate" targetRef="T_Asset" />
@@ -45,6 +48,7 @@ Business key = order external ID, so a rerun cannot double-write. Timers run on 
     <bpmn:sequenceFlow id="F14" sourceRef="T_Fulfilled" targetRef="End_Live" />
     <bpmn:sequenceFlow id="F20" sourceRef="Err_Policy" targetRef="End_Blocked" />
     <bpmn:sequenceFlow id="F21" sourceRef="Err_Identity" targetRef="End_Review" />
+    <bpmn:sequenceFlow id="F22" sourceRef="Err_NoPlan" targetRef="End_NoPlan" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="Diagram">
     <bpmndi:BPMNPlane id="Plane" bpmnElement="agentictelcoMvpUpgrade">
@@ -66,6 +70,9 @@ Business key = order external ID, so a rerun cannot double-write. Timers run on 
       <bpmndi:BPMNShape id="S_EndBlocked" bpmnElement="End_Blocked"><dc:Bounds x="106" y="212" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="S_ErrId" bpmnElement="Err_Identity"><dc:Bounds x="152" y="122" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="S_EndReview" bpmnElement="End_Review"><dc:Bounds x="212" y="212" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ErrNoPlan" bpmnElement="Err_NoPlan"><dc:Bounds x="403" y="122" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndNoPlan" bpmnElement="End_NoPlan"><dc:Bounds x="403" y="212" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="E22" bpmnElement="F22"><di:waypoint x="421" y="158" /><di:waypoint x="421" y="212" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="E1" bpmnElement="F1"><di:waypoint x="56" y="100" /><di:waypoint x="86" y="100" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="E2" bpmnElement="F2"><di:waypoint x="196" y="100" /><di:waypoint x="226" y="100" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="E3" bpmnElement="F3"><di:waypoint x="336" y="100" /><di:waypoint x="366" y="100" /></bpmndi:BPMNEdge>

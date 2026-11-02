@@ -1,7 +1,8 @@
 // Salesforce evidence screenshots for the MVP demo (Lightning record pages, story order).
 // Login: the sf CLI's one-time URL (`sf org open --url-only`), opened in headless Chrome. The URL is never printed, logged or saved.
 // Privacy: the global header (search, user menu), user names (owner / created by / modified by) are blurred; headless has no URL bar.
-// Usage (repo root): node scripts/mvp/sf_evidence.js <outDir> <name>=<lightning path> [<name>=<path> ...]
+// Usage (repo root): node scripts/mvp/sf_evidence.js <outDir> <name>=<lightning path>[#<tab label>] [<name>=<path> ...]
+// Optional: EV_WAIT (ms after each load, default 9000), EV_W/EV_H (viewport, default 1500x1250). '#Related' clicks that record tab.
 const { chromium } = require(require('path').join(__dirname, '..', '..', 'web', 'node_modules', 'playwright-core'));
 const { execFileSync } = require('child_process');
 const fs = require('fs'), path = require('path');
@@ -24,19 +25,26 @@ const BLUR = `
   .slds-split-view_container, .forceSplitViewContainer, .split-left { display: none !important; }`;
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] });
-  const ctx = await browser.newContext({ viewport: { width: 1500, height: 1250 }, deviceScaleFactor: 1 });
+  const ctx = await browser.newContext({ viewport: { width: +(process.env.EV_W || 1500), height: +(process.env.EV_H || 1250) }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   let first = true, LIGHTNING = null;
   for (const j of jobs) {
-    const i = j.indexOf('='), name = j.slice(0, i), p = j.slice(i + 1);
-    if (first) { await page.goto(oneTimeUrl(p), { waitUntil: 'domcontentloaded', timeout: 90000 }); first = false; }
+    const i = j.indexOf('='), name = j.slice(0, i), pt = j.slice(i + 1).split('#'), p = pt[0], tabLabel = pt[1];
+    if (first) {   // the first page signs in; load it again once Lightning is up so it renders fully
+      await page.goto(oneTimeUrl(p), { waitUntil: 'domcontentloaded', timeout: 90000 }); first = false;
+      await page.waitForTimeout(+(process.env.EV_WAIT || 9000)); LIGHTNING = new URL(page.url()).origin;
+      await page.goto(LIGHTNING + p, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    }
     else {
       // Lightning paths load on the lightning domain; a Classic-only object (AccountContactRole) loads embedded (isdtp) on the my.salesforce.com domain
       const base = /^\/lightning\//.test(p) ? LIGHTNING : new URL(LIGHTNING.replace('.lightning.force.com', '.my.salesforce.com')).origin;
       await page.goto(base + p, { waitUntil: 'domcontentloaded', timeout: 90000 });
     }
     if (!LIGHTNING) LIGHTNING = new URL(page.url()).origin;
-    await page.waitForTimeout(9000);
+    await page.waitForTimeout(+(process.env.EV_WAIT || 9000));
+    if (tabLabel === 'zoomout') {   // plan viewer: zoom out so all steps fit
+      for (let k = 0; k < 3; k++) { const z = page.locator('button[title*="Zoom Out" i], button:has(lightning-primitive-icon):right-of(button[title*="Zoom In" i])').first(); if (await z.isVisible().catch(() => false)) { await z.click(); await page.waitForTimeout(800); } }
+    } else if (tabLabel) { const t = page.locator(`a[role="tab"]:has-text("${tabLabel}"), lightning-tab-bar a:has-text("${tabLabel}")`).first(); if (await t.isVisible().catch(() => false)) { await t.click(); await page.waitForTimeout(4000); } }
     for (let k = 0; k < 3; k++) {   // close one-off promo dialogs (e.g. the Slack announcement); no settings are changed
       const x = page.locator('section[role="dialog"] button[title="Close"], div[role="dialog"] button[title="Close"], .slds-modal button.slds-modal__close').first();
       if (await x.isVisible().catch(() => false)) { await x.click().catch(() => { }); await page.waitForTimeout(1200); } else break;

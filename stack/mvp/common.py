@@ -109,12 +109,12 @@ from stack.zg_common.sf_session import request as _sf_request, API_V   # noqa: E
 SF_DATA = f"/services/data/{API_V}"
 APEX = "/services/apexrest/agentictelco"          # TMF facade within Salesforce (Apex classes AgenticTelco_TMFnnn)
 CC = f"{SF_DATA}/connect/comms"                    # Salesforce's own TMF Open APIs (Communications Cloud)
-TMF_SF = "TMF Open API (Salesforce)"               # the on-screen chip for every Salesforce call
+TMF_SF = "TMF Open API"               # the on-screen chip for every Salesforce call
 OOTB = "Salesforce (out of the box)"               # 'Provided by' (detail drawer only)
 FACADE = "TMF facade within Salesforce (Apex)"     # 'Provided by' (detail drawer only)
 STANDIN = "Legacy stand-in (mocked)"
-TMF_NAMES = {"TMF620": "Product Catalog", "TMF622": "Product Order", "TMF629": "Customer", "TMF632": "Party", "TMF637": "Product Inventory", "TMF639": "Resource Inventory",
-             "TMF641": "Service Order", "TMF648": "Quote", "TMF666": "Account", "TMF671": "Promotion", "TMF679": "Product Offering Qualification",
+TMF_NAMES = {"TMF620": "Product Catalog", "TMF622": "Product Order", "TMF629": "Customer", "TMF632": "Party", "TMF637": "Product Inventory", "TMF638": "Service Inventory", "TMF639": "Resource Inventory",
+             "TMF641": "Service Order", "TMF648": "Quote", "TMF666": "Account", "TMF671": "Promotion", "TMF679": "Product Offering Qualification", "TMF685": "Resource Pool Management",
              "TMF921": "Intent"}
 
 

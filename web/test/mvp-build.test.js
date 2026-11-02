@@ -19,10 +19,10 @@ test('payload is AES-256-GCM, PBKDF2 250k; the verifier does not reveal the pass
   assert.throws(() => decrypt(payload, pw + 'x'));
   assert.doesNotMatch(html, /Brightwell|Fibre 900/, 'business content must only be inside the encrypted payload');
 });
-test('recorded mode with 8 layers and 27 glossary terms from docs/mvp/layer-panels.md', () => {
+test('recorded mode with 8 layers and 31 glossary terms from docs/mvp/layer-panels.md', () => {
   assert.strictEqual(CFG.mode, 'recorded');
   assert.deepStrictEqual(CFG.copy.layers.map((l) => l.id), ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8']);
-  assert.strictEqual(CFG.copy.glossary.length, 27);
+  assert.strictEqual(CFG.copy.glossary.length, 31);
 });
 test('the four journeys are recorded runs with the expected outcomes', () => {
   assert.deepStrictEqual(Object.keys(CFG.recordings).sort(), ['delayed', 'happy', 'notauth', 'overdue']);
@@ -52,7 +52,8 @@ test('policy and model come from this build', () => {
 test('L6 wording, footer, no hosting wording, branding', () => {
   const l6 = CFG.copy.layers.find((l) => l.id === 'L6');
   assert.match(JSON.stringify(l6), /TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce/);
-  assert.match(app.js, /TMF Open APIs \(Salesforce\)/);
+  assert.match(app.js, /TMF Open APIs/);
+  assert.doesNotMatch(JSON.stringify(CFG.copy) + JSON.stringify(CFG.ui), /TMF Open APIs? \(Salesforce\)/);
   assert.doesNotMatch(app.js, /native Salesforce API/);
   assert.doesNotMatch(app.js.replace(/not (ODA-)?certified( as conformant)?/g, ''), /\b(conformant|certified)\b/i);
   assert.match(app.js, /All system-of-record access is through TM Forum Open APIs exposed by Salesforce; no Salesforce-specific APIs above the systems layer\./);
@@ -78,9 +79,13 @@ test('every Salesforce call in the recordings is a TM Forum Open API (no SOQL, n
       if (/^Payment link \(mocked\)$/.test(s.step)) { assert.strictEqual(s.runtime, 'Legacy stand-in (mocked)'); continue; }   // the one non-TMF stand-in
       assert.match(String(s.api || ''), /^TMF\d{3} \S/, k + ' ' + s.step + ' has TMF tag and name');
       if (/^\/services\//.test(s.path)) {
-        assert.strictEqual(s.runtime, 'TMF Open API (Salesforce)', k + ' ' + s.step);
+        // the chip was renamed to 'TMF Open API'; recordings made before the rename (not re-recorded) keep the old runtime string
+        assert.ok(s.runtime === 'TMF Open API' || (k !== 'happy' && s.runtime === 'TMF Open API (Salesforce)'), k + ' ' + s.step + ' ' + s.runtime);
         assert.match(s.path, /^\/services\/apexrest\/agentictelco\/tmf\d{3}\/|^\/services\/data\/v[\d.]+\/connect\/comms\//, k + ' ' + s.step);
         assert.ok(['Salesforce (out of the box)', 'TMF facade within Salesforce (Apex)'].includes((s.attributes || {}).providedBy), k + ' ' + s.step);
+      } else if (/^Network order adapter/.test(s.component || '')) {   // calls made by Salesforce order orchestration (mocked adapter)
+        assert.match(String(s.runtime), /network order adapter \(Mocked\)$/, k + ' ' + s.step);
+        assert.match(s.path, /^\/tmf-api\//, k + ' ' + s.step);
       } else assert.strictEqual(s.runtime, 'Legacy stand-in (mocked)', k + ' ' + s.step);
     }
   }
@@ -114,7 +119,7 @@ test('three audience views, all their copy in one object (ui-copy.json)', () => 
   assert.deepStrictEqual(UI.diagram.groups.map((g) => g.title), ['Understand', 'Know', 'Act', 'Connect', 'Prove']);
   assert.strictEqual(UI.cio.galleryHeading, 'Proof: the real records in Salesforce');
   assert.deepStrictEqual(UI.business.steps.map((s) => s.label), ['Asks', 'Checks', 'Recommends', 'Agrees', 'Ordered', 'Live']);
-  assert.strictEqual(UI.diagram.chips.sf, 'TMF Open API (Salesforce)');
+  assert.strictEqual(UI.diagram.chips.sf, 'TMF Open API');
   assert.strictEqual(UI.diagram.chips.facade, undefined);   // the picture shows no facade chip; the Dev View keeps the detail
   assert.match(UI.architect.mappingHeading, /conceptual alignment/);
   assert.doesNotMatch(JSON.stringify(UI), /certif|conforman|Salesforce APIs|sObject|hosting|Docker|Ollama|Qwen/i);

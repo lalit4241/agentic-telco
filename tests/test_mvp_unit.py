@@ -8,10 +8,10 @@ ROOT = Path(__file__).resolve().parent.parent
 MVP = ROOT / "stack" / "mvp"
 
 
-def test_copy_json_has_8_layers_and_27_terms():
+def test_copy_json_has_8_layers_and_31_terms():
     c = json.loads((ROOT / "web" / "src" / "mvp" / "copy.json").read_text())
     assert [l["id"] for l in c["layers"]] == [f"L{i}" for i in range(1, 9)]
-    assert len(c["glossary"]) == 27
+    assert len(c["glossary"]) == 31
     assert "TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce" in json.dumps(c)
     assert "native Salesforce API" not in json.dumps(c)
 
@@ -23,7 +23,7 @@ def test_bpmn_has_the_business_steps_and_a_diagram():
     p = root.find("b:process", ns)
     assert p.get("isExecutable") == "true"
     names = " ".join((e.get("name") or "") for e in p.iter())
-    for step in ["Binding policy check", "Create quote", "Place upgrade order", "legacy OSS", "jeopardy", "Complete order", "Asset change", "Intent fulfilled"]:
+    for step in ["Binding policy check", "Create quote", "Place upgrade order", "Salesforce order orchestration", "jeopardy", "Complete order", "Asset change", "Intent fulfilled"]:
         assert re.search(step, names, re.I), step
     assert "bpmndi:BPMNShape" in x
 

@@ -144,3 +144,12 @@ body.presenter .stephint,body.presenter .glegend,body.presenter .kpis .small{dis
 .dsvg .nt.sb{font-size:11px}.dsvg [data-node^="sf"]:not([data-node="sf"]) .ns{font-size:10.5px}.dsvg [data-node^="sf"]:not([data-node="sf"]) .bx{rx:8}
 .dsvg .sfband rect{stroke:var(--blue);stroke-width:1.2}.dsvg .sfband .bi{fill:#fff}.dsvg .sfband .fa{fill:color-mix(in srgb,var(--blue) 12%,#fff)}.dsvg .sfband text{font-size:11px;font-weight:700;fill:var(--txt)}.dsvg .ad{font-size:10px;font-weight:700;fill:#5c6170}
 .dsvg .tgt path{fill:none;stroke:#7d8494;stroke-width:1.8;stroke-dasharray:5 4}.dsvg .tgt rect{fill:#eef0f3;stroke:#9aa0ae}.dsvg .tgt text{font-size:10.5px;font-style:italic;fill:#555b6a}.glegend .tl{grid-column:1/-1;color:#7a8090}
+/* Salesforce order orchestration: the Order Management -> network order adapter arrow, the decomposition tree, action codes */
+.dsvg .olbl rect{fill:#eef4ff;stroke:#9ab8e6}.dsvg .olbl text{font-size:10.5px;font-weight:600;fill:#1e3a6e}
+.dtree{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#e2e5ea);border-radius:10px;background:#fbfcfe}.dtree h3{margin:0 0 4px;font-size:15px}
+.tree,.tree ul{list-style:none;margin:0;padding-left:18px}.tree{padding-left:0}.tree li{position:relative;padding:3px 0}
+.tree ul li::before{content:'';position:absolute;left:-12px;top:0;bottom:50%;width:10px;border-left:1.5px solid #c3c8d2;border-bottom:1.5px solid #c3c8d2}
+.lv{display:inline-block;min-width:62px;font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.03em}
+.act{display:inline-block;padding:0 7px;border-radius:9px;font-size:11px;font-weight:700;font-family:ui-monospace,monospace;background:#eef0f3;color:#475569}
+.act-modify{background:#e0ecff;color:#1e40af}.act-add{background:#dcfce7;color:#14532d}.act-delete{background:#fee2e2;color:#7f1d1d}.act-nochange{background:#f1f5f9;color:#64748b}
+.orl{margin:4px 0 8px;font-weight:600}

@@ -41,7 +41,8 @@
   "outcomeWaiting": "The outcome appears here when the journey ends.",
   "outcomeNoOrder": "No order placed",
   "kpiHeading": "From this run",
-  "kpiNote": "Counted from the recorded run. The overnight network batch is simulated, so the elapsed time is the demo run, not a real install."
+  "kpiNote": "Counted from the recorded run. The network is simulated, so the elapsed time is the demo run, not a real install.",
+  "orchestrationLine": "One upgrade, three services, one router swap."
  },
  "cio": {
   "headline": "Agentic change, on the estate you already have.",
@@ -83,17 +84,18 @@
    "sfcust": { "title": "Customer and contacts", "sub": "TMF629, TMF632" },
    "sfcat": { "title": "Product Catalog", "sub": "catalogue records (TMF620)" },
    "sfcpq": { "title": "CPQ", "sub": "quote and promotion (TMF648, TMF671)" },
-   "sfom": { "title": "Order Management", "sub": "orders and installed services (TMF622, TMF637)" },
+   "sfom": { "title": "Order Management", "sub": "orders and installed products (TMF622, TMF637)" },
    "billing": { "title": "Billing", "sub": "Older system" },
    "avail": { "title": "Availability", "sub": "Older system" },
-   "oss": { "title": "Network orders", "sub": "Older system (OSS)" },
+   "oss": { "title": "Network orders", "sub": "Network order adapter (TMF641 only)" },
    "L7": { "title": "Network view", "sub": "Exchange port and fibre" },
    "L8": { "title": "Step timeline", "sub": "Request to live service" }
   },
   "sfBand": { "label": "TMF APIs interface" },
   "adapters": { "billing": "TMF666 adapter", "avail": "TMF679 adapter", "oss": "TMF641 adapter" },
-  "target": { "label": "Salesforce order orchestration", "tag": "target state", "legendTitle": "Dashed grey arrow", "legend": "Target state, not part of this run: Salesforce Order Management sends the network order. Today the workflow sends it." },
-  "chips": { "sf": "TMF Open API (Salesforce)", "mocked": "Mocked", "adapters": "Adapters" }
+  "orchestration": { "label": "Salesforce order orchestration · TMF641 service order", "tag": "Mocked", "legendTitle": "Order Management to Network orders", "legend": "Salesforce order orchestration decomposes the order and sends one TMF641 service order through the network order adapter. Mocked: simulated inside Salesforce for this demo." },
+  "decomposition": { "heading": "One upgrade, decomposed", "intro": "TMF622 carries the commercial codes on the product and its bundle components. Salesforce order orchestration decomposes the order into customer facing services (CFS), and TMF641 carries one code per CFS. The network breaks each CFS into its RFS and resources; that breakdown comes back only in the TMF641 response.", "note": "Action codes are derived from the installed base (TMF637), not by the built-in decomposition. RFS and resources are the network's own breakdown (x-action extension fields in the TMF641 response, mocked network data).", "noPlan": "No fulfilment plan was created for this order, so the run stops here (no fallback route).", "fallbackRoute": "fallback route" },
+  "chips": { "sf": "TMF Open API", "mocked": "Mocked", "adapters": "Adapters" }
  },
  "architect": {
   "stepsHeading": "Step timeline",
@@ -116,7 +118,7 @@
    ["Quote", "TMF648 Quote", "Core Commerce Management", "Quote, QuoteItem"],
    ["Product order", "TMF622 Product Order", "Core Commerce Management", "ProductOrder, ProductOrderItem"],
    ["Service order (OSS, mocked)", "TMF641 Service Order", "Production", "ServiceOrder, ServiceOrderItem"],
-   ["Installed service", "TMF637 Product Inventory", "Core Commerce Management", "Product"]
+   ["Installed product", "TMF637 Product Inventory", "Core Commerce Management", "Product"]
   ]
  }
 }

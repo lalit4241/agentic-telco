@@ -90,7 +90,7 @@ It stores the conversation, the decisions, the intent and its reports, the delay
 Business terms such as "authorised contact" and "available at site" are defined once, with their source. For Sam's request, the context service builds one context pack, with every fact tagged with where it came from. The same policy then runs twice: first as an advisory check before the agent makes an offer, then as the binding check in the workflow before anything is written. It checks four things: Sam is an authorised contact, there is no overdue balance, Fibre 900 is available at the site, and mid-contract changes are upgrades only.
 
 - **Why it matters:** rules live in one visible, versioned, tested place, not inside the model and not buried in a system of record.
-- **What you'll see:** the context pack with source chips ("TMF Open API (Salesforce)" with the API name, or "Legacy stand-in (mocked)"), the policy decision and the rule that applied.
+- **What you'll see:** the context pack with source chips ("TMF Open API" with the API name, or "Legacy stand-in (mocked)"), the policy decision and the rule that applied.
 - **Today vs agentic:** in our own demo org, the "Custom Assetize Order" flow silently required a usage record on each order. Nothing documented it. That is an org customisation, not a Salesforce flaw. Here the same kind of rule is one visible policy, and the usage record is created inside the TMF622 order itself, not as a separate call.
 - **Tags:** none (policy engine: OPA)
 
@@ -98,9 +98,9 @@ Business terms such as "authorised contact" and "available at site" are defined 
 
 **Question**: Who actually does the work?
 **Tech**: Operaton BPMN (Apache-2.0), Python workers
-**Status**: Real; OSS is a stand-in
+**Status**: Real; the network is mocked
 
-One business process takes Sam's acceptance through to "live". It runs the binding policy check, creates the quote, places the upgrade order and waits for fulfilment. A timer raises the delay and the revised date. At the end it marks Fibre 150 as obsolete, records Fibre 900 as installed and links the two as an upgrade. It is the only component that writes. The order ID is its business key, so a rerun can't write the same order twice.
+One business process takes Sam's acceptance through to "live". It runs the binding policy check, creates the quote, places the upgrade order and waits while Salesforce order orchestration fulfils it. A timer raises the delay and the revised date. At the end it marks Fibre 150 as obsolete, records Fibre 900 as installed and links the two as an upgrade. It is the only component that writes. The order ID is its business key, so a rerun can't write the same order twice.
 
 - **Why it matters:** writes follow a fixed, auditable process that absorbs slow and batch legacy systems, whatever the agent says.
 - **What you'll see:** the process diagram (BPMN) with the current step highlighted, including the delay.
@@ -110,15 +110,15 @@ One business process takes Sam's acceptance through to "live". It runs the bindi
 
 **Question**: Where is the truth recorded?
 **Tech**: Salesforce as the system of record, exposed only through TM Forum Open APIs: TMF629 and TMF637 get-by-id out of the box from Salesforce; TMF632, TMF637 list/create/update/relationship, TMF620, TMF648, TMF622 and TMF671 from a thin TMF facade layer within Salesforce (Apex); legacy stand-ins behind TMF-shaped adapters
-**Status**: Salesforce real; legacy billing, availability, inventory and OSS mocked
+**Status**: Salesforce real; legacy billing, availability and inventory mocked; network order adapter mocked
 **Label**: TM Forum Open APIs exposed by Salesforce: two out of the box, the rest through a thin TMF facade layer within Salesforce
-**Chip**: TMF Open APIs (Salesforce)
+**Chip**: TMF Open APIs
 
-Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed services. Everything above this layer reaches it only through TM Forum Open APIs, never through Salesforce-specific APIs. Out of the box, Salesforce provides two of them: the customer record (TMF629) and reading one installed service by its ID (TMF637). A thin TMF facade layer within Salesforce (Apex) provides the rest: the organisation and its contact roles (TMF632), listing, creating and updating installed services and linking them as an upgrade (TMF637), catalogue (TMF620), quote (TMF648), order (TMF622) and promotion (TMF671). It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The usage record that our demo org expects on each order is created inside the TMF622 order itself, not as a separate call. The legacy billing, availability, network inventory and network fulfilment systems sit behind adapters with the same TM Forum API shapes. The overdue-balance payment link is a mocked stand-in and is not a TMF API. The APIs are TMF-aligned.
+Salesforce holds Brightwell's customer record, contacts, site, quote, order and installed products (TMF637). Everything above this layer reaches it only through TM Forum Open APIs, never through Salesforce-specific APIs. Out of the box, Salesforce provides two of them: the customer record (TMF629) and reading one installed service by its ID (TMF637). A thin TMF facade layer within Salesforce (Apex) provides the rest: the organisation and its contact roles (TMF632), listing, creating and updating installed services and linking them as an upgrade (TMF637), catalogue (TMF620), quote (TMF648), order (TMF622) and promotion (TMF671). It lives in the Salesforce org itself, not in a separate integration tier, and it only translates data: it holds no business rules. The usage record that our demo org expects on each order is created inside the TMF622 order itself, not as a separate call. Salesforce order orchestration fulfils the order: the built-in decomposition turns Business Fibre 900 (modify) into three customer facing services, Fibre Broadband (modify, 150 to 900 Mbps), Fibre Access (noChange) and Managed Router (CPE) (modify), each with its action code, and a seven-step fulfilment plan sends one TMF641 service order through the network order adapter. The adapter is mocked: the TMF641 request and response are simulated inside Salesforce for this demo. The legacy billing, availability and network inventory systems sit behind adapters with the same TM Forum API shapes. The overdue-balance payment link is a mocked stand-in and is not a TMF API. The APIs are TMF-aligned.
 
 - **Why it matters:** Salesforce and the legacy estate stay in place, keep the records and nothing else, and can be replaced one at a time behind the same APIs.
-- **What you'll see:** each call, shown by its TM Forum API number and name (for example "TMF622 Product Order") and labelled "TMF Open API (Salesforce)" or "Legacy stand-in (mocked)", with links to the Salesforce records behind it.
-- **Tags:** TMF Open API (Salesforce), out of the box [TMF629] [TMF637 get-by-id] · TMF Open API (Salesforce), TMF facade [TMF632] [TMF637 list/create/update/relationship] [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666 billing] [TMF679 availability] [TMF639 network inventory] [TMF641 network fulfilment] (shape only) · payment link (mocked, not a TMF API)
+- **What you'll see:** each call, shown by its TM Forum API number and name (for example "TMF622 Product Order") and labelled "TMF Open API" or "Legacy stand-in (mocked)", with links to the Salesforce records behind it.
+- **Tags:** TMF Open API, out of the box [TMF629] [TMF637 get-by-id] · TMF Open API, TMF facade [TMF632] [TMF637 list/create/update/relationship] [TMF620] [TMF648] [TMF622] [TMF671] · legacy stand-ins [TMF666 billing] [TMF679 availability] [TMF639 network inventory] (shape only) · network order adapter (mocked, simulated inside Salesforce) [TMF685] [TMF639] [TMF641] [TMF638] · payment link (mocked, not a TMF API)
 
 ## L7 Digital Core
 
@@ -126,7 +126,7 @@ Salesforce holds Brightwell's customer record, contacts, site, quote, order and 
 **Tech**: Network view (mocked)
 **Status**: Mocked, our illustration
 
-It shows the operator's network at site 4471: the exchange, the fibre path to Martlesham and the access port. The port changes from 150 to 900 when the network fulfilment step completes. One line underneath lists the platform services an operator would provide.
+It shows the operator's network at site 4471: the exchange, the fibre path to Martlesham and the access port. The port changes from 150 to 900 when the TMF641 network order completes. One line underneath lists the platform services an operator would provide.
 
 - **Why it matters:** it shows where the order meets the network and what a production platform needs, without claiming the MVP has it.
 - **What you'll see:** the network view for site 4471, labelled "network view is our illustration"; one platform line (Kubernetes, secrets vault, network zones, API gateway, agent and workload identity, event bus).
@@ -162,10 +162,14 @@ It builds a step timeline for Sam's request from the audit log. It shows each st
 **Workflow**: The business process that carries out an agreed action step by step. It is the only part of the demo that writes to a system of record.
 **BPMN**: Business Process Model and Notation, a standard way to draw and run business processes. The demo's workflow is a BPMN process running on Operaton.
 **Business key**: A unique ID, here the order ID, that the workflow uses so that running a step again does not create a second order.
-**System of record**: The system that holds the official version of a piece of data. Here Salesforce holds customers, quotes, orders and installed services; legacy systems hold billing and network data.
+**System of record**: The system that holds the official version of a piece of data. Here Salesforce holds customers, quotes, orders and installed products (TMF637); legacy systems hold billing data, and the network holds its own installed services (TMF638) and resources (TMF639).
 **TMF facade**: A thin layer within Salesforce, written in Apex, that exposes Salesforce's records as TM Forum Open APIs where Salesforce's out-of-the-box TMF APIs (TMF629 and TMF637 get-by-id) don't cover the need: TMF632 contact roles, TMF637 list, create, update and relationship, TMF620 catalogue, TMF648 quote, TMF622 order (including the usage record, created inside the order) and TMF671 promotion. It lives in the Salesforce org, not in a separate integration tier, and only translates data.
-**Legacy stand-in**: A mocked version of an older system, such as billing (TMF666 shape), availability (TMF679), network inventory (TMF639) or network fulfilment (TMF641), built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen.
+**Legacy stand-in**: A mocked version of an older system, such as billing (TMF666 shape), availability (TMF679), network inventory (TMF639) or the legacy network fulfilment (TMF641, the fallback route of the recorded delayed journey only), built to behave like the real thing, including slow answers and overnight batches. It is always labelled on screen.
 **Adapter**: A small piece of software in front of a legacy system that gives it a standard API, so the rest of the architecture never deals with its quirks.
+**CFS (customer facing service)**: A service the customer would recognise, such as Fibre Broadband, Fibre Access or Managed Router (CPE). Salesforce order orchestration decomposes the commercial product into CFS lines with the built-in decomposition; the network decomposes each CFS into resource facing services and resources (RFS). The Wi-Fi 6 Router and Fibre Access Line are bundle components (commercial products), not CFS.
+**Action code**: What happens to each line of an order: add, modify, delete or noChange. TMF622 carries the commercial codes (product and bundle components), TMF641 carries one code per CFS, and the network's own RFS and resource codes come back only in the TMF641 response. The codes are derived from the installed base (TMF637), not by the built-in decomposition, so an upgrade changes only what needs to change.
+**Salesforce order orchestration**: The fulfilment plan Salesforce builds from the order: decomposition, seven steps with dependencies, a jeopardy rule and a point of no return. It sends one TMF641 service order and records the network result. The installed product (TMF637) is written only by the L5 workflow.
+**Network order adapter**: The one interface Salesforce order orchestration uses to reach the network: one TMF641 service order (POST plus status reads). Reservation (TMF685) and the network's service and resource inventories (TMF638, TMF639) sit on the network side and come back as data in the TMF641 response. In the demo it is mocked: the requests and responses are simulated inside Salesforce.
 **Cross-reference**: A maintained table linking one customer's IDs across systems, such as the Salesforce account, billing ID and network site. If a link is not verified, the workflow stops for human review.
 **Jeopardy**: A warning that an order is at risk of missing its date. Here the legacy network system reports no free exchange port, the date moves by two days and the order stays in progress.
 **Hidden rule**: A business rule buried inside a system's configuration or code, often undocumented. In our demo org, a custom flow silently required a usage record on each order; the demo now creates it inside the TMF622 order.
