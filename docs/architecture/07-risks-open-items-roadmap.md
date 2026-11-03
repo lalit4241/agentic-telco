@@ -28,7 +28,7 @@
 | R6 | Licence drift (a project relicenses) | Low | Medium | Re-check [06](06-tech-stack-and-licences.md) before each release | RECOMMENDED |
 | R7 | Operaton short support window (no LTS) | Medium | Low (demo) | Pin version; Flowable or Temporal as fallback | CONFIRMED (support policy) |
 | R8 | Live demo failure at an event | Medium | High | Replay mode (ADR-006); local stack on a laptop as backup | RECOMMENDED |
-| R9 | Salesforce out-of-the-box configuration contains logic overlapping OPA (for example CPQ rules) | Medium | Medium | Document it; OPA decides before any write | INFERRED |
+| R9 | Salesforce out-of-the-box configuration contains logic overlapping OPA (for example CPQ rules) | Medium | Medium | Document it; OPA decides before any write; split set in [decision-cpq-rules.md](../mvp/decision-cpq-rules.md) | INFERRED |
 | R10 | Salesforce version changes (Winter '27 Direct Access only; API version differences) | Medium | Medium | Use Direct Access from the start; pin API versions | CONFIRMED (deprecation) |
 
 ## 3. Roadmap (RECOMMENDED)
