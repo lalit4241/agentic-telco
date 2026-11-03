@@ -7,7 +7,7 @@ const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
 const FILE = path.join(__dirname, '..', 'dist', 'index.html');
 const PW = process.env.TF_DEMO_PASSWORD || fs.readFileSync(path.join(ROOT, '.demo-password'), 'utf8').trim();
 const SHOTS = process.env.SHOTS;
-const FOOT = 'Concept demo by Lalit Chauhan · not an official Salesforce product';
+const FOOT = 'Concept demo · not an official Salesforce product';
 const UI = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'src', 'mvp', 'ui-copy.json'), 'utf8'));
 const results = [];
 const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: detail || '' }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (detail ? ' — ' + detail : '')); };
@@ -51,6 +51,14 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('modebar says recorded run', /recorded run/i.test(await page.textContent('#modebar')));
   await page.selectOption('#spd', '4'); await page.waitForTimeout(3500); await shot('1-business-happy-start.png');
   check('play advances the step bar', (await chev()).some((x) => /now|done/.test(x)));
+  const zg = () => page.$$eval('#zg .zc', (a) => a.map((x) => ({ id: x.dataset.layer, name: x.textContent, on: x.classList.contains('on') })));
+  const zgl = await zg(), RD = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  check('business tab: Zero Gravity layer strip L1..L8 with the README layer names', zgl.map((x) => x.id).join() === 'L1,L2,L3,L4,L5,L6,L7,L8' && zgl.every((x) => x.name === x.id + UI.business.zgLayers.layers.find((l) => l.id === x.id).name && RD.includes('| ' + x.id + ' | ' + x.name.slice(2) + ' |')), JSON.stringify(zgl.map((x) => x.name)));
+  check('business tab: the strip lights the layers the replay step lands in', zgl.some((x) => x.on), zgl.filter((x) => x.on).map((x) => x.id).join());
+  await page.setViewportSize({ width: 1280, height: 800 }); await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(200);
+  const zr = await page.evaluate(() => { const z = document.getElementById('zg').getBoundingClientRect(), c = document.getElementById('chat').getBoundingClientRect(), r = [...document.querySelectorAll('#zg .zc')].map((x) => x.getBoundingClientRect().top); return { h: Math.round(z.height), one: Math.max(...r) - Math.min(...r) < 2, chat: Math.round(c.top) }; });
+  check('layer strip is one compact row at 1280x800 and the chat stays above the fold', zr.one && zr.h <= 48 && zr.chat < 800 - 300, JSON.stringify(zr));
+  await page.setViewportSize({ width: 1440, height: 900 });
   // while playing, How it fits lights the layers in use
   await tab('cio'); await page.waitForTimeout(500);
   check('How it fits lights layers during the replay', (await page.$$('#dsvg .dn.on')).length >= 2, String((await page.$$('#dsvg .dn.on')).length));
@@ -65,17 +73,29 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('happy: outcome card Fibre 900, £45, 28 Aug 2027, order from the recording, live 2 Nov 2026', /Fibre 900 is live/.test(out) && /£45 a month/.test(out) && /28 Aug 2027/.test(out) && out.includes(JSON.parse(fs.readFileSync(path.join(ROOT, 'recordings', 'mvp', 'happy.json'), 'utf8')).state.links.orderNumber) && /2 Nov 2026/.test(out), out);
   check('happy: tab 1 line "One upgrade, three services, one router swap."', out.includes(UI.business.orchestrationLine) && UI.business.orchestrationLine === 'One upgrade, three services, one router swap.');
   check('happy: KPIs derived from the run', (await page.$$('#kpis .kg div')).length === 4 && /request to live/.test(await page.textContent('#kpis')));
-  check('tab 1 has no layer numbers, APIs or drawers', !/\bL[1-8]\b|TMF\d|API/.test(b) && !(await page.$('#v-business [data-about]')));
+  const bNoZg = await page.evaluate(() => { const v = document.getElementById('v-business').cloneNode(true); v.querySelector('#zg').remove(); return v.innerText; });
+  check('tab 1 has no layer numbers, APIs or drawers outside the layer strip', !/\bL[1-8]\b|TMF\d|API/.test(bNoZg) && !(await page.$('#v-business [data-about]')));
   await shot('2-business-happy-end.png');
 
   // ---- step selection drives tabs 2 and 3
   await page.click('#chev .cv[data-step="4"]');
   check('selecting a step marks it', (await page.$$('#chev .cv.sel')).length === 1);
+  const zOn = (await page.$$eval('#zg .zc.on', (a) => a.map((x) => x.dataset.layer))).join();
+  await page.click('#zg .zc[data-layer="L5"]'); await page.waitForTimeout(300);
+  check('clicking the layer strip opens How it fits', await page.isVisible('#v-cio') && !(await page.isVisible('#v-business')));
+  const dOn = (await page.$$eval('#dsvg .dn.on', (a) => a.map((x) => x.dataset.node === 'api' ? 'L6' : x.dataset.node).filter((n) => /^L[1-8]$/.test(n)).sort())).join();
+  check('layer strip uses the same step-to-layer mapping as How it fits', zOn && zOn === dOn, zOn + ' vs ' + dOn);
+  await tab('business');
   await tab('cio');
   const cio = await page.evaluate(() => document.getElementById('v-cio').innerText);
   check('CIO: headline, 3 cards, 4 messages verbatim', cio.includes(UI.cio.headline) && UI.cio.cards.every((x) => cio.includes(x.title) && cio.includes(x.text)) && UI.cio.messages.every((x) => cio.includes(x.title) && cio.includes(x.text)));
   check('CIO: banner', /Agent proposes.*Policy decides.*Workflow writes/s.test(await page.textContent('#v-cio .banner')) && (await page.textContent('#v-cio .banner')).includes('never writes to a system of record'));
-  check('CIO: 5 groups and the Salesforce chip, no facade wording in the diagram', (await page.$$('#dsvg .dg')).length === 5 && /TMF Open API/.test(await page.textContent('#dsvg')) && !/\(Salesforce\)/.test(await page.textContent('#dsvg')) && !/facade/i.test(await page.textContent('#dsvg')));
+  const geo = await page.$$eval('#dsvg .dn .bx, #dsvg .dg rect', (a) => Object.fromEntries(a.map((r) => { const g = r.closest('[data-node],[data-group]'); return [g.dataset.node || g.dataset.group, ['x', 'y', 'width', 'height'].map((k) => +r.getAttribute(k))]; })));
+  const [g1, g2, g3, g4, g5, g6, g7, g8] = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'].map((k) => geo[k]);
+  check('CIO: the diagram follows Figure 3: L1 and L2 on top, L3 down the left, L4 beside L5, L6 under them, L7 at the bottom, L8 down the right',
+    g1[1] < g2[1] && g2[1] < g4[1] && g4[1] === g5[1] && g4[0] < g5[0] && g3[0] < g4[0] && g3[3] > 2 * g4[3] && g6[1] > g4[1] + g4[3] && g7[1] > g6[1] + g6[3] && g8[0] > g7[0] + g7[2] && g8[3] > 0.9 * 612 && g2[2] > 1000 && g7[2] > 1000, JSON.stringify(geo.L1));
+  check('CIO: the layer boxes use the report names', /Intent and Experience Layer/.test(await page.textContent('#dsvg')) && /Agent Ready Systems of Record/.test(await page.textContent('#dsvg')) && /Observability & Governance/.test(await page.textContent('#dsvg')));
+  check('CIO: one L6 band and the Salesforce chip, no facade wording in the diagram', (await page.$$('#dsvg .dg')).length === 1 && /TMF Open API/.test(await page.textContent('#dsvg')) && !/\(Salesforce\)/.test(await page.textContent('#dsvg')) && !/facade/i.test(await page.textContent('#dsvg')));
   check('CIO: older systems, the network and the network order adapter arrow tagged Mocked', (await page.$$('#dsvg .mk')).length === 5);
   check('CIO: a real arrow from Order Management to the network order adapter, legend says simulated inside Salesforce', !!(await page.$('#dsvg path.de[data-e="sfom-oss"]')) && !(await page.$('#dsvg .tgt')) && /simulated inside Salesforce for this demo/.test(await page.textContent('#v-cio .glegend')));
   const tree = await page.textContent('#dtree');

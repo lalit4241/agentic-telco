@@ -11,7 +11,7 @@ function decrypt(p, password) {
 }
 const app = decrypt(payload, pw);
 const CFG = JSON.parse(app.js.match(/^window\.MVP_CFG=(.*?);\n/s)[1]);
-const FOOT = 'Concept demo by Lalit Chauhan · not an official Salesforce product';
+const FOOT = 'Concept demo · not an official Salesforce product';
 
 test('payload is AES-256-GCM, PBKDF2 250k; the verifier does not reveal the password; wrong password fails', () => {
   assert.strictEqual(payload.iter, 250000);
@@ -42,6 +42,17 @@ test('the four journeys are recorded runs with the expected outcomes', () => {
   assert.match(txt('notauth'), /Sam/);
   assert.match(txt('overdue'), /overdue|outstanding/i);
   for (const k of ['notauth', 'overdue']) assert.ok(!CFG.recordings[k].state.links || !CFG.recordings[k].state.links.order, k + ' places no order');
+});
+test('every journey opens with the scripted greeting to its own contact, a few seconds before the first customer message', () => {
+  for (const [k, r] of Object.entries(CFG.recordings)) {
+    const m = r.state.messages, name = r.state.state.contactName, first = m.findIndex((x) => x.role === 'user');
+    assert.strictEqual(m[0].role, 'assistant', k); assert.ok(m[0].meta && m[0].meta.greeting, k);
+    assert.strictEqual(m[0].content, `Hi ${name}, I'm the assistant for AgenticTelco Business.`, k);
+    const gap = (Date.parse(m[first].at) - Date.parse(m[0].at)) / 1000;
+    assert.ok(first === 1 && gap > 1 && gap < 15, k + ' greeting sits just before the first customer message');
+    assert.ok(r.state.spans.some((s) => s.step === 'Greeting' && s.path === '/greet'), k + ' greeting span');
+  }
+  assert.strictEqual(CFG.recordings.notauth.state.state.contactName, 'Alex');
 });
 test('policy and model come from this build', () => {
   assert.match(CFG.rego, /package agentictelco/);
@@ -121,7 +132,11 @@ test('three audience views, all their copy in one object (ui-copy.json)', () => 
   assert.strictEqual(UI.cio.headline, 'Agentic change, on the estate you already have.');
   assert.deepStrictEqual(UI.cio.cards.map((c) => c.title), ['Agent proposes', 'Policy decides', 'Workflow writes']);
   assert.deepStrictEqual(UI.cio.messages.map((c) => c.title), ['Nothing ripped out', 'No lock-in', 'Controls hold', 'Every step evidenced']);
-  assert.deepStrictEqual(UI.diagram.groups.map((g) => g.title), ['Understand', 'Know', 'Act', 'Connect', 'Prove']);
+  // the How it fits legend lists the eight layers with the names used in Figure 3 of the Zero Gravity report
+  const ZG3 = ['Intent and Experience Layer', 'Agent Mesh', 'Data Foundation', 'Enterprise Context Layer', 'Deterministic Execution Fabric', 'Agent Ready Systems of Record', 'Digital Core', 'Observability & Governance'];
+  assert.deepStrictEqual(UI.diagram.groups.map((g) => g.id + ' ' + g.name), ZG3.map((n, i) => 'L' + (i + 1) + ' ' + n));
+  assert.deepStrictEqual(UI.business.zgLayers.layers.map((l) => l.name), ZG3);
+  for (const id of ['L1', 'L2', 'L3', 'L4', 'L5', 'L7', 'L8']) assert.strictEqual(UI.diagram.nodes[id].title, ZG3[+id[1] - 1]);
   assert.strictEqual(UI.cio.galleryHeading, 'Proof: the real records in Salesforce');
   assert.deepStrictEqual(UI.business.steps.map((s) => s.label), ['Asks', 'Checks', 'Recommends', 'Agrees', 'Ordered', 'Live']);
   assert.strictEqual(UI.diagram.chips.sf, 'TMF Open API');
@@ -137,4 +152,8 @@ test('no model names on screen and the delayed order number is masked', () => {
   assert.ok(CFG.ui.architect.mapping.some((r) => r[3] === 'Intent (TMF921)'));
   assert.match(src, /function rtName/); assert.match(src, /function maskNum/);
   const D = CFG.recordings.delayed.state; assert.ok(JSON.stringify(D).includes(D.links.orderNumber), 'delayed number is in the data, so the UI must mask it');
+});
+test('no personal name in the MVP page (footer is the plain disclaimer)', () => {
+  assert.doesNotMatch(html + JSON.stringify(app), /Lalit/);
+  assert.ok(JSON.stringify(app).includes(FOOT) && html.includes(FOOT));
 });

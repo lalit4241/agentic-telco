@@ -22,16 +22,16 @@ in a **55-page report** [2b] and positioned as part of TechM Helix [3][4]. The c
 - Legacy systems are thinned into agent-ready systems of record.
 - Agents act through a deterministic, compensating execution fabric.
 
-The **8 layers** [2b p.21–22]:
+The **8 layers**, named as in Figure 3 of the report [2b p.21–22]:
 
 | Layer | Name |
 |---|---|
-| L1 | Intent & Experience |
+| L1 | Intent and Experience Layer |
 | L2 | Agent Mesh |
-| L3 | Data & Intelligence Foundations |
-| L4 | Context Layer |
+| L3 | Data Foundation |
+| L4 | Enterprise Context Layer |
 | L5 | Deterministic Execution Fabric |
-| L6 | Agent-Ready SoRs |
+| L6 | Agent Ready Systems of Record |
 | L7 | Digital Core |
 | L8 | Observability & Governance |
 
