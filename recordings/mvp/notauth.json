@@ -19,7 +19,7 @@
    "trace_id": "a4bb97b303112538a93d5cf1f2754305",
    "contact_id": "003QH00000TTvZJYA1",
    "case_name": "notauth",
-   "started_at": "2026-10-30T18:00:17.919594+00:00"
+   "started_at": "2026-10-30T18:00:11.872587+00:00"
   },
   "state": {
    "case": "notauth",
@@ -131,6 +131,15 @@
   },
   "messages": [
    {
+    "seq": 185,
+    "at": "2026-10-30T18:00:11.926587+00:00",
+    "role": "assistant",
+    "content": "Hi Alex, I'm the assistant for AgenticTelco Business.",
+    "meta": {
+     "greeting": true
+    }
+   },
+   {
     "seq": 186,
     "at": "2026-10-30T18:00:17.945560+00:00",
     "role": "user",
@@ -150,6 +159,54 @@
    }
   ],
   "spans": [
+   {
+    "seq": 1042,
+    "trace_id": "a4bb97b303112538a93d5cf1f2754305",
+    "span_id": "be2d4b0d5cfdbbf7",
+    "parent_span_id": null,
+    "layer": "L1",
+    "component": "Web chat",
+    "step": "Chat opened",
+    "runtime": "ours (web chat)",
+    "api": "HTTPS",
+    "method": "POST",
+    "path": "/api/demo/start",
+    "status": 200,
+    "start_ts": "2026-10-30T18:00:11.872587+00:00",
+    "end_ts": "2026-10-30T18:00:11.930587+00:00",
+    "duration_ms": 58.0,
+    "attributes": {},
+    "request": {
+     "case": "notauth"
+    },
+    "response": {
+     "reply": "Hi Alex, I'm the assistant for AgenticTelco Business."
+    }
+   },
+   {
+    "seq": 1043,
+    "trace_id": "a4bb97b303112538a93d5cf1f2754305",
+    "span_id": "a66d741b005abe36",
+    "parent_span_id": "be2d4b0d5cfdbbf7",
+    "layer": "L2",
+    "component": "Agent (LangGraph)",
+    "step": "Greeting",
+    "runtime": "ours (LangGraph)",
+    "api": "MCP",
+    "method": "TURN",
+    "path": "/greet",
+    "status": 200,
+    "start_ts": "2026-10-30T18:00:11.893587+00:00",
+    "end_ts": "2026-10-30T18:00:11.927587+00:00",
+    "duration_ms": 34.0,
+    "attributes": {},
+    "request": {
+     "office": "Martlesham"
+    },
+    "response": {
+     "reply": "Hi Alex, I'm the assistant for AgenticTelco Business."
+    }
+   },
    {
     "seq": 1044,
     "trace_id": "a4bb97b303112538a93d5cf1f2754305",
@@ -1390,6 +1447,7 @@
   }
  },
  "notes": [
-  "3 Nov 2026 (UK time): the TMF637 facade now leaves out superseded upgrade links (an outgoing Upgrade productRelationship whose target product is terminated/Obsolete; ?includeHistory=true shows them all). The Fibre 150 reads in this recording were filtered to match, so links left by earlier demo runs are not shown; where the stored body had been cut at 6,000 characters it was rebuilt from a read-only TMF637 GET of the same product (status and end date as at the time of the step). No org data was changed."
+  "3 Nov 2026 (UK time): the TMF637 facade now leaves out superseded upgrade links (an outgoing Upgrade productRelationship whose target product is terminated/Obsolete; ?includeHistory=true shows them all). The Fibre 150 reads in this recording were filtered to match, so links left by earlier demo runs are not shown; where the stored body had been cut at 6,000 characters it was rebuilt from a read-only TMF637 GET of the same product (status and end date as at the time of the step). No org data was changed.",
+  "3 Nov 2026 (UK time): the fixed opening greeting (/greet: \"Hi {name}, I'm the assistant for AgenticTelco Business.\", no model call) was added for Alex, the same scripted line every live run now produces: one message and two spans (L1 Chat opened, L2 Greeting) about 6 s before Alex's first message. Everything else in this recording is unchanged."
  ]
 }

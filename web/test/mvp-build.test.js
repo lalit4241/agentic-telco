@@ -43,6 +43,17 @@ test('the four journeys are recorded runs with the expected outcomes', () => {
   assert.match(txt('overdue'), /overdue|outstanding/i);
   for (const k of ['notauth', 'overdue']) assert.ok(!CFG.recordings[k].state.links || !CFG.recordings[k].state.links.order, k + ' places no order');
 });
+test('every journey opens with the scripted greeting to its own contact, a few seconds before the first customer message', () => {
+  for (const [k, r] of Object.entries(CFG.recordings)) {
+    const m = r.state.messages, name = r.state.state.contactName, first = m.findIndex((x) => x.role === 'user');
+    assert.strictEqual(m[0].role, 'assistant', k); assert.ok(m[0].meta && m[0].meta.greeting, k);
+    assert.strictEqual(m[0].content, `Hi ${name}, I'm the assistant for AgenticTelco Business.`, k);
+    const gap = (Date.parse(m[first].at) - Date.parse(m[0].at)) / 1000;
+    assert.ok(first === 1 && gap > 1 && gap < 15, k + ' greeting sits just before the first customer message');
+    assert.ok(r.state.spans.some((s) => s.step === 'Greeting' && s.path === '/greet'), k + ' greeting span');
+  }
+  assert.strictEqual(CFG.recordings.notauth.state.state.contactName, 'Alex');
+});
 test('policy and model come from this build', () => {
   assert.match(CFG.rego, /package agentictelco/);
   assert.match(CFG.rego, /not_authorised/); assert.match(CFG.rego, /overdue_balance/);
