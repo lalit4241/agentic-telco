@@ -21,6 +21,7 @@ CASES = {
 }
 OPENING = ("We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. "
            "Our broadband already struggles. What do you suggest?")
+SMALL_TALK = "Hi, thanks. All good here, busy but in a good way: we've just won a couple of new clients. How are you?"   # scripted, like OPENING
 
 @app.on_event("startup")
 def _s():
@@ -74,7 +75,13 @@ async def start(request: Request):
     q("insert into mvp.conversation(id, trace_id, contact_id, case_name, state) values (%s,%s,%s,%s,%s)", cid, trace, who["contactId"], b["case"],
       J({"accountId": B["accountId"], "contactName": who["name"].split()[0], "contactFullName": who["name"], "contactRole": who["role"],
          "customerName": "Brightwell Design Ltd", "case": b["case"]}))
-    return {"conversationId": cid, "traceId": trace, "case": b["case"], "title": case["title"], "contact": who, "opening": OPENING}
+    with Span(trace, "L1", "Web chat", "Chat opened", runtime="ours (web chat)", api="HTTPS", method="POST", path="/api/demo/start",
+              conversation_id=cid, request={"case": b["case"]}) as sp:   # the agent opens with a greeting (L2, real model)
+        async with httpx.AsyncClient(timeout=300) as cl:
+            r = await cl.post(f"{url('agent')}/greet", json={"conversationId": cid, "office": "Martlesham"}, headers={"traceparent": traceparent(trace, sp.span_id)})
+        sp.status, sp.response = r.status_code, r.json()
+    return {"conversationId": cid, "traceId": trace, "case": b["case"], "title": case["title"], "contact": who, "greeting": r.json().get("reply"),
+            "smallTalk": SMALL_TALK, "opening": OPENING}
 
 @app.post("/api/chat")
 async def chat(request: Request):

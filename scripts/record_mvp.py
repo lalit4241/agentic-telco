@@ -17,6 +17,9 @@ def state(cid):
 def run(case):
     s = httpx.post(G + "/api/demo/start", json={"case": case}, timeout=900).json()
     cid, turns = s["conversationId"], []
+    if s.get("smallTalk"):   # the agent has greeted on start; the customer says hello before the request
+        t = time.time(); r = httpx.post(G + "/api/chat", json={"conversationId": cid, "message": s["smallTalk"]}, timeout=600).json()
+        turns.append({"message": "small talk", "seconds": round(time.time() - t, 1), "tools": r.get("tools")})
     t = time.time(); r = httpx.post(G + "/api/chat", json={"conversationId": cid, "message": s["opening"]}, timeout=600).json()
     turns.append({"message": "opening", "seconds": round(time.time() - t, 1), "tools": r.get("tools")})
     if case in ("happy", "delayed"):

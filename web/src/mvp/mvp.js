@@ -74,7 +74,7 @@
     if (winCache.full === full && winCache.n === n) return winCache.w;
     var sp = (full.spans || []).slice().sort(byStart), msgs = full.messages || [];
     var first = function (pred, after) { for (var i = 0; i < sp.length; i++) { var t = T(sp[i].start_ts); if ((after == null || t > after) && pred(sp[i])) return t; } return null; };
-    var users = msgs.filter(function (m) { return m.role === 'user'; });
+    var users = msgs.filter(function (m) { return m.role === 'user' && !(m.meta && m.meta.smallTalk); });   // the greeting and small talk sit in step 1
     var t0 = users.length ? T(users[0].at) : (sp.length ? T(sp[0].start_ts) : null);
     if (sp.length) t0 = Math.min(t0, T(sp[0].start_ts));
     var bChecks = first(function (s) { return s.layer === 'L2' && /^Tool:/.test(s.step); }); if (bChecks == null) bChecks = first(function (s) { return s.layer === 'L4'; });
@@ -277,9 +277,9 @@
     if (!v) return '';
     var W = windows(S.full), asst = v.messages.filter(function (m) { return m.role === 'assistant'; }), live = isLive(v);
     if (!(live || (W && W.blocked && asst.length))) return '';
-    var users = v.messages.filter(function (m) { return m.role === 'user'; }), pro = asst.filter(function (m) { return m.meta && m.meta.proactive; });
+    var users = v.messages.filter(function (m) { return m.role === 'user'; }), req = users.filter(function (m) { return !(m.meta && m.meta.smallTalk); }), pro = asst.filter(function (m) { return m.meta && m.meta.proactive; });
     var orders = v.milestones.filter(function (m) { return m.name === 'OrderInProgress'; }).length, k = [];
-    if (live && S.caseId !== 'delayed') { var lv = v.milestones.filter(function (m) { return m.name === 'Live'; })[0]; k.push([dur(T(lv.at) - T(users[0].at)), 'request to live (demo run)']); }
+    if (live && S.caseId !== 'delayed') { var lv = v.milestones.filter(function (m) { return m.name === 'Live'; })[0]; k.push([dur(T(lv.at) - T((req[0] || users[0]).at)), 'request to live (demo run)']); }
     k.push([v.spans.length, 'automated steps, all logged']);
     k.push([users.length, users.length === 1 ? 'customer message' : 'customer messages']);
     if (live) k.push([pro.length, pro.length === 1 ? 'proactive update' : 'proactive updates']); else k.push([orders, 'orders placed']);

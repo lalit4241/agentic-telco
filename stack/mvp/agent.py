@@ -33,9 +33,15 @@ How you work:
 4. When the customer agrees, call request_upgrade with the offeringId and their need in plain words (not a product name).
    Then confirm the order reference and say you will tell them if anything changes.
 5. For questions about progress, call order_status.
+6. If {name} is only saying hello or making small talk, reply warmly in one or two short sentences: respond to what they said, answer any
+   friendly question they ask you, then ask what you can help with. Call no tool and mention no products, prices or orders.
 You never change any system yourself: the workflow does that after a final policy check.
 Terms you may need to explain:
 {glossary}"""
+
+GREETING = ("{name} has just opened the business chat. Write your opening message: greet {name} by name and say "
+            "you are the assistant for AgenticTelco Business, ask in one light, friendly line how things are at the {office} office, and offer to help. One or two short sentences, UK English, "
+            "no hype, and nothing about products, prices or orders.")
 
 MODEL_TOOLS = [
     {"type": "function", "function": {"name": "get_context", "description": "Facts about this customer and the upgrades the policy allows.",
@@ -191,11 +197,43 @@ async def chat(request: Request):
                 q("insert into mvp.message(conversation_id, role, content, meta) values (%s,'agent-internal','',%s)", cid,
                   J({k: v for k, v in m.items() if k in ("role", "content", "tool_calls", "tool_name")}))
         used = [m.get("tool_name") for m in res.get("messages", []) if m.get("role") == "tool"]
-        q("insert into mvp.message(conversation_id, role, content, meta) values (%s,'assistant',%s,%s)", cid, reply, J({"tools": used}))
+        small = not used and not st.get("recommended") and not st.get("intentId")   # hello / small talk before the request
+        if small:
+            q("update mvp.message set meta = %s where seq = (select max(seq) from mvp.message where conversation_id=%s and role='user')", J({"smallTalk": True}), cid)
+        q("insert into mvp.message(conversation_id, role, content, meta) values (%s,'assistant',%s,%s)", cid, reply,
+          J({"tools": used, **({"smallTalk": True} if small else {})}))
         if "get_context" in used and not consent:
             q("update mvp.conversation set state = state || %s where id=%s", J({"recommended": True}), cid)
         sp.status, sp.response = 200, {"reply": reply, "tools": used}
     return {"reply": reply, "tools": used, "consentRecorded": bool(consent)}
+
+@app.post("/greet")
+async def greet(request: Request):
+    """Opening message when the chat opens: the agent greets the contact by name (same persona and system prompt, no tools)."""
+    b = await request.json()
+    cid = b["conversationId"]
+    c = q1("select trace_id, state from mvp.conversation where id=%s", cid)
+    if not c:
+        raise HTTPException(404, "unknown conversation")
+    trace, parent = parse_traceparent(request.headers.get("traceparent"))
+    trace = trace or c["trace_id"]
+    st = c["state"] or {}
+    name = st.get("contactName", "there")
+    office = b.get("office") or "Martlesham"
+    with Span(trace, "L2", "Agent (LangGraph)", "Greeting", runtime="ours (LangGraph)", api="MCP", method="TURN", path="/greet",
+              parent=parent, conversation_id=cid, request={"office": office}) as sp:
+        sysmsg = SYSTEM.format(name=name, customer=st.get("customerName", "the business"), glossary=glossary_lines())
+        prompt = [{"role": "system", "content": sysmsg}, {"role": "user", "content": GREETING.format(name=name, office=office)}]
+        try:
+            reply = (ollama(trace, sp.span_id, cid, prompt, tools=False, step="Model call (greeting)").get("content") or "").strip()
+        except Exception:
+            reply = None
+        if not reply:
+            reply = f"Hello {name}, welcome to AgenticTelco Business. How are things at the {office} office? I'm here if you need anything."
+            sp.attrs["scriptedFallback"] = True
+        q("insert into mvp.message(conversation_id, role, content, meta) values (%s,'assistant',%s,%s)", cid, reply, J({"greeting": True}))
+        sp.status, sp.response = 200, {"reply": reply}
+    return {"reply": reply}
 
 @app.post("/notify")
 async def notify(request: Request):
