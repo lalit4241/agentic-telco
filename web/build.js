@@ -22,7 +22,11 @@ const viewer = fs.readFileSync(R('node_modules', 'bpmn-js', 'dist', 'bpmn-naviga
 const bcss = ['diagram-js.css', 'bpmn-js.css'].map((f) => fs.readFileSync(R('node_modules', 'bpmn-js', 'dist', 'assets', f), 'utf8')).join('\n');
 const mark = (k) => rd(R('src', 'mark.svg')).replace(/id="g"/, `id="g${k}"`).replace(/url\(#g\)/, `url(#g${k})`);
 const css = bcss + '\n' + rd(R('src', 'mvp', 'mvp.css'));
-const fav = 'data:image/svg+xml,' + encodeURIComponent(rd(R('src', 'mark.svg')).trim());
+// Tech Mahindra logo, the official file from techmahindra.com (/themes/custom/techm/logo-print.png), shown as a brand mark
+const techm = 'data:image/png;base64,' + fs.readFileSync(R('src', 'mvp', 'brand', 'techm-logo.png')).toString('base64');
+const tmImg = '<img class="tmlogo" src="' + techm + '" alt="Tech Mahindra">';
+const mvpMark = (k) => mark(k).replace('#0176d3', '#E31837').replace('#5a1ba9', '#5F0229');   // AgenticTelco mark in the Tech Mahindra palette
+const fav = 'data:image/svg+xml,' + encodeURIComponent(mvpMark('f').trim());
 const MODEL = 'Qwen3-4B-Instruct-2507 (local, Ollama)';
 
 // ---- recorded runs (recordings/mvp/<case>.json = final /api/state of a real run; the UI replays it by timestamp)
@@ -74,7 +78,7 @@ const appJs = (cfg) => 'window.MVP_CFG=' + JSON.stringify(Object.assign({ ui: UI
 fs.mkdirSync(R('dist'), { recursive: true });
 
 if (LIVE) {
-  const js = appJs({ mode: 'live', copy, bpmn, rego, model: MODEL, mark: mark(2), evidence: evidence() });
+  const js = appJs({ mode: 'live', copy, bpmn, rego, model: MODEL, mark: mvpMark(2), techm: tmImg, evidence: evidence() });
   const html = rd(R('src', 'mvp', 'index.template.html')).replace('/*CSS*/', () => css).replace('/*FAVICON*/', fav).replace('/*BODYCLASS*/', 'live')
     .replace('/*GATEHTML*/', '').replace('/*SCRIPT*/', () => js.replace(/<\/script/gi, '<\\/script'));
   leakCheck(html);
@@ -87,7 +91,7 @@ const pwFile = path.join(ROOT, '.demo-password');
 const pw = process.env.TF_DEMO_PASSWORD || (fs.existsSync(pwFile) ? rd(pwFile).trim() : '');
 if (!pw) { console.error('Set TF_DEMO_PASSWORD or create .demo-password (git-ignored) before building.'); process.exit(1); }
 const recs = recordings();
-const js = appJs({ mode: 'recorded', copy, bpmn, rego, model: MODEL, mark: mark(2), recordings: recs, evidence: evidence() });
+const js = appJs({ mode: 'recorded', copy, bpmn, rego, model: MODEL, mark: mvpMark(2), techm: tmImg, recordings: recs, evidence: evidence() });
 leakCheck(js);
 const appHtml = '<style>' + css + '</style>';
 const salt = crypto.randomBytes(16), iv = crypto.randomBytes(12), iter = 250000, hsalt = crypto.randomBytes(16).toString('hex');
@@ -97,7 +101,7 @@ const ct = Buffer.concat([c.update(JSON.stringify({ html: appHtml, js }), 'utf8'
 const payload = { v: 1, iter, salt: salt.toString('base64'), iv: iv.toString('base64'), hsalt, hash: crypto.createHash('sha256').update(hsalt + pw).digest('hex'), ct: ct.toString('base64') };
 const gate = rd(R('src', 'gate.js')).replace('/*PAYLOAD*/null', () => JSON.stringify(payload)).replace(/<\/script/gi, '<\\/script');
 const html = rd(R('src', 'mvp', 'index.template.html')).replace('/*CSS*/', () => rd(R('src', 'mvp', 'mvp.css'))).replace('/*FAVICON*/', fav).replace('/*BODYCLASS*/', 'locked')
-  .replace('/*GATEHTML*/', () => rd(R('src', 'mvp', 'gate.html')).replace('/*MARK*/', () => mark(1))).replace('/*SCRIPT*/', () => gate);
+  .replace('/*GATEHTML*/', () => rd(R('src', 'mvp', 'gate.html')).replace('/*TECHM*/', () => tmImg).replace('/*MARK*/', () => mvpMark(1))).replace('/*SCRIPT*/', () => gate);
 if (gate.includes(pw)) { console.error('Refusing to write: password found in output'); process.exit(1); }
 if (pw.length < 16) console.warn('WARNING: password shorter than 16 characters; client-side encryption can be attacked offline (ADR-005).');
 fs.writeFileSync(R('dist', 'index.html'), html);

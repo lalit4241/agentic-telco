@@ -152,7 +152,7 @@
     $('#app').innerHTML =
       '<header class="hd"><div class="brand">' + (CFG.mark || '') + '<div><div class="brand-name">AgenticTelco</div><div class="brand-sub">TelForce business portal</div></div></div>' +
       '<div class="ttl"><div class="kick">' + esc(H.kicker) + '</div><h1>' + esc(H.title) + '</h1></div>' +
-      '<button class="tb" id="b-pres" title="Presenter mode (P)">Presenter</button>' + (LIVE ? '' : '<button class="tb" id="btn-lock" title="Lock">Lock</button>') + '</header>' +
+      '<button class="tb" id="b-pres" title="Presenter mode (P)">Presenter</button>' + (LIVE ? '' : '<button class="tb" id="btn-lock" title="Lock">Lock</button>') + (CFG.techm || '') + '</header>' +
       '<nav class="tabs" role="tablist">' + (UI.tabs || []).map(function (t) { return '<button role="tab" data-tab="' + t.id + '"><b>' + tabIcon(t.id) + esc(t.label) + '</b><span>' + esc(t.subtitle) + '</span></button>'; }).join('') + '</nav>' +
       '<div class="modebar' + (LIVE ? '' : ' rec') + '" id="modebar"></div>' +
       '<main><section id="v-business"></section><section id="v-cio" hidden></section><section id="v-architect" hidden></section></main>' +
@@ -336,8 +336,8 @@
     ['L3', 16, 176, 144, 364, 'db', '--l3', 0, 'tall'],
     ['L4', 184, 176, 446, 94, 'shield', '--l4', 0, 'band'], ['L5', 650, 176, 446, 94, 'flow', '--l5', 0, 'band'],
     ['api', 196, 316, 888, 40, 'api', '--l6'],
-    ['sf', 196, 366, 364, 150, 'cloud', '--blue'],
-    ['sfcust', 204, 426, 348, 22, '', '--blue'], ['sfcat', 204, 454, 112, 56, '', '--blue'], ['sfcpq', 322, 454, 112, 56, '', '--blue'], ['sfom', 440, 454, 112, 56, '', '--blue'],
+    ['sf', 196, 366, 364, 150, 'cloud', '--l6'],
+    ['sfcust', 204, 426, 348, 22, '', '--l6'], ['sfcat', 204, 454, 112, 56, '', '--l6'], ['sfcpq', 322, 454, 112, 56, '', '--l6'], ['sfom', 440, 454, 112, 56, '', '--l6'],
     ['billing', 580, 394, 160, 116, 'bill', '--legacy', 1], ['avail', 750, 394, 160, 116, 'pin', '--legacy', 1], ['oss', 920, 394, 160, 116, 'server', '--legacy', 1],
     ['L7', 16, 556, 1080, 48, 'net', '--l7', 1, 'band'], ['L8', 1112, 8, 152, 596, 'timeline', '--l8', 0, 'tall']];
   var DGROUPS = { L6: [184, 288, 912, 252, '--l6'] };
