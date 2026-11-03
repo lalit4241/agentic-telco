@@ -608,176 +608,7 @@
        "@referredType": "ProductOffering"
       },
       "terminationDate": "2027-08-28",
-      "productRelationship": [
-       {
-        "id": "1ARQH0000002ibF4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHRNYA4",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHRNYA4",
-         "name": "AgenticTelco Fibre 500 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:20:48.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002icr4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHWDYA4",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHWDYA4",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:23:57.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ieT4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHb3YAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHb3YAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:26:20.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ig54AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHftYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHftYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:31:08.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ihh4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHkjYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHkjYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:33:31.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ijJ4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHrBYAW",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHrBYAW",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:37:44.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ikv4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHsnYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHsnYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:40:43.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002imX4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHzFYAW",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHzFYAW",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:45:14.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002io94AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GI45YAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GI45YAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:47:28.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ipl4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GIAYYA4",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GIAYYA4",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T17:05:18.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002irN4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GILpYAO",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GILpYAO",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T17:08:32.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002iub4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GJ4zYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ4zYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T17:59:52.000Z"
-        },
-        "relationshipType": "Upgrade"
-       }
-      ],
+      "productRelationship": [],
       "productSerialNumber": "AT-PI-B4471"
      }
     ]
@@ -1736,176 +1567,7 @@
        "@referredType": "ProductOffering"
       },
       "terminationDate": "2027-08-28",
-      "productRelationship": [
-       {
-        "id": "1ARQH0000002ibF4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHRNYA4",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHRNYA4",
-         "name": "AgenticTelco Fibre 500 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:20:48.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002icr4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHWDYA4",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHWDYA4",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:23:57.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ieT4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHb3YAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHb3YAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:26:20.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ig54AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHftYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHftYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:31:08.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ihh4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHkjYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHkjYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:33:31.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ijJ4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHrBYAW",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHrBYAW",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:37:44.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ikv4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHsnYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHsnYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:40:43.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002imX4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GHzFYAW",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHzFYAW",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:45:14.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002io94AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GI45YAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GI45YAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T16:47:28.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002ipl4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GIAYYA4",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GIAYYA4",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T17:05:18.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002irN4AQ",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GILpYAO",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GILpYAO",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T17:08:32.000Z"
-        },
-        "relationshipType": "Upgrade"
-       },
-       {
-        "id": "1ARQH0000002iub4AA",
-        "@type": "ProductRelationship",
-        "product": {
-         "id": "02iQH000003GJ4zYAG",
-         "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ4zYAG",
-         "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-         "@referredType": "Product"
-        },
-        "validFor": {
-         "startDateTime": "2026-10-30T17:59:52.000Z"
-        },
-        "relationshipType": "Upgrade"
-       }
-      ],
+      "productRelationship": [],
       "productSerialNumber": "AT-PI-B4471"
      }
     ]
@@ -3137,176 +2799,7 @@
       "@referredType": "ProductOffering"
      },
      "terminationDate": "2027-08-28",
-     "productRelationship": [
-      {
-       "id": "1ARQH0000002ibF4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHRNYA4",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHRNYA4",
-        "name": "AgenticTelco Fibre 500 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:20:48.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002icr4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHWDYA4",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHWDYA4",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:23:57.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ieT4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHb3YAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHb3YAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:26:20.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ig54AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHftYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHftYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:31:08.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ihh4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHkjYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHkjYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:33:31.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ijJ4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHrBYAW",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHrBYAW",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:37:44.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ikv4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHsnYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHsnYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:40:43.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002imX4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHzFYAW",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHzFYAW",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:45:14.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002io94AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GI45YAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GI45YAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:47:28.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ipl4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GIAYYA4",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GIAYYA4",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T17:05:18.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002irN4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GILpYAO",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GILpYAO",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T17:08:32.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002iub4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GJ4zYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ4zYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T17:59:52.000Z"
-       },
-       "relationshipType": "Upgrade"
-      }
-     ],
+     "productRelationship": [],
      "productSerialNumber": "AT-PI-B4471"
     }
    },
@@ -3523,176 +3016,7 @@
       "@referredType": "ProductOffering"
      },
      "terminationDate": "2026-11-02",
-     "productRelationship": [
-      {
-       "id": "1ARQH0000002ibF4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHRNYA4",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHRNYA4",
-        "name": "AgenticTelco Fibre 500 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:20:48.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002icr4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHWDYA4",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHWDYA4",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:23:57.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ieT4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHb3YAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHb3YAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:26:20.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ig54AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHftYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHftYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:31:08.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ihh4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHkjYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHkjYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:33:31.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ijJ4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHrBYAW",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHrBYAW",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:37:44.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ikv4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHsnYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHsnYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:40:43.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002imX4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GHzFYAW",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GHzFYAW",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:45:14.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002io94AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GI45YAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GI45YAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T16:47:28.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002ipl4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GIAYYA4",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GIAYYA4",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T17:05:18.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002irN4AQ",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GILpYAO",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GILpYAO",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T17:08:32.000Z"
-       },
-       "relationshipType": "Upgrade"
-      },
-      {
-       "id": "1ARQH0000002iub4AA",
-       "@type": "ProductRelationship",
-       "product": {
-        "id": "02iQH000003GJ4zYAG",
-        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ4zYAG",
-        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
-        "@referredType": "Product"
-       },
-       "validFor": {
-        "startDateTime": "2026-10-30T17:59:52.000Z"
-       },
-       "relationshipType": "Upgrade"
-      }
-     ],
+     "productRelationship": [],
      "productSerialNumber": "AT-PI-B4471"
     }
    },
@@ -3727,7 +3051,86 @@
      ]
     },
     "response": {
-     "truncated": "{\"@type\": \"Product\", \"x-runtime\": \"TMF facade within Salesforce (Apex)\", \"productRelationship\": [{\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHRNYA4\", \"name\": \"AgenticTelco Fibre 500 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHRNYA4\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:20:48.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002ibF4AQ\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHWDYA4\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHWDYA4\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:23:57.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002icr4AA\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHb3YAG\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHb3YAG\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:26:20.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002ieT4AQ\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHftYAG\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHftYAG\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:31:08.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002ig54AA\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHkjYAG\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHkjYAG\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:33:31.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002ihh4AA\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHrBYAW\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHrBYAW\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:37:44.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002ijJ4AQ\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHsnYAG\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHsnYAG\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:40:43.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002ikv4AA\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GHzFYAW\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GHzFYAW\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:45:14.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002imX4AQ\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GI45YAG\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GI45YAG\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T16:47:28.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002io94AA\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GIAYYA4\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GIAYYA4\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T17:05:18.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002ipl4AA\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GILpYAO\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GILpYAO\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T17:08:32.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002irN4AQ\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ4zYAG\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GJ4zYAG\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T17:59:52.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002iub4AA\"}, {\"@type\": \"ProductRelationship\", \"product\": {\"@referredType\": \"Product\", \"href\": \"/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ8DYAW\", \"name\": \"AgenticTelco Fibre 900 \\u2013 Brightwell site 4471\", \"id\": \"02iQH000003GJ8DYAW\"}, \"validFor\": {\"startDateTime\": \"2026-10-30T18:02:19.000Z\"}, \"relationshipType\": \"Upgrade\", \"id\": \"1ARQH0000002iwD4AQ\"}], \"place\": [{\"geographicAddress\": {\"postcode\": \"IP5 3RE\", \"city\": \"Ipswich\", \"streetName\": \"1 Fibre Way, Martlesham\"}, \"externalIdentifier\": [{\"externalIdentifierType\": \"addressKey\", \"id\": \"A00000001975\"}], \"@type\": \"GeographicSite\", \"role\": \"installationSite\", \"name\": \"AgenticTelco Site 4471 \\u2013 Brightwell, Martlesham\", \"id\": \"131QH000001CX9JYAW\"}], \"relatedParty\": [{\"@referredType\": \"Organization\", \"role\": \"Customer\", \"name\": \"AgenticTelco \\u2013 Brightwell Design Ltd\", \"id\": \"001QH00002La125YAB\"}, {\"@referredType\": \"Individual\", \"role\": \"User\", \"name\": \"Sam Taylor\", \"id\": \"003QH00000TU8kDYAT\"}], \"productPrice\": [{\"@type\": \"ProductPrice\", \"price\": {\"taxIncludedAmount\": {\"value\": 27, \"unit\": \"GBP\"}}, \"recurringChargePeriod\": \"month\", \"priceType\": \"recurring\"}], \"productOffering\": {\"@referredType\": \"ProductOffering\", \"href\": \"/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOIjYAN\", \"name\": \"AgenticTelco Fibre 150\", \"id\": \"01tQH00000IbOIjYAN\"}, \"creationDate\": \"2026-10-30T15:53:21.000Z\", \"terminationDate\": \"2026-11-02\", \"startDate\": \"2025-08-28\", \"productSerialNumber\": \"AT-PI-B4471\", \"x-sfStatus\": \"Obsolete\", \"status\": \"terminated\", \"description\": \"AgenticTelco MVP: Fibre 150 on a 24-"
+     "id": "02iQH000003GH4nYAG",
+     "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GH4nYAG",
+     "name": "AgenticTelco Fibre 150 \u2013 Brightwell site 4471",
+     "@type": "Product",
+     "place": [
+      {
+       "id": "131QH000001CX9JYAW",
+       "name": "AgenticTelco Site 4471 \u2013 Brightwell, Martlesham",
+       "role": "installationSite",
+       "@type": "GeographicSite",
+       "geographicAddress": {
+        "city": "Ipswich",
+        "postcode": "IP5 3RE",
+        "streetName": "1 Fibre Way, Martlesham"
+       },
+       "externalIdentifier": [
+        {
+         "id": "A00000001975",
+         "externalIdentifierType": "addressKey"
+        }
+       ]
+      }
+     ],
+     "status": "terminated",
+     "startDate": "2025-08-28",
+     "x-runtime": "TMF facade within Salesforce (Apex)",
+     "x-sfStatus": "Obsolete",
+     "description": "AgenticTelco MVP: Fibre 150 on a 24-month term (synthetic)",
+     "creationDate": "2026-10-30T15:53:21.000Z",
+     "productPrice": [
+      {
+       "@type": "ProductPrice",
+       "price": {
+        "taxIncludedAmount": {
+         "unit": "GBP",
+         "value": 27
+        }
+       },
+       "priceType": "recurring",
+       "recurringChargePeriod": "month"
+      }
+     ],
+     "relatedParty": [
+      {
+       "id": "001QH00002La125YAB",
+       "name": "AgenticTelco \u2013 Brightwell Design Ltd",
+       "role": "Customer",
+       "@referredType": "Organization"
+      },
+      {
+       "id": "003QH00000TU8kDYAT",
+       "name": "Sam Taylor",
+       "role": "User",
+       "@referredType": "Individual"
+      }
+     ],
+     "productOffering": {
+      "id": "01tQH00000IbOIjYAN",
+      "href": "/services/apexrest/agentictelco/tmf620/productOffering/01tQH00000IbOIjYAN",
+      "name": "AgenticTelco Fibre 150",
+      "@referredType": "ProductOffering"
+     },
+     "terminationDate": "2026-11-02",
+     "productRelationship": [
+      {
+       "@type": "ProductRelationship",
+       "product": {
+        "@referredType": "Product",
+        "href": "/services/apexrest/agentictelco/tmf637/product/02iQH000003GJ8DYAW",
+        "name": "AgenticTelco Fibre 900 \u2013 Brightwell site 4471",
+        "id": "02iQH000003GJ8DYAW"
+       },
+       "validFor": {
+        "startDateTime": "2026-10-30T18:02:19.000Z"
+       },
+       "relationshipType": "Upgrade",
+       "id": "1ARQH0000002iwD4AQ"
+      }
+     ],
+     "productSerialNumber": "AT-PI-B4471"
     }
    },
    {
@@ -4844,5 +4247,8 @@
     "end": "2026-10-30T18:02:25.627+0000"
    }
   ]
- }
+ },
+ "notes": [
+  "3 Nov 2026 (UK time): the TMF637 facade now leaves out superseded upgrade links (an outgoing Upgrade productRelationship whose target product is terminated/Obsolete; ?includeHistory=true shows them all). The Fibre 150 reads in this recording were filtered to match, so links left by earlier demo runs are not shown; where the stored body had been cut at 6,000 characters it was rebuilt from a read-only TMF637 GET of the same product (status and end date as at the time of the step). No org data was changed."
+ ]
 }

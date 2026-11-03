@@ -713,6 +713,19 @@ private class AgenticTelco_TmfTest {
         req('GET', '/agentictelco/tmf637/product/' + newId, null, null);
         AgenticTelco_TMF637.doGet();
         System.assertEquals(1, ((List<Object>) ((Map<String, Object>) resp()).get('productRelationship')).size());
+        // superseded upgrade: a second upgrade target that is itself terminated is hidden unless includeHistory=true
+        Asset gone = new Asset(Name = 'AgenticTelco Fibre 500 T', AccountId = accId(), Status = 'Obsolete', Quantity = 1, SerialNumber = 'AT-T-3');
+        insert gone;
+        insert new AssetRelationship(AssetId = oldId, RelatedAssetId = gone.Id, RelationshipType = 'Upgrade', FromDate = System.now().addDays(-1));
+        req('GET', '/agentictelco/tmf637/product/' + oldId, null, null);
+        AgenticTelco_TMF637.doGet();
+        List<Object> shown = (List<Object>) ((Map<String, Object>) resp()).get('productRelationship');
+        System.assertEquals(1, shown.size(), JSON.serialize(shown));
+        System.assertEquals(newId, (String) ((Map<String, Object>) ((Map<String, Object>) shown[0]).get('product')).get('id'));
+        req('GET', '/agentictelco/tmf637/product/' + oldId, new Map<String, String>{ 'includeHistory' => 'true' }, null);
+        AgenticTelco_TMF637.doGet();
+        System.assertEquals(2, ((List<Object>) ((Map<String, Object>) resp()).get('productRelationship')).size());
+        System.assert(AgenticTelco_TMF637.isSuperseded('Upgrade', 'Obsolete') && !AgenticTelco_TMF637.isSuperseded('Upgrade', 'Installed'));
         // errors
         req('GET', '/agentictelco/tmf637/product/' + foreign.Id, null, null);
         AgenticTelco_TMF637.doGet();

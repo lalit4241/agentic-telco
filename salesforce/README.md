@@ -18,6 +18,14 @@ step, returned as `x-usageRecord`; callers never touch it directly. TMF637 statu
 Obsolete ↔ terminated, Purchased ↔ created, Shipped ↔ pendingActive (the Salesforce value is returned as `x-sfStatus`).
 The facades only map data: no business rules (policy is OPA, process is Operaton). The resource shapes are TMF-aligned.
 
+TMF637 superseded upgrade links (read rule, LalitC 3 Nov 2026): a product's outgoing `Upgrade` productRelationship is left
+out of the response when its target product is itself terminated (Asset Status `Obsolete`), i.e. an earlier upgrade that
+was later replaced or reset. Only the upgrade that is in service is shown; incoming links (`Upgrade (from)`) are always
+shown. `?includeHistory=true` returns every link. No AssetRelationship record is changed or deleted. On the demo Fibre 150
+(Brightwell site 4471) this hides the 17 links left by earlier test runs (15 from 30 Oct, orders 159–173; 2 from 2 Nov,
+orders 175 and 176) and keeps one: 1ARQH0000002kDF4AY to the active Fibre 900 of order 00000177. It is a filter on the
+read path, not on the data (`AgenticTelco_TMF637.isSuperseded`, tested in `AgenticTelco_TmfTest.tmf637Lifecycle`).
+
 Shared helpers: `AgenticTelco_Tmf`. Tests: `AgenticTelco_TmfTest` (target ≥ 85 % coverage).
 
 Rules: only records created by these APIs carry the `AgenticTelco` prefix; nothing existing is updated or deleted

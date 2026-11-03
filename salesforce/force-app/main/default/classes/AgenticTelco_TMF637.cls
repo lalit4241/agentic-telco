@@ -6,6 +6,10 @@
  *   GET   /agentictelco/tmf637/product[/{id}]   ?relatedParty.id=&status=&productSerialNumber=&creationDate.gt=&limit=
  *   POST  /agentictelco/tmf637/product          (idempotent on productSerialNumber)
  *   PATCH /agentictelco/tmf637/product/{id}     {status, terminationDate, productRelationship:[{relationshipType, product:{id}}]}
+ * Superseded upgrade links: an outgoing 'Upgrade' productRelationship whose target product is itself terminated (Asset
+ * Status Obsolete) is history (an earlier upgrade that was later replaced or reset) and is left out of the response, so a
+ * product shows only the upgrade that is in service. The AssetRelationship records are not changed. Add
+ * ?includeHistory=true to see every link. Incoming links ('Upgrade (from)') are always shown.
  * Bundle components (child Assets, ParentId) are returned in the bundle's 'product' list; a component carries
  * 'x-bundledIn' (its bundle). The MVP's installed product is written by one writer (AgenticTelco_Assetisation); the
  * L5 workflow only uses GET here. POST and PATCH remain for the older stack paths.
@@ -140,6 +144,11 @@ global with sharing class AgenticTelco_TMF637 {
         return String.isBlank(s) ? null : Date.valueOf(s.left(10));
     }
 
+    /** An outgoing Upgrade link to a product that is no longer in service (Obsolete) is superseded history. */
+    public static Boolean isSuperseded(String relationshipType, String targetSfStatus) {
+        return relationshipType == 'Upgrade' && targetSfStatus == 'Obsolete';
+    }
+
     public static String status(String sf) {
         return TO_TMF.containsKey(sf) ? TO_TMF.get(sf) : (sf == null ? null : sf.toLowerCase());
     }
@@ -147,9 +156,11 @@ global with sharing class AgenticTelco_TMF637 {
     public static List<Map<String, Object>> serialize(List<Asset> assets) {
         Set<Id> ids = new Map<Id, Asset>(assets).keySet();
         Map<Id, List<Object>> rels = new Map<Id, List<Object>>();
-        for (AssetRelationship r : [SELECT Id, AssetId, RelatedAssetId, RelatedAsset.Name, RelationshipType, FromDate
+        Boolean history = AgenticTelco_Tmf.param('includeHistory') == 'true';
+        for (AssetRelationship r : [SELECT Id, AssetId, RelatedAssetId, RelatedAsset.Name, RelatedAsset.Status, RelationshipType, FromDate
                                     FROM AssetRelationship WHERE AssetId IN :ids OR RelatedAssetId IN :ids ORDER BY CreatedDate]) {
             Boolean fwd = ids.contains(r.AssetId);
+            if (fwd && !history && isSuperseded(r.RelationshipType, r.RelatedAsset.Status)) continue;
             Id self = fwd ? r.AssetId : r.RelatedAssetId, other = fwd ? r.RelatedAssetId : r.AssetId;
             if (!rels.containsKey(self)) rels.put(self, new List<Object>());
             rels.get(self).add(new Map<String, Object>{ 'id' => r.Id, 'relationshipType' => fwd ? r.RelationshipType : r.RelationshipType + ' (from)',
