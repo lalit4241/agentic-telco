@@ -36,7 +36,7 @@ flowchart TD
   G -- Overdue balance --> X2[Explain; offer payment link - mocked]
   G -- Passed --> H[Sam accepts; consent recorded]
   H --> I[Workflow creates quote]
-  I --> J[Workflow places modify order 150 to 900]
+  I --> J[Workflow places order: delete Fibre 150, add Fibre 900]
   J --> L[Fulfilment in progress - mocked network/OSS]
   L -- On track --> K[Order completed]
   L -- Jeopardy: delay e.g. engineer slot or exchange capacity --> M[Workflow raises jeopardy, agent tells Sam the new date proactively]
@@ -54,8 +54,8 @@ flowchart TD
 | L2 Agent | One agent: understand need, match to product, explain | Agent mesh, A2A, multiple models |
 | L3 Data | Postgres: conversation, decisions, audit | Kafka, pgvector, semantic cache |
 | L4 Policy | One OPA policy: authorised contact, no overdue balance (mocked), available at address key (mocked), upgrade-only mid-contract (rule present; downgrade not demoed) | Multiple policy packs |
-| L5 Execution | Small coded workflow: quote, order, track fulfilment to completion, raise jeopardy and revised date, update inventory; idempotent | Operaton BPMN engine (full demo only) |
-| L6 Salesforce SoR | Reads party, site, asset, catalogue; writes quote and order | OSS service order, qualification (org returns error) |
+| L5 Execution | Small coded workflow: quote, order, track fulfilment to completion, raise jeopardy and revised date, check installed products (TMF637 read); idempotent | Operaton BPMN engine (full demo only) |
+| L6 Salesforce SoR | Reads party, site, asset, catalogue; writes quote and order; order orchestration decomposes the order, makes the one TMF641 call and records the installed product (custom Apex step today) | Qualification (org returns error) |
 | L8 Observability | One OpenTelemetry trace per request in Jaeger | Grafana, Langfuse, inference gateway |
 
 Rule unchanged: **the agent proposes, policy decides, the workflow writes.** No business rules sit in the agent or in Salesforce.
@@ -69,8 +69,8 @@ Rule unchanged: **the agent proposes, policy decides, the workflow writes.** No 
 | Availability at address key | TMF679 Product Offering Qualification | Mocked in our layer |
 | Product and price | TMF620 Product Catalog | Salesforce, Apex TMF facade |
 | Quote | TMF648 Quote | Salesforce, Apex TMF facade |
-| Modify order and order state (acknowledged, inProgress, completed) | TMF622 Product Order (action `modify`) | Salesforce, Apex TMF facade |
-| Fulfilment progress, jeopardy and revised date | TMF641 Service Order (milestones and jeopardy alerts; field support to be verified against the spec version) | Mocked OSS in our layer |
+| Upgrade order and order state (acknowledged, inProgress, completed) | TMF622 Product Order (delete Fibre 150 plus add Fibre 900) | Salesforce, Apex TMF facade |
+| Fulfilment progress, jeopardy and revised date | TMF641 Service Order (milestones and jeopardy alerts; field support to be verified against the spec version) | Called by Salesforce order orchestration; mocked network order adapter |
 | Order status notification to Sam | TMF622 / TMF641 events via TMF688 Event pattern | Our layer |
 | Service live | TMF637 Product Inventory: Fibre 900 active | Salesforce, native |
 
@@ -86,7 +86,7 @@ Mocked and labelled in the demo: L7 Digital Core platform services, shown as a "
 3. Confirm the MVP runs as a separate "MVP mode" alongside the full AgenticTelco demo.
 
 ## 8. Build items identified
-1. Extend the TMF622 Apex facade to accept `action: modify` with a reference to the existing Fibre 150 product, mapping it to an order line that replaces Fibre 150 with Fibre 900 on the same service. Mapping only, no business rules in Salesforce (DevBot).
+1. Extend the TMF622 Apex facade to accept the upgrade as delete Fibre 150 plus add Fibre 900, linked as "replaces", with the router and access lines bundled under Fibre 900 (updated 2 Nov 2026; see [MVP-KEY-DESIGN.md](MVP-KEY-DESIGN.md) decision 6). Mapping only, no business rules in Salesforce (DevBot).
 
 ## 9. Layer walkthrough
 A detailed, layer-by-layer explanation of this design (how we present it, the end-to-end sequence across all eight Zero Gravity layers, what each layer does in Brightwell's journey, example artefacts, real vs mocked, the proposed demo layer view and a CIO/CTO view) is in [layer-walkthrough.md](layer-walkthrough.md). It explains this page and does not change the business process. The walkthrough sets the journey in a fictional Tier 1 operator, "UK Telco" (illustrative), where Salesforce is one system among several legacy systems; the non-Salesforce systems are labelled legacy stand-ins.
