@@ -75,7 +75,7 @@ async def start(request: Request):
       J({"accountId": B["accountId"], "contactName": who["name"].split()[0], "contactFullName": who["name"], "contactRole": who["role"],
          "customerName": "Brightwell Design Ltd", "case": b["case"]}))
     with Span(trace, "L1", "Web chat", "Chat opened", runtime="ours (web chat)", api="HTTPS", method="POST", path="/api/demo/start",
-              conversation_id=cid, request={"case": b["case"]}) as sp:   # the agent opens with a greeting (L2, real model)
+              conversation_id=cid, request={"case": b["case"]}) as sp:   # the agent opens with a one-line greeting (L2, scripted)
         async with httpx.AsyncClient(timeout=300) as cl:
             r = await cl.post(f"{url('agent')}/greet", json={"conversationId": cid, "office": "Martlesham"}, headers={"traceparent": traceparent(trace, sp.span_id)})
         sp.status, sp.response = r.status_code, r.json()

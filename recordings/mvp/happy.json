@@ -145,7 +145,7 @@
     "seq": 247,
     "at": "2026-11-02T23:29:39.934955+00:00",
     "role": "assistant",
-    "content": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything.",
+    "content": "Hi Sam, I'm the assistant for AgenticTelco Business.",
     "meta": {
      "greeting": true
     }
@@ -220,7 +220,7 @@
      "case": "happy"
     },
     "response": {
-     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything."
+     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business."
     }
    },
    {
@@ -244,35 +244,7 @@
      "office": "Martlesham"
     },
     "response": {
-     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything."
-    }
-   },
-   {
-    "seq": 1428,
-    "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
-    "span_id": "81dbd21493120469",
-    "parent_span_id": "fced1f0af7231b01",
-    "layer": "L2",
-    "component": "Agent (LangGraph)",
-    "step": "Model call (greeting)",
-    "runtime": "Ollama, qwen3-4b-instruct-2507 (local, thinking off)",
-    "api": "Ollama",
-    "method": "POST",
-    "path": "/api/chat",
-    "status": 200,
-    "start_ts": "2026-11-02T23:29:36.912203+00:00",
-    "end_ts": "2026-11-02T23:29:39.932537+00:00",
-    "duration_ms": 3020.3,
-    "attributes": {
-     "model": "qwen3-4b-instruct-2507",
-     "toolCalls": [],
-     "outputTokens": 39,
-     "promptTokens": 708
-    },
-    "request": null,
-    "response": {
-     "content": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything.",
-     "tool_calls": null
+     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business."
     }
    },
    {
@@ -4588,7 +4560,7 @@
   ]
  },
  "notes": [
-  "The agent's opening greeting was produced on 3 Nov 2026 (UK time) by the real agent model and system prompt (/greet, conversation C-c664e68bd6) and spliced in before Sam's request; its timestamps are re-based to end 6 s before 23:29:45. Order 00000177 data is unchanged.",
+  "The agent's opening greeting is now a fixed one-line script (/greet: \"Hi {name}, I'm the assistant for AgenticTelco Business.\", no model call); the greeting message and spans were updated on 3 Nov 2026 (UK time) and the earlier greeting model-call span removed. It sits before Sam's request with timestamps ending 6 s before 23:29:45. Order 00000177 data is unchanged.",
   "Span 1479 (Complete order) productOrderItem and span 1481 (TMF622 read) response were refreshed from a read-only TMF622 GET of 00000177 after the item mapping fix."
  ]
 }

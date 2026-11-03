@@ -39,10 +39,7 @@ You never change any system yourself: the workflow does that after a final polic
 Terms you may need to explain:
 {glossary}"""
 
-GREETING = ("{name} has just opened the business chat. Write your opening message: greet {name} by name and say "
-            "you are the assistant for AgenticTelco Business, ask in one light, friendly line how the service is working for them at the {office} office, "
-            "and offer to help. One or two short sentences, UK English, "
-            "no hype, and nothing about products, prices or orders.")
+GREETING = "Hi {name}, I'm the assistant for AgenticTelco Business."   # fixed opening line (deterministic, no model call)
 
 MODEL_TOOLS = [
     {"type": "function", "function": {"name": "get_context", "description": "Facts about this customer and the upgrades the policy allows.",
@@ -210,7 +207,7 @@ async def chat(request: Request):
 
 @app.post("/greet")
 async def greet(request: Request):
-    """Opening message when the chat opens: the agent greets the contact by name (same persona and system prompt, no tools)."""
+    """Opening message when the chat opens: one fixed line greeting the contact by name (scripted, so it is identical on every run)."""
     b = await request.json()
     cid = b["conversationId"]
     c = q1("select trace_id, state from mvp.conversation where id=%s", cid)
@@ -223,15 +220,7 @@ async def greet(request: Request):
     office = b.get("office") or "Martlesham"
     with Span(trace, "L2", "Agent (LangGraph)", "Greeting", runtime="ours (LangGraph)", api="MCP", method="TURN", path="/greet",
               parent=parent, conversation_id=cid, request={"office": office}) as sp:
-        sysmsg = SYSTEM.format(name=name, customer=st.get("customerName", "the business"), glossary=glossary_lines())
-        prompt = [{"role": "system", "content": sysmsg}, {"role": "user", "content": GREETING.format(name=name, office=office)}]
-        try:
-            reply = (ollama(trace, sp.span_id, cid, prompt, tools=False, step="Model call (greeting)").get("content") or "").strip()
-        except Exception:
-            reply = None
-        if not reply:
-            reply = f"Hello {name}, welcome to AgenticTelco Business. How are things at the {office} office? I'm here if you need anything."
-            sp.attrs["scriptedFallback"] = True
+        reply = GREETING.format(name=name)
         q("insert into mvp.message(conversation_id, role, content, meta) values (%s,'assistant',%s,%s)", cid, reply, J({"greeting": True}))
         sp.status, sp.response = 200, {"reply": reply}
     return {"reply": reply}
