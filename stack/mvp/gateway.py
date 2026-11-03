@@ -21,7 +21,6 @@ CASES = {
 }
 OPENING = ("We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. "
            "Our broadband already struggles. What do you suggest?")
-SMALL_TALK = "Hi, thanks. All good here, busy but in a good way: we've just won a couple of new clients. How are you?"   # scripted, like OPENING
 
 @app.on_event("startup")
 def _s():
@@ -80,8 +79,7 @@ async def start(request: Request):
         async with httpx.AsyncClient(timeout=300) as cl:
             r = await cl.post(f"{url('agent')}/greet", json={"conversationId": cid, "office": "Martlesham"}, headers={"traceparent": traceparent(trace, sp.span_id)})
         sp.status, sp.response = r.status_code, r.json()
-    return {"conversationId": cid, "traceId": trace, "case": b["case"], "title": case["title"], "contact": who, "greeting": r.json().get("reply"),
-            "smallTalk": SMALL_TALK, "opening": OPENING}
+    return {"conversationId": cid, "traceId": trace, "case": b["case"], "title": case["title"], "contact": who, "greeting": r.json().get("reply"), "opening": OPENING}
 
 @app.post("/api/chat")
 async def chat(request: Request):

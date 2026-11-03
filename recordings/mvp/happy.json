@@ -6,11 +6,6 @@
  "conversationId": "C-5ead30b179",
  "turns": [
   {
-   "message": "small talk",
-   "seconds": 4.1,
-   "tools": []
-  },
-  {
    "message": "opening",
    "seconds": 29.7,
    "tools": [
@@ -32,7 +27,7 @@
    "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
    "contact_id": "003QH00000TU8kDYAT",
    "case_name": "happy",
-   "started_at": "2026-11-02T23:29:26.546269+00:00"
+   "started_at": "2026-11-02T23:29:36.888810+00:00"
   },
   "state": {
    "case": "happy",
@@ -147,31 +142,12 @@
   },
   "messages": [
    {
-    "seq": 245,
-    "at": "2026-11-02T23:29:30.802496+00:00",
+    "seq": 247,
+    "at": "2026-11-02T23:29:39.934955+00:00",
     "role": "assistant",
-    "content": "Hi Sam, I'm the assistant for AgenticTelco Business. How's it going at the Martlesham office? Happy to help with anything you need.",
+    "content": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything.",
     "meta": {
      "greeting": true
-    }
-   },
-   {
-    "seq": 246,
-    "at": "2026-11-02T23:29:36.849139+00:00",
-    "role": "user",
-    "content": "Hi, thanks. All good here, busy but in a good way: we've just won a couple of new clients. How are you?",
-    "meta": {
-     "smallTalk": true
-    }
-   },
-   {
-    "seq": 247,
-    "at": "2026-11-02T23:29:40.935321+00:00",
-    "role": "assistant",
-    "content": "Hi Sam, thanks for the update \u2013 that\u2019s great news! We\u2019re all working well here. How can I help you today?",
-    "meta": {
-     "tools": [],
-     "smallTalk": true
     }
    },
    {
@@ -224,9 +200,9 @@
   ],
   "spans": [
    {
-    "seq": 1423,
+    "seq": 1426,
     "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
-    "span_id": "3910d448620a3a69",
+    "span_id": "204a327bc1b37ece",
     "parent_span_id": null,
     "layer": "L1",
     "component": "Web chat",
@@ -236,22 +212,22 @@
     "method": "POST",
     "path": "/api/demo/start",
     "status": 200,
-    "start_ts": "2026-11-02T23:29:26.546269+00:00",
-    "end_ts": "2026-11-02T23:29:30.806667+00:00",
-    "duration_ms": 4260.4,
+    "start_ts": "2026-11-02T23:29:36.888810+00:00",
+    "end_ts": "2026-11-02T23:29:39.937743+00:00",
+    "duration_ms": 3048.9,
     "attributes": {},
     "request": {
      "case": "happy"
     },
     "response": {
-     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business. How's it going at the Martlesham office? Happy to help with anything you need."
+     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything."
     }
    },
    {
-    "seq": 1424,
+    "seq": 1427,
     "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
-    "span_id": "9d2c2ad22333426a",
-    "parent_span_id": "3910d448620a3a69",
+    "span_id": "fced1f0af7231b01",
+    "parent_span_id": "204a327bc1b37ece",
     "layer": "L2",
     "component": "Agent (LangGraph)",
     "step": "Greeting",
@@ -260,22 +236,22 @@
     "method": "TURN",
     "path": "/greet",
     "status": 200,
-    "start_ts": "2026-11-02T23:29:26.567585+00:00",
-    "end_ts": "2026-11-02T23:29:30.803135+00:00",
-    "duration_ms": 4235.6,
+    "start_ts": "2026-11-02T23:29:36.911890+00:00",
+    "end_ts": "2026-11-02T23:29:39.935582+00:00",
+    "duration_ms": 3023.7,
     "attributes": {},
     "request": {
      "office": "Martlesham"
     },
     "response": {
-     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business. How's it going at the Martlesham office? Happy to help with anything you need."
+     "reply": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything."
     }
    },
    {
-    "seq": 1425,
+    "seq": 1428,
     "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
-    "span_id": "2daa02da77c80a82",
-    "parent_span_id": "9d2c2ad22333426a",
+    "span_id": "81dbd21493120469",
+    "parent_span_id": "fced1f0af7231b01",
     "layer": "L2",
     "component": "Agent (LangGraph)",
     "step": "Model call (greeting)",
@@ -284,97 +260,18 @@
     "method": "POST",
     "path": "/api/chat",
     "status": 200,
-    "start_ts": "2026-11-02T23:29:26.567965+00:00",
-    "end_ts": "2026-11-02T23:29:30.799568+00:00",
-    "duration_ms": 4231.6,
+    "start_ts": "2026-11-02T23:29:36.912203+00:00",
+    "end_ts": "2026-11-02T23:29:39.932537+00:00",
+    "duration_ms": 3020.3,
     "attributes": {
      "model": "qwen3-4b-instruct-2507",
      "toolCalls": [],
-     "outputTokens": 34,
-     "promptTokens": 704
+     "outputTokens": 39,
+     "promptTokens": 708
     },
     "request": null,
     "response": {
-     "content": "Hi Sam, I'm the assistant for AgenticTelco Business. How's it going at the Martlesham office? Happy to help with anything you need.",
-     "tool_calls": null
-    }
-   },
-   {
-    "seq": 1426,
-    "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
-    "span_id": "0c38202d5e99906d",
-    "parent_span_id": null,
-    "layer": "L1",
-    "component": "Web chat",
-    "step": "Customer message",
-    "runtime": "ours (web chat)",
-    "api": "HTTPS",
-    "method": "POST",
-    "path": "/api/chat",
-    "status": 200,
-    "start_ts": "2026-11-02T23:29:36.806667+00:00",
-    "end_ts": "2026-11-02T23:29:40.937743+00:00",
-    "duration_ms": 4131.1,
-    "attributes": {},
-    "request": {
-     "message": "Hi, thanks. All good here, busy but in a good way: we've just won a couple of new clients. How are you?"
-    },
-    "response": {
-     "reply": "Hi Sam, thanks for the update \u2013 that\u2019s great news! We\u2019re all working well here. How can I help you today?",
-     "tools": [],
-     "consentRecorded": false
-    }
-   },
-   {
-    "seq": 1427,
-    "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
-    "span_id": "dadd05abb81304f3",
-    "parent_span_id": "0c38202d5e99906d",
-    "layer": "L2",
-    "component": "Agent (LangGraph)",
-    "step": "Agent turn",
-    "runtime": "ours (LangGraph + MCP client)",
-    "api": "MCP",
-    "method": "TURN",
-    "path": "/chat",
-    "status": 200,
-    "start_ts": "2026-11-02T23:29:36.847453+00:00",
-    "end_ts": "2026-11-02T23:29:40.935425+00:00",
-    "duration_ms": 4088,
-    "attributes": {},
-    "request": {
-     "message": "Hi, thanks. All good here, busy but in a good way: we've just won a couple of new clients. How are you?"
-    },
-    "response": {
-     "reply": "Hi Sam, thanks for the update \u2013 that\u2019s great news! We\u2019re all working well here. How can I help you today?",
-     "tools": []
-    }
-   },
-   {
-    "seq": 1428,
-    "trace_id": "38695fdcd85f485b2b439e6b84fd2275",
-    "span_id": "3b006f247f15a817",
-    "parent_span_id": "dadd05abb81304f3",
-    "layer": "L2",
-    "component": "Agent (LangGraph)",
-    "step": "Model call",
-    "runtime": "Ollama, qwen3-4b-instruct-2507 (local, thinking off)",
-    "api": "Ollama",
-    "method": "POST",
-    "path": "/api/chat",
-    "status": 200,
-    "start_ts": "2026-11-02T23:29:36.852684+00:00",
-    "end_ts": "2026-11-02T23:29:40.931119+00:00",
-    "duration_ms": 4078.4,
-    "attributes": {
-     "model": "qwen3-4b-instruct-2507",
-     "toolCalls": [],
-     "outputTokens": 28,
-     "promptTokens": 989
-    },
-    "request": null,
-    "response": {
-     "content": "Hi Sam, thanks for the update \u2013 that\u2019s great news! We\u2019re all working well here. How can I help you today?",
+     "content": "Hi Sam, I'm the assistant for AgenticTelco Business. How's the service working for you at the Martlesham office? I'm here to help if you need anything.",
      "tool_calls": null
     }
    },
@@ -4691,7 +4588,7 @@
   ]
  },
  "notes": [
-  "Greeting turns (agent greeting, Sam's scripted small talk, agent reply) were produced on 2 Nov 2026 by the real agent model and system prompt (/greet and /chat, conversation C-97eafe5f44) and spliced in before the request; their timestamps are re-based to end before 23:29:45 with short reading pauses. Order 00000177 data is unchanged.",
+  "The agent's opening greeting was produced on 3 Nov 2026 (UK time) by the real agent model and system prompt (/greet, conversation C-c664e68bd6) and spliced in before Sam's request; its timestamps are re-based to end 6 s before 23:29:45. Order 00000177 data is unchanged.",
   "Span 1479 (Complete order) productOrderItem and span 1481 (TMF622 read) response were refreshed from a read-only TMF622 GET of 00000177 after the item mapping fix."
  ]
 }

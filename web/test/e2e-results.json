@@ -1,5 +1,5 @@
 {
- "at": "2026-11-03T00:01:41.041Z",
+ "at": "2026-11-03T00:07:11.548Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -74,7 +74,7 @@
   {
    "name": "How it fits lights layers during the replay",
    "ok": true,
-   "detail": "4"
+   "detail": "12"
   },
   {
    "name": "happy: step bar Asks..Live, all done, Live green",

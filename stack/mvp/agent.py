@@ -40,7 +40,8 @@ Terms you may need to explain:
 {glossary}"""
 
 GREETING = ("{name} has just opened the business chat. Write your opening message: greet {name} by name and say "
-            "you are the assistant for AgenticTelco Business, ask in one light, friendly line how things are at the {office} office, and offer to help. One or two short sentences, UK English, "
+            "you are the assistant for AgenticTelco Business, ask in one light, friendly line how the service is working for them at the {office} office, "
+            "and offer to help. One or two short sentences, UK English, "
             "no hype, and nothing about products, prices or orders.")
 
 MODEL_TOOLS = [
