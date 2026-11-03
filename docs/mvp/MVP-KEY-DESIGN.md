@@ -4,7 +4,7 @@
 
 v1.1 (30 Oct 2026): TMF-only API presentation; hosting and runtime wording removed. Agreed by LalitC.
 
-v1.2 (3 Nov 2026, DRAFT for LalitC's approval): the upgrade is a TMF622 delete plus add; Salesforce order orchestration decomposes to customer-facing services and makes the one network order call [TMF641]; the installed product has one writer, a custom Apex plan step today (decision 6; [decision-assetisation.md](decision-assetisation.md)); no silent fallback.
+v1.2 (3 Nov 2026, approved by LalitC): the upgrade is a TMF622 delete plus add; Salesforce order orchestration decomposes to customer-facing services and makes the one network order call [TMF641]; the installed product has one writer, a custom Apex plan step today (decision 6; [decision-assetisation.md](decision-assetisation.md)); no silent fallback.
 
 27 Oct 2026. This is the one document all three must agree before any development starts. It consolidates [MVP-design.md](MVP-design.md) and [layer-walkthrough.md](layer-walkthrough.md). The walkthrough is superseded (30 Oct 2026) and kept for history only; the on-screen wording is in [layer-panels.md](layer-panels.md). Where they differ, this document wins once agreed.
 
