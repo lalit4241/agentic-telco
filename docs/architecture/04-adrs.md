@@ -32,7 +32,7 @@ Date for all records: 26 Oct 2026.
 
 **Consequences.**
 - The demo shows the Axiom cleanly. INFERRED.
-- Out-of-the-box configuration still embeds some logic (for example catalogue structure, CPQ pricing, built-in order decomposition). We treat that as SoR configuration and show it, not hide it. Where it overlaps with OPA policy, OPA decides first. INFERRED.
+- Out-of-the-box configuration still embeds some logic (for example catalogue structure, CPQ pricing, built-in order decomposition). We treat that as SoR configuration and show it, not hide it. Where it overlaps with OPA policy, OPA decides first. INFERRED. Which CPQ rules leave the SoR is decided in [decision-cpq-rules.md](../mvp/decision-cpq-rules.md).
 - Anything the org does not expose has to come from the stand-in (ADR-004).
 - Salesforce-shipped prerequisites (datapacks, static resources, permission set licences) are still needed for the TMF APIs. CONFIRMED for TMF620.
 
