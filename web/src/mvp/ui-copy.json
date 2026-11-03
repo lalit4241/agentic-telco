@@ -80,7 +80,7 @@
   "nodes": {
    "L1": { "title": "Intent and Experience Layer", "sub": "Intent: Sam's request, captured as an outcome" },
    "L2": { "title": "Agent Mesh", "sub": "One agent: understands, recommends, proposes only" },
-   "L4": { "title": "Enterprise Context Layer", "sub": "Context and policy: reads catalogue and contracts, no prices", "note": "Rules moved out of CPQ: eligibility, authorised contact, overdue balance, upgrade-only" },
+   "L4": { "title": "Enterprise Context Layer", "sub": "Context and policy: reads catalogue and contracts, no prices", "note": "Rules held here, not in CPQ: eligibility, authorised contact, overdue balance, upgrade-only" },
    "L3": { "title": "Data Foundation", "sub": "Memory and audit: same customer, every step" },
    "L5": { "title": "Deterministic Execution Fabric", "sub": "Workflow: the only writer" },
    "api": { "title": "TM Forum Open APIs", "sub": "TMF-aligned" },

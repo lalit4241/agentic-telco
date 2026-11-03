@@ -1,5 +1,5 @@
 {
- "at": "2026-11-03T00:54:30.681Z",
+ "at": "2026-11-03T12:07:03.846Z",
  "results": [
   {
    "name": "source holds no journey content in plaintext",
@@ -39,7 +39,7 @@
   {
    "name": "each tab heading has an inline line icon (no external refs), accent colour when active",
    "ok": true,
-   "detail": "[[1,\"rgb(1, 118, 211)\",true,false],[4,\"color(srgb 0.333922 0.559804 0.756275)\",false,false],[1,\"color(srgb 0.333922 0.559804 0.756275)\",false,false]]"
+   "detail": "[[1,\"rgb(227, 24, 55)\",true,false],[4,\"color(srgb 0.732745 0.393922 0.48098)\",false,false],[1,\"color(srgb 0.732745 0.393922 0.48098)\",false,false]]"
   },
   {
    "name": "tab 1 (What changes for the business) is the default",
@@ -72,9 +72,24 @@
    "detail": ""
   },
   {
+   "name": "business tab: Zero Gravity layer strip L1..L8 with the README layer names",
+   "ok": true,
+   "detail": "[\"L1Intent and Experience Layer\",\"L2Agent Mesh\",\"L3Data Foundation\",\"L4Enterprise Context Layer\",\"L5Deterministic Execution Fabric\",\"L6Agent Ready Systems of Record\",\"L7Digital Core\",\"L8Observability & Governance\"]"
+  },
+  {
+   "name": "business tab: the strip lights the layers the replay step lands in",
+   "ok": true,
+   "detail": "L1,L2,L8"
+  },
+  {
+   "name": "layer strip is one compact row at 1280x800 and the chat stays above the fold",
+   "ok": true,
+   "detail": "{\"h\":36,\"one\":true,\"chat\":424}"
+  },
+  {
    "name": "How it fits lights layers during the replay",
    "ok": true,
-   "detail": "12"
+   "detail": "11"
   },
   {
    "name": "happy: step bar Asks..Live, all done, Live green",
@@ -112,7 +127,7 @@
    "detail": ""
   },
   {
-   "name": "tab 1 has no layer numbers, APIs or drawers",
+   "name": "tab 1 has no layer numbers, APIs or drawers outside the layer strip",
    "ok": true,
    "detail": ""
   },
@@ -120,6 +135,16 @@
    "name": "selecting a step marks it",
    "ok": true,
    "detail": ""
+  },
+  {
+   "name": "clicking the layer strip opens How it fits",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "layer strip uses the same step-to-layer mapping as How it fits",
+   "ok": true,
+   "detail": "L2,L3,L5,L6,L8 vs L2,L3,L5,L6,L8"
   },
   {
    "name": "CIO: headline, 3 cards, 4 messages verbatim",
@@ -132,7 +157,17 @@
    "detail": ""
   },
   {
-   "name": "CIO: 5 groups and the Salesforce chip, no facade wording in the diagram",
+   "name": "CIO: the diagram follows Figure 3: L1 and L2 on top, L3 down the left, L4 beside L5, L6 under them, L7 at the bottom, L8 down the right",
+   "ok": true,
+   "detail": "[160,8,936,68]"
+  },
+  {
+   "name": "CIO: the layer boxes use the report names",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "CIO: one L6 band and the Salesforce chip, no facade wording in the diagram",
    "ok": true,
    "detail": ""
   },
@@ -154,7 +189,7 @@
   {
    "name": "CIO: \"Ordered\" lights the workflow, the APIs and Salesforce",
    "ok": true,
-   "detail": "customer,L2,L3,L5,api,sf,sfcust,sfcat,sfcpq,sfom,billing,avail,L8"
+   "detail": "customer,L2,L3,L5,api,sf,sfcust,sfcat,sfom,billing,avail,L8"
   },
   {
    "name": "CIO: no Exposed APIs list here",
@@ -164,7 +199,7 @@
   {
    "name": "CIO: \"Checks\" lights the context and policy layers and the older systems",
    "ok": true,
-   "detail": "L2,L4,L3,api,sf,sfcust,sfcat,sfcpq,sfom,billing,avail,L8"
+   "detail": "L2,L3,L4,api,sf,sfcust,sfcat,sfom,billing,avail,L8"
   },
   {
    "name": "CIO: diagram caption visible without scrolling at 1440x900",
