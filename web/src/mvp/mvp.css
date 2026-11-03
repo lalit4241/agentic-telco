@@ -151,7 +151,7 @@ body.presenter .stephint,body.presenter .glegend,body.presenter .kpis .small{dis
 .sorline{background:#fdf0f2;border:1px solid #f5c6cf;border-radius:8px;padding:8px 12px;margin:4px 0 0}
 .evg{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;margin-top:10px}.ev{margin:0;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .ev img{width:100%;display:block;cursor:zoom-in;border-bottom:1px solid var(--line)}.ev figcaption{padding:8px 10px;font-size:12.5px}
-.dsvg .nt.sb{font-size:11px}.dsvg [data-node^="sf"]:not([data-node="sf"]) .ns{font-size:10.5px}.dsvg [data-node^="sf"]:not([data-node="sf"]) .bx{rx:8}
+.dsvg .nt.sb{font-size:11px}.dsvg .nn rect{fill:color-mix(in srgb,var(--c) 8%,#fff);stroke:color-mix(in srgb,var(--c) 35%,#fff);stroke-width:1}.dsvg .nn text{font-size:10px;fill:#5c6170}.dsvg [data-node^="sf"]:not([data-node="sf"]) .ns{font-size:10.5px}.dsvg [data-node^="sf"]:not([data-node="sf"]) .bx{rx:8}
 .dsvg .sfband rect{stroke:var(--l6);stroke-width:1.2}.dsvg .sfband .bi{fill:#fff}.dsvg .sfband .fa{fill:color-mix(in srgb,var(--l6) 12%,#fff)}.dsvg .sfband text{font-size:11px;font-weight:700;fill:var(--txt)}.dsvg .ad{font-size:10px;font-weight:700;fill:#5c6170}
 .dsvg .tgt path{fill:none;stroke:#7d8494;stroke-width:1.8;stroke-dasharray:5 4}.dsvg .tgt rect{fill:#eef0f3;stroke:#9aa0ae}.dsvg .tgt text{font-size:10.5px;font-style:italic;fill:#555b6a}.glegend .tl{grid-column:1/-1;color:#7a8090}
 /* Salesforce order orchestration: the Order Management -> network order adapter arrow, the decomposition tree, action codes */

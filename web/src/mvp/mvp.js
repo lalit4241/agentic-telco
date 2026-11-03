@@ -337,7 +337,7 @@
     ['L4', 184, 176, 446, 94, 'shield', '--l4', 0, 'band'], ['L5', 650, 176, 446, 94, 'flow', '--l5', 0, 'band'],
     ['api', 196, 316, 888, 40, 'api', '--l6'],
     ['sf', 196, 366, 364, 150, 'cloud', '--l6'],
-    ['sfcust', 204, 426, 348, 22, '', '--l6'], ['sfcat', 204, 454, 112, 56, '', '--l6'], ['sfcpq', 322, 454, 112, 56, '', '--l6'], ['sfom', 440, 454, 112, 56, '', '--l6'],
+    ['sfcust', 204, 426, 348, 22, '', '--l6'], ['sfcat', 204, 454, 196, 56, '', '--l6'], ['sfom', 406, 454, 146, 56, '', '--l6'],
     ['billing', 580, 394, 160, 116, 'bill', '--legacy', 1], ['avail', 750, 394, 160, 116, 'pin', '--legacy', 1], ['oss', 920, 394, 160, 116, 'server', '--legacy', 1],
     ['L7', 16, 556, 1080, 48, 'net', '--l7', 1, 'band'], ['L8', 1112, 8, 152, 596, 'timeline', '--l8', 0, 'tall']];
   var DGROUPS = { L6: [184, 288, 912, 252, '--l6'] };
@@ -368,12 +368,19 @@
         h += '<text x="' + (x + 10) + '" y="' + (y + 15) + '" class="ns sb">' + esc(t.title) + ' (' + esc(t.sub) + ')</text>';
       } else if (/^sf/.test(id)) {
         h += '<text x="' + (x + 8) + '" y="' + (y + 16) + '" class="nt sb">' + esc(t.title) + ':</text>';
-        wrapText(t.sub, 16).slice(0, 3).forEach(function (ln, i) { h += '<text x="' + (x + 8) + '" y="' + (y + 31 + i * 12) + '" class="ns">' + esc(ln) + '</text>'; });
+        wrapText(t.sub, Math.floor((w - 16) / 5)).slice(0, 3).forEach(function (ln, i) { h += '<text x="' + (x + 8) + '" y="' + (y + 31 + i * 12) + '" class="ns">' + esc(ln) + '</text>'; });
       } else if (n[8] === 'band') {
         var cy = y + ht / 2, subs = wrapText(t.sub, Math.floor((w - (id === 'customer' ? 66 : 140)) / 6.2)).slice(0, 2), ty = cy - (subs.length * 15) / 2 + 4;
+        if (t.note) { subs = wrapText(t.sub, Math.floor((w - 84) / 5.9)).slice(0, 1); ty = y + 24; }
         h += '<circle cx="' + (x + 30) + '" cy="' + cy + '" r="17" class="icb"/>' + icon(n[5], x + 19, cy - 11, 22, col);
         h += '<text x="' + (x + 58) + '" y="' + ty + '" class="nt">' + esc(t.title) + '</text>';
         subs.forEach(function (ln, i) { h += '<text x="' + (x + 58) + '" y="' + (ty + 16 + i * 14) + '" class="ns">' + esc(ln) + '</text>'; });
+        if (t.note) {   // a small note under the subtitle (L4: the rules it holds)
+          var nl = wrapText(t.note, Math.floor((w - 80) / 5.4)).slice(0, 2);
+          h += '<g class="nn"><rect x="' + (x + 52) + '" y="' + (ty + 24) + '" width="' + (w - 64) + '" height="' + (nl.length * 13 + 8) + '" rx="6"/>';
+          nl.forEach(function (ln, i) { h += '<text x="' + (x + 60) + '" y="' + (ty + 37 + i * 13) + '">' + esc(ln) + '</text>'; });
+          h += '</g>';
+        }
         if (lay) h += '<text x="' + (x + w - 12) + '" y="' + (y + 20) + '" text-anchor="end" class="ln">' + lay + '</text>';
         if (n[7]) h += '<g class="mk"><rect x="' + (x + w - 64) + '" y="' + (y + ht - 26) + '" width="54" height="18" rx="9"/><text x="' + (x + w - 37) + '" y="' + (y + ht - 13) + '" text-anchor="middle">' + esc(chips.mocked || 'Mocked') + '</text></g>';
       } else {
@@ -418,8 +425,7 @@
         on.api = 1; var r = (s.runtime || '') + ' ' + s.step + ' ' + (s.component || '');
         if (isSfRt(s.runtime) || /Salesforce/.test(s.runtime || '')) {
           on.sf = 1; var a = s.api || '';
-          if (/TMF620/.test(a)) on.sfcat = 1;
-          if (/TMF648|TMF671/.test(a)) on.sfcpq = 1;
+          if (/TMF620|TMF648|TMF671/.test(a)) on.sfcat = 1;   // product catalogue and quote
           if (/TMF622|TMF637/.test(a)) on.sfom = 1;
           if (/TMF629|TMF632/.test(a)) on.sfcust = 1;
         }
