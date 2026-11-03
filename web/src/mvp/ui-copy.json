@@ -33,6 +33,7 @@
   ],
   "stepHint": "Selected step lights up the layers in How it fits.",
   "stepHintLink": "See it in How it fits",
+  "zgLayers": { "label": "Zero Gravity layers", "link": "See the layers in How it fits", "layers": [ { "id": "L1", "name": "Intent & Experience" }, { "id": "L2", "name": "Agent Mesh" }, { "id": "L3", "name": "Data & Intelligence Foundations" }, { "id": "L4", "name": "Context Layer" }, { "id": "L5", "name": "Deterministic Execution Fabric" }, { "id": "L6", "name": "Agent-Ready SoRs" }, { "id": "L7", "name": "Digital Core" }, { "id": "L8", "name": "Observability & Governance" } ] },
   "chatEmpty": "Choose a journey above, then press Play. Each starts from Brightwell on Fibre 150 at £27 a month, contract to 28 August 2027.",
   "chatReady": "Press Play to replay the recorded run.",
   "todayHeading": "Today",

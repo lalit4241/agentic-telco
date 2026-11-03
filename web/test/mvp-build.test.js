@@ -11,7 +11,7 @@ function decrypt(p, password) {
 }
 const app = decrypt(payload, pw);
 const CFG = JSON.parse(app.js.match(/^window\.MVP_CFG=(.*?);\n/s)[1]);
-const FOOT = 'Concept demo by Lalit Chauhan · not an official Salesforce product';
+const FOOT = 'Concept demo · not an official Salesforce product';
 
 test('payload is AES-256-GCM, PBKDF2 250k; the verifier does not reveal the password; wrong password fails', () => {
   assert.strictEqual(payload.iter, 250000);
@@ -148,4 +148,8 @@ test('no model names on screen and the delayed order number is masked', () => {
   assert.ok(CFG.ui.architect.mapping.some((r) => r[3] === 'Intent (TMF921)'));
   assert.match(src, /function rtName/); assert.match(src, /function maskNum/);
   const D = CFG.recordings.delayed.state; assert.ok(JSON.stringify(D).includes(D.links.orderNumber), 'delayed number is in the data, so the UI must mask it');
+});
+test('no personal name in the MVP page (footer is the plain disclaimer)', () => {
+  assert.doesNotMatch(html + JSON.stringify(app), /Lalit/);
+  assert.ok(JSON.stringify(app).includes(FOOT) && html.includes(FOOT));
 });

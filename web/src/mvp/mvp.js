@@ -15,6 +15,7 @@
   var LAYER_IDS = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'];
   var CASES = UB.journeys || [{ id: 'happy' }, { id: 'notauth' }, { id: 'overdue' }, { id: 'delayed' }];
   var STEPS = UB.steps || [];
+  var ZG = UB.zgLayers || { layers: [] };
   var OPENING = "We're taking on 15 more staff at the Martlesham office next month, 35 people in total, and moving everyone to cloud video calls. Our broadband already struggles. What do you suggest?";
   var PLATFORM = 'Kubernetes · secrets vault · network zones · API gateway · agent and workload identity · event bus';
   /* step: null = follow the replay, 0..5 = a selected business step, 'all' = whole journey */
@@ -156,7 +157,7 @@
       '<div class="modebar' + (LIVE ? '' : ' rec') + '" id="modebar"></div>' +
       '<main><section id="v-business"></section><section id="v-cio" hidden></section><section id="v-architect" hidden></section></main>' +
       '<div class="dr" id="drawer" aria-hidden="true"></div>' +
-      '<div class="foot">Concept demo by Lalit Chauhan · not an official Salesforce product</div>';
+      '<div class="foot">Concept demo · not an official Salesforce product</div>';
     shellBusiness(); shellCio(); shellArchitect();
     $$('.tabs button').forEach(function (b) { b.onclick = function () { setTab(b.dataset.tab); }; });
     $('#b-pres').onclick = togglePresenter;
@@ -218,6 +219,7 @@
     $('#v-business').innerHTML = '<div class="bv">' +
       '<div class="jrow"><div class="jl">' + esc(UB.journeysHeading) + '</div><div class="cases">' + CASES.map(function (c, i) { return '<button class="case" data-case="' + c.id + '"><b>' + (i + 1) + '. ' + esc(c.title) + '</b><span>' + esc(c.sub) + '</span></button>'; }).join('') + '</div></div>' +
       '<div class="chev" id="chev"></div><div class="stephint" id="stephint"></div>' +
+      '<div class="zg" id="zg" data-goto="cio" role="link" tabindex="0" title="' + esc(ZG.link || '') + '"></div>' +
       '<div class="bgrid"><div class="panel chatp"><div class="portal"><div class="av" id="av">S</div><div class="who" id="who"></div><span class="badge" id="ist"></span></div>' +
       '<div class="chat" id="chat"></div>' +
       (LIVE ? '<div class="quick" id="quick"></div><div class="composer"><textarea id="msg" placeholder="Type as the customer…"></textarea><button class="btn" id="send">Send</button></div>' : '') + '</div>' +
@@ -233,6 +235,9 @@
     var hint = sel === null || sel === 'all' ? esc(UB.stepHint) + ' <a href="#" data-goto="cio">' + esc(UB.stepHintLink) + ' →</a>'
       : 'Selected: <b>' + esc((STEPS[sel] || {}).label) + '</b> · <a href="#" data-goto="cio">' + esc(UB.stepHintLink) + ' →</a> · <a href="#" data-step="follow">Follow the replay</a>';
     if ($('#stephint').innerHTML !== hint) $('#stephint').innerHTML = hint;
+    var lit = stepLit(v).on || {}, hotL = S.step === null && S.play ? hotLayers(v).hot : {};   // same step-to-layer mapping as How it fits
+    var zg = '<span class="zgl">' + esc(ZG.label) + '</span>' + (ZG.layers || []).map(function (l) { return '<span class="zc' + (lit[l.id] ? ' on' : '') + (lit[l.id] && hotL[l.id] ? ' hot' : '') + '" data-layer="' + l.id + '" style="--c:var(--' + l.id.toLowerCase() + ')"><i>' + l.id + '</i><span>' + esc(l.name) + '</span></span>'; }).join('');
+    if ($('#zg').dataset.k !== zg) { $('#zg').innerHTML = zg; $('#zg').dataset.k = zg; }
     var st = (v && v.state) || {}, f = facts(v);
     $('#av').textContent = (st.contactName || 'S')[0];
     $('#who').innerHTML = st.contactFullName ? '<b>' + esc(f.who) + '</b><span>Business portal chat · ' + esc(UB.customer) + '</span>' : '<b>Business portal chat</b><span>' + esc(UB.customer) + '</span>';
@@ -418,6 +423,13 @@
     return on;
   }
   function inWin(W, k) { var w = k === 'all' ? { a: -Infinity, b: Infinity } : W[k]; return function (x) { var t = T(x); return w.a != null && t >= w.a && t < w.b; }; }
+  /* the nodes the current (or selected) step lights up: one mapping for the How it fits diagram and the business-tab layer strip */
+  function stepLit(v) {
+    var W = windows(S.full), k = selStep();
+    if (!v || k == null || !W) return { k: k, on: null };
+    var f = inWin(W, k), src = S.step !== null ? S.full : v;
+    return { k: k, on: W[k === 'all' ? 0 : k] && (k === 'all' || W[k].a != null) ? litNodes((src.spans || []).filter(function (s) { return f(s.start_ts); }), (src.messages || []).filter(function (m) { return f(m.at); }), (src.milestones || []).filter(function (m) { return f(m.at); })) : {} };
+  }
   function renderCio(v) {
     var W = windows(S.full), k = selStep(), kinds = stepKinds(v);
     var strip = '<span class="sl">' + esc(UC.stepsLabel) + '</span>' + kinds.map(function (c, i) { return '<button class="pill ' + c.k + (S.step === i ? ' sel' : '') + (k === i && S.step === null ? ' cur' : '') + '" data-step="' + i + '">' + esc(c.b) + '</button>'; }).join('') +
@@ -428,7 +440,7 @@
     else {
       var f = inWin(W, k), selected = S.step !== null;
       src = selected ? S.full : v;   // a selected step shows everything it uses; following the replay shows what has happened so far
-      on = W[k === 'all' ? 0 : k] && (k === 'all' || W[k].a != null) ? litNodes((src.spans || []).filter(function (s) { return f(s.start_ts); }), (src.messages || []).filter(function (m) { return f(m.at); }), (src.milestones || []).filter(function (m) { return f(m.at); })) : {};
+      on = stepLit(v).on;
       svg.classList.add('active');
       var names = DNODES.filter(function (n) { return on[n[0]]; }).map(function (n) { var t = n[0] === 'customer' ? UD.customer : (UD.nodes || {})[n[0]]; return (t || {}).title; });
       var lbl = k === 'all' ? UC.allSteps : (STEPS[k] || {}).label;

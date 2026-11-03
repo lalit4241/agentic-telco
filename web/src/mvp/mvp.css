@@ -73,7 +73,13 @@ main{padding:12px 18px 4px;max-width:1880px;margin:0 auto}
 .cv:first-child{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%);padding-left:14px}.cv:hover{filter:brightness(.96)}
 .cv b{display:block;font-size:13.5px;color:inherit}.cv span{font-size:12px}.cv.done{background:#dbe8fb;color:#0b3a75}.cv.now{background:var(--blue);color:#fff}.cv.delay{background:#fdba74;color:#5a2600}.cv.live{background:#22a35a;color:#fff}.cv.blocked{background:#fecaca;color:#7f1d1d}.cv.skip{background:#f3f4f6;color:#a1a5ad}
 .cv.sel{box-shadow:inset 0 -4px 0 var(--navy)}.cv.sel b{text-decoration:underline}
-.stephint{font-size:12px;color:var(--muted);margin:5px 2px 10px}.stephint a{color:var(--blue);font-weight:600;text-decoration:none}
+.stephint{font-size:12px;color:var(--muted);margin:5px 2px 8px}
+.zg{display:grid;grid-template-columns:auto repeat(8,minmax(0,1fr));gap:5px;align-items:stretch;margin:0 0 12px;cursor:pointer}
+.zgl{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--navy);display:flex;align-items:center;padding-right:4px;max-width:96px;line-height:1.2}
+.zc{display:flex;gap:6px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:11px;line-height:1.2;color:var(--muted);transition:border-color .25s,background .25s,color .25s,box-shadow .25s}
+.zc i{font-style:normal;font-weight:700;font-size:10.5px;color:var(--c);opacity:.75}
+.zc.on{border-color:var(--c);color:var(--txt);box-shadow:inset 3px 0 0 var(--c)}.zc.on i{opacity:1}
+.zc.hot{background:color-mix(in srgb,var(--c) 9%,#fff)}.stephint a{color:var(--blue);font-weight:600;text-decoration:none}
 .bgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);gap:14px;align-items:start}
 .chatp .chat{height:calc(100vh - 360px);min-height:300px;max-height:640px}.portal .who b{display:block}.portal .who span{font-size:11.5px;opacity:.85}
 .badge.ok{background:#22a35a;color:#fff;border-color:#22a35a}.badge.warn{background:#fdba74;color:#5a2600;border-color:#fdba74}.badge.no{background:#fecaca;color:#7f1d1d;border-color:#fecaca}.portal .badge{color:#032d60}

@@ -7,7 +7,7 @@ const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
 const FILE = path.join(__dirname, '..', 'dist', 'index.html');
 const PW = process.env.TF_DEMO_PASSWORD || fs.readFileSync(path.join(ROOT, '.demo-password'), 'utf8').trim();
 const SHOTS = process.env.SHOTS;
-const FOOT = 'Concept demo by Lalit Chauhan · not an official Salesforce product';
+const FOOT = 'Concept demo · not an official Salesforce product';
 const UI = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'src', 'mvp', 'ui-copy.json'), 'utf8'));
 const results = [];
 const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: detail || '' }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (detail ? ' — ' + detail : '')); };
@@ -51,6 +51,14 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('modebar says recorded run', /recorded run/i.test(await page.textContent('#modebar')));
   await page.selectOption('#spd', '4'); await page.waitForTimeout(3500); await shot('1-business-happy-start.png');
   check('play advances the step bar', (await chev()).some((x) => /now|done/.test(x)));
+  const zg = () => page.$$eval('#zg .zc', (a) => a.map((x) => ({ id: x.dataset.layer, name: x.textContent, on: x.classList.contains('on') })));
+  const zgl = await zg(), RD = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  check('business tab: Zero Gravity layer strip L1..L8 with the README layer names', zgl.map((x) => x.id).join() === 'L1,L2,L3,L4,L5,L6,L7,L8' && zgl.every((x) => x.name === x.id + UI.business.zgLayers.layers.find((l) => l.id === x.id).name && RD.includes('| ' + x.id + ' | ' + x.name.slice(2) + ' |')), JSON.stringify(zgl.map((x) => x.name)));
+  check('business tab: the strip lights the layers the replay step lands in', zgl.some((x) => x.on), zgl.filter((x) => x.on).map((x) => x.id).join());
+  await page.setViewportSize({ width: 1280, height: 800 }); await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(200);
+  const zr = await page.evaluate(() => { const z = document.getElementById('zg').getBoundingClientRect(), c = document.getElementById('chat').getBoundingClientRect(), r = [...document.querySelectorAll('#zg .zc')].map((x) => x.getBoundingClientRect().top); return { h: Math.round(z.height), one: Math.max(...r) - Math.min(...r) < 2, chat: Math.round(c.top) }; });
+  check('layer strip is one compact row at 1280x800 and the chat stays above the fold', zr.one && zr.h <= 48 && zr.chat < 800 - 300, JSON.stringify(zr));
+  await page.setViewportSize({ width: 1440, height: 900 });
   // while playing, How it fits lights the layers in use
   await tab('cio'); await page.waitForTimeout(500);
   check('How it fits lights layers during the replay', (await page.$$('#dsvg .dn.on')).length >= 2, String((await page.$$('#dsvg .dn.on')).length));
@@ -65,12 +73,19 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   check('happy: outcome card Fibre 900, £45, 28 Aug 2027, order from the recording, live 2 Nov 2026', /Fibre 900 is live/.test(out) && /£45 a month/.test(out) && /28 Aug 2027/.test(out) && out.includes(JSON.parse(fs.readFileSync(path.join(ROOT, 'recordings', 'mvp', 'happy.json'), 'utf8')).state.links.orderNumber) && /2 Nov 2026/.test(out), out);
   check('happy: tab 1 line "One upgrade, three services, one router swap."', out.includes(UI.business.orchestrationLine) && UI.business.orchestrationLine === 'One upgrade, three services, one router swap.');
   check('happy: KPIs derived from the run', (await page.$$('#kpis .kg div')).length === 4 && /request to live/.test(await page.textContent('#kpis')));
-  check('tab 1 has no layer numbers, APIs or drawers', !/\bL[1-8]\b|TMF\d|API/.test(b) && !(await page.$('#v-business [data-about]')));
+  const bNoZg = await page.evaluate(() => { const v = document.getElementById('v-business').cloneNode(true); v.querySelector('#zg').remove(); return v.innerText; });
+  check('tab 1 has no layer numbers, APIs or drawers outside the layer strip', !/\bL[1-8]\b|TMF\d|API/.test(bNoZg) && !(await page.$('#v-business [data-about]')));
   await shot('2-business-happy-end.png');
 
   // ---- step selection drives tabs 2 and 3
   await page.click('#chev .cv[data-step="4"]');
   check('selecting a step marks it', (await page.$$('#chev .cv.sel')).length === 1);
+  const zOn = (await page.$$eval('#zg .zc.on', (a) => a.map((x) => x.dataset.layer))).join();
+  await page.click('#zg .zc[data-layer="L5"]'); await page.waitForTimeout(300);
+  check('clicking the layer strip opens How it fits', await page.isVisible('#v-cio') && !(await page.isVisible('#v-business')));
+  const dOn = (await page.$$eval('#dsvg .dn.on', (a) => a.map((x) => x.dataset.node === 'api' ? 'L6' : x.dataset.node).filter((n) => /^L[1-8]$/.test(n)).sort())).join();
+  check('layer strip uses the same step-to-layer mapping as How it fits', zOn && zOn === dOn, zOn + ' vs ' + dOn);
+  await tab('business');
   await tab('cio');
   const cio = await page.evaluate(() => document.getElementById('v-cio').innerText);
   check('CIO: headline, 3 cards, 4 messages verbatim', cio.includes(UI.cio.headline) && UI.cio.cards.every((x) => cio.includes(x.title) && cio.includes(x.text)) && UI.cio.messages.every((x) => cio.includes(x.title) && cio.includes(x.text)));
