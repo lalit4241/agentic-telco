@@ -90,7 +90,12 @@ const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: det
   const cio = await page.evaluate(() => document.getElementById('v-cio').innerText);
   check('CIO: headline, 3 cards, 4 messages verbatim', cio.includes(UI.cio.headline) && UI.cio.cards.every((x) => cio.includes(x.title) && cio.includes(x.text)) && UI.cio.messages.every((x) => cio.includes(x.title) && cio.includes(x.text)));
   check('CIO: banner', /Agent proposes.*Policy decides.*Workflow writes/s.test(await page.textContent('#v-cio .banner')) && (await page.textContent('#v-cio .banner')).includes('never writes to a system of record'));
-  check('CIO: 5 groups and the Salesforce chip, no facade wording in the diagram', (await page.$$('#dsvg .dg')).length === 5 && /TMF Open API/.test(await page.textContent('#dsvg')) && !/\(Salesforce\)/.test(await page.textContent('#dsvg')) && !/facade/i.test(await page.textContent('#dsvg')));
+  const geo = await page.$$eval('#dsvg .dn .bx, #dsvg .dg rect', (a) => Object.fromEntries(a.map((r) => { const g = r.closest('[data-node],[data-group]'); return [g.dataset.node || g.dataset.group, ['x', 'y', 'width', 'height'].map((k) => +r.getAttribute(k))]; })));
+  const [g1, g2, g3, g4, g5, g6, g7, g8] = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'].map((k) => geo[k]);
+  check('CIO: the diagram follows Figure 3: L1 and L2 on top, L3 down the left, L4 beside L5, L6 under them, L7 at the bottom, L8 down the right',
+    g1[1] < g2[1] && g2[1] < g4[1] && g4[1] === g5[1] && g4[0] < g5[0] && g3[0] < g4[0] && g3[3] > 2 * g4[3] && g6[1] > g4[1] + g4[3] && g7[1] > g6[1] + g6[3] && g8[0] > g7[0] + g7[2] && g8[3] > 0.9 * 612 && g2[2] > 1000 && g7[2] > 1000, JSON.stringify(geo.L1));
+  check('CIO: the layer boxes use the report names', /Intent and Experience Layer/.test(await page.textContent('#dsvg')) && /Agent Ready Systems of Record/.test(await page.textContent('#dsvg')) && /Observability & Governance/.test(await page.textContent('#dsvg')));
+  check('CIO: one L6 band and the Salesforce chip, no facade wording in the diagram', (await page.$$('#dsvg .dg')).length === 1 && /TMF Open API/.test(await page.textContent('#dsvg')) && !/\(Salesforce\)/.test(await page.textContent('#dsvg')) && !/facade/i.test(await page.textContent('#dsvg')));
   check('CIO: older systems, the network and the network order adapter arrow tagged Mocked', (await page.$$('#dsvg .mk')).length === 5);
   check('CIO: a real arrow from Order Management to the network order adapter, legend says simulated inside Salesforce', !!(await page.$('#dsvg path.de[data-e="sfom-oss"]')) && !(await page.$('#dsvg .tgt')) && /simulated inside Salesforce for this demo/.test(await page.textContent('#v-cio .glegend')));
   const tree = await page.textContent('#dtree');

@@ -132,7 +132,11 @@ test('three audience views, all their copy in one object (ui-copy.json)', () => 
   assert.strictEqual(UI.cio.headline, 'Agentic change, on the estate you already have.');
   assert.deepStrictEqual(UI.cio.cards.map((c) => c.title), ['Agent proposes', 'Policy decides', 'Workflow writes']);
   assert.deepStrictEqual(UI.cio.messages.map((c) => c.title), ['Nothing ripped out', 'No lock-in', 'Controls hold', 'Every step evidenced']);
-  assert.deepStrictEqual(UI.diagram.groups.map((g) => g.title), ['Understand', 'Know', 'Act', 'Connect', 'Prove']);
+  // the How it fits legend lists the eight layers with the names used in Figure 3 of the Zero Gravity report
+  const ZG3 = ['Intent and Experience Layer', 'Agent Mesh', 'Data Foundation', 'Enterprise Context Layer', 'Deterministic Execution Fabric', 'Agent Ready Systems of Record', 'Digital Core', 'Observability & Governance'];
+  assert.deepStrictEqual(UI.diagram.groups.map((g) => g.id + ' ' + g.name), ZG3.map((n, i) => 'L' + (i + 1) + ' ' + n));
+  assert.deepStrictEqual(UI.business.zgLayers.layers.map((l) => l.name), ZG3);
+  for (const id of ['L1', 'L2', 'L3', 'L4', 'L5', 'L7', 'L8']) assert.strictEqual(UI.diagram.nodes[id].title, ZG3[+id[1] - 1]);
   assert.strictEqual(UI.cio.galleryHeading, 'Proof: the real records in Salesforce');
   assert.deepStrictEqual(UI.business.steps.map((s) => s.label), ['Asks', 'Checks', 'Recommends', 'Agrees', 'Ordered', 'Live']);
   assert.strictEqual(UI.diagram.chips.sf, 'TMF Open API');

@@ -327,37 +327,39 @@
     net: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11l9.4-5M7.3 13l9.4 5"/>',
     timeline: '<path d="M4 6h9M7 12h11M5 18h7"/><path d="M3 3v18"/>'
   };
-  /* node: [id, x, y, w, h, icon, colour var, mocked] ; diagram text comes from UI.diagram */
+  /* node: [id, x, y, w, h, icon, colour var, mocked, shape] ; diagram text comes from UI.diagram.
+     Layout follows the report's Figure 3: L1 and L2 full width, L3 down the left, L4 and L5 side by side,
+     L6 under them, L7 full width at the bottom and L8 a cross-cutting band down the right. */
   var DNODES = [
-    ['customer', 16, 56, 104, 132, 'person', '--navy'],
-    ['L1', 148, 56, 156, 132, 'chat', '--l1'], ['L2', 328, 56, 156, 132, 'agent', '--l2'],
-    ['L4', 524, 56, 156, 132, 'shield', '--l4'], ['L3', 704, 56, 156, 132, 'db', '--l3'],
-    ['L5', 900, 56, 144, 132, 'flow', '--l5'],
-    ['api', 148, 256, 896, 56, 'api', '--l6'],
-    ['sf', 148, 340, 352, 152, 'cloud', '--blue'],
-    ['sfcust', 156, 396, 336, 22, '', '--blue'], ['sfcat', 156, 424, 108, 62, '', '--blue'], ['sfcpq', 270, 424, 108, 62, '', '--blue'], ['sfom', 384, 424, 108, 62, '', '--blue'],
-    ['billing', 528, 366, 160, 118, 'bill', '--legacy', 1], ['avail', 700, 366, 160, 118, 'pin', '--legacy', 1], ['oss', 872, 366, 160, 118, 'server', '--legacy', 1],
-    ['L8', 1084, 56, 168, 200, 'timeline', '--l8'], ['L7', 1084, 296, 168, 196, 'net', '--l7', 1]];
-  var DGROUPS = { understand: [136, 16, 360, 188, '--l2'], know: [512, 16, 360, 188, '--l4'], act: [888, 16, 168, 188, '--l5'], connect: [136, 220, 920, 284, '--l6'], prove: [1072, 16, 192, 488, '--l8'] };
-  var DEDGES = [['customer', 'L1', 'M120 122H148'], ['L1', 'L2', 'M304 122H328'], ['L2', 'L4', 'M484 122H524'], ['L4', 'L3', 'M680 122H704'],
-    ['L1', 'L5', 'M226 188V212H972V188'], ['L4', 'api', 'M602 188V256'], ['L5', 'api', 'M972 212V256'], ['L3', 'L8', 'M782 56V8H1168V56'],
-    ['api', 'sf', 'M324 312V340'], ['api', 'billing', 'M608 312V366'], ['api', 'avail', 'M780 312V366'], ['api', 'oss', 'M952 312V366'], ['oss', 'L7', 'M1032 425H1084'], ['sfom', 'oss', 'M438 486V514H952V484']];
+    ['customer', 16, 8, 128, 68, 'person', '--navy', 0, 'band'],
+    ['L1', 160, 8, 936, 68, 'chat', '--l1', 0, 'band'], ['L2', 16, 92, 1080, 64, 'agent', '--l2', 0, 'band'],
+    ['L3', 16, 176, 144, 364, 'db', '--l3', 0, 'tall'],
+    ['L4', 184, 176, 446, 94, 'shield', '--l4', 0, 'band'], ['L5', 650, 176, 446, 94, 'flow', '--l5', 0, 'band'],
+    ['api', 196, 316, 888, 40, 'api', '--l6'],
+    ['sf', 196, 366, 364, 150, 'cloud', '--blue'],
+    ['sfcust', 204, 426, 348, 22, '', '--blue'], ['sfcat', 204, 454, 112, 56, '', '--blue'], ['sfcpq', 322, 454, 112, 56, '', '--blue'], ['sfom', 440, 454, 112, 56, '', '--blue'],
+    ['billing', 580, 394, 160, 116, 'bill', '--legacy', 1], ['avail', 750, 394, 160, 116, 'pin', '--legacy', 1], ['oss', 920, 394, 160, 116, 'server', '--legacy', 1],
+    ['L7', 16, 556, 1080, 48, 'net', '--l7', 1, 'band'], ['L8', 1112, 8, 152, 596, 'timeline', '--l8', 0, 'tall']];
+  var DGROUPS = { L6: [184, 288, 912, 252, '--l6'] };
+  var DEDGES = [['customer', 'L1', 'M144 42H160'], ['L1', 'L2', 'M628 76V92'], ['L2', 'L4', 'M407 176V156'], ['L2', 'L5', 'M873 156V176'],
+    ['L3', 'L4', 'M160 223H184'], ['L4', 'L5', 'M630 223H650'], ['L4', 'api', 'M407 316V270'], ['L5', 'api', 'M873 270V316'], ['api', 'L3', 'M184 450H160'],
+    ['api', 'sf', 'M378 356V366'], ['api', 'billing', 'M660 356V394'], ['api', 'avail', 'M830 356V394'], ['api', 'oss', 'M1000 356V394'], ['oss', 'L7', 'M1040 510V556'], ['sfom', 'oss', 'M496 510V528H1000V510']];
   function wrapText(s, max) { var w = String(s || '').split(' '), out = [], cur = ''; w.forEach(function (x) { if ((cur + ' ' + x).trim().length > max && cur) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); if (cur) out.push(cur); return out; }
   function icon(name, x, y, s, col) { return '<g class="ic" transform="translate(' + x + ' ' + y + ') scale(' + (s / 24) + ')" fill="none" stroke="' + col + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</g>'; }
   function diagramSvg() {
     var N = UD.nodes || {}, G = {}, chips = UD.chips || {}; (UD.groups || []).forEach(function (g) { G[g.id] = g; });
-    var h = '<svg class="dsvg" id="dsvg" viewBox="0 0 1280 526" role="img" aria-label="' + esc(UC.headline) + '"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker><marker id="aht" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7d8494"/></marker></defs>';
-    Object.keys(DGROUPS).forEach(function (k) { var g = DGROUPS[k]; h += '<g class="dg" data-group="' + k + '"><rect x="' + g[0] + '" y="' + g[1] + '" width="' + g[2] + '" height="' + g[3] + '" rx="14" style="--c:var(' + g[4] + ')"/><text x="' + (g[0] + 14) + '" y="' + (g[1] + 24) + '" class="gt">' + esc(((G[k] || {}).title || k).toUpperCase()) + '</text></g>'; });
-    h += '<g class="older"><rect x="516" y="330" width="528" height="166" rx="10"/><text x="528" y="352" class="ot">' + esc(chips.adapters || 'Adapters') + ' · older systems</text></g>';
+    var h = '<svg class="dsvg" id="dsvg" viewBox="0 0 1280 612" role="img" aria-label="' + esc(UC.headline) + '"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker><marker id="aht" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7d8494"/></marker></defs>';
+    Object.keys(DGROUPS).forEach(function (k) { var g = DGROUPS[k]; h += '<g class="dg" data-group="' + k + '" data-about="' + k + '" style="--c:var(' + g[4] + ')"><rect x="' + g[0] + '" y="' + g[1] + '" width="' + g[2] + '" height="' + g[3] + '" rx="14"/><text x="' + (g[0] + 14) + '" y="' + (g[1] + 21) + '" class="gt">' + esc(((G[k] || {}).name || k)) + '</text><text x="' + (g[0] + g[2] - 12) + '" y="' + (g[1] + 21) + '" text-anchor="end" class="ln">' + k + '</text></g>'; });
+    h += '<g class="older"><rect x="572" y="366" width="516" height="150" rx="10"/><text x="670" y="385" class="ot">' + esc(chips.adapters || 'Adapters') + ' · older systems</text></g>';
     DEDGES.forEach(function (e) { h += '<path class="de" data-e="' + e[0] + '-' + e[1] + '" d="' + e[2] + '" marker-end="url(#ah)"/>'; });
     DNODES.forEach(function (n) {
       var id = n[0], x = n[1], y = n[2], w = n[3], ht = n[4], t = id === 'customer' ? (UD.customer || {}) : (N[id] || {}), col = 'var(' + n[6] + ')';
       var lay = /^L\d$/.test(id) ? id : id === 'api' || /^sf/.test(id) || id === 'billing' || id === 'avail' || id === 'oss' ? 'L6' : '';
-      h += '<g class="dn" data-node="' + id + '"' + (lay ? ' data-about="' + lay + '"' : '') + ' style="--c:' + col + '" tabindex="0"><title>' + esc(t.title) + (lay ? ' (' + lay + ')' : '') + '</title><rect class="bx" x="' + x + '" y="' + y + '" width="' + w + '" height="' + ht + '" rx="12"/>';
+      h += '<g class="dn' + (id === 'L2' ? ' em' : '') + '" data-node="' + id + '"' + (lay ? ' data-about="' + lay + '"' : '') + ' style="--c:' + col + '" tabindex="0"><title>' + esc(t.title) + (lay ? ' (' + lay + ')' : '') + '</title><rect class="bx" x="' + x + '" y="' + y + '" width="' + w + '" height="' + ht + '" rx="12"/>';
       if (id === 'api') {
-        h += '<circle cx="' + (x + 28) + '" cy="' + (y + 28) + '" r="18" class="icb"/>' + icon('api', x + 17, y + 17, 22, col) +
-          '<text x="' + (x + 56) + '" y="' + (y + 25) + '" class="nt">' + esc(t.title) + '</text><text x="' + (x + 56) + '" y="' + (y + 43) + '" class="ns">' + esc(t.sub) + ' · L6</text>' +
-          '<g class="chipg"><rect x="' + (x + 686) + '" y="' + (y + 15) + '" width="196" height="26" rx="13" class="chs"/><text x="' + (x + 784) + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(chips.sf) + '</text></g>';
+        h += '<circle cx="' + (x + 22) + '" cy="' + (y + 20) + '" r="14" class="icb"/>' + icon('api', x + 13, y + 11, 18, col) +
+          '<text x="' + (x + 44) + '" y="' + (y + 25) + '" class="nt">' + esc(t.title) + '</text><text x="' + (x + 196) + '" y="' + (y + 25) + '" class="ns">' + esc(t.sub) + '</text>' +
+          '<g class="chipg"><rect x="' + (x + w - 206) + '" y="' + (y + 7) + '" width="196" height="26" rx="13" class="chs"/><text x="' + (x + w - 108) + '" y="' + (y + 24) + '" text-anchor="middle">' + esc(chips.sf) + '</text></g>';
       } else if (id === 'sf') {
         var B = UD.sfBand || {};
         h += '<g class="sfband"><rect class="fa" x="' + (x + 6) + '" y="' + (y + 6) + '" width="' + (w - 12) + '" height="26" rx="6"/><text x="' + (x + w / 2) + '" y="' + (y + 23) + '" text-anchor="middle">' + esc(B.label) + '</text></g>' +
@@ -367,21 +369,29 @@
       } else if (/^sf/.test(id)) {
         h += '<text x="' + (x + 8) + '" y="' + (y + 16) + '" class="nt sb">' + esc(t.title) + ':</text>';
         wrapText(t.sub, 16).slice(0, 3).forEach(function (ln, i) { h += '<text x="' + (x + 8) + '" y="' + (y + 31 + i * 12) + '" class="ns">' + esc(ln) + '</text>'; });
+      } else if (n[8] === 'band') {
+        var cy = y + ht / 2, subs = wrapText(t.sub, Math.floor((w - (id === 'customer' ? 66 : 140)) / 6.2)).slice(0, 2), ty = cy - (subs.length * 15) / 2 + 4;
+        h += '<circle cx="' + (x + 30) + '" cy="' + cy + '" r="17" class="icb"/>' + icon(n[5], x + 19, cy - 11, 22, col);
+        h += '<text x="' + (x + 58) + '" y="' + ty + '" class="nt">' + esc(t.title) + '</text>';
+        subs.forEach(function (ln, i) { h += '<text x="' + (x + 58) + '" y="' + (ty + 16 + i * 14) + '" class="ns">' + esc(ln) + '</text>'; });
+        if (lay) h += '<text x="' + (x + w - 12) + '" y="' + (y + 20) + '" text-anchor="end" class="ln">' + lay + '</text>';
+        if (n[7]) h += '<g class="mk"><rect x="' + (x + w - 64) + '" y="' + (y + ht - 26) + '" width="54" height="18" rx="9"/><text x="' + (x + w - 37) + '" y="' + (y + ht - 13) + '" text-anchor="middle">' + esc(chips.mocked || 'Mocked') + '</text></g>';
       } else {
         var cx = id === 'customer' ? x + w / 2 : x + 30;
         h += '<circle cx="' + cx + '" cy="' + (y + 30) + '" r="19" class="icb"/>' + icon(n[5], cx - 12, y + 18, 24, col);
         var tx = id === 'customer' ? x + w / 2 : x + 14, anc = id === 'customer' ? ' text-anchor="middle"' : '';
-        h += '<text x="' + tx + '" y="' + (y + 72) + '" class="nt"' + anc + '>' + esc(t.title) + '</text>';
-        wrapText(t.sub, Math.floor((w - 24) / 6.4)).slice(0, 3).forEach(function (ln, i) { h += '<text x="' + tx + '" y="' + (y + 92 + i * 16) + '" class="ns"' + anc + '>' + esc(ln) + '</text>'; });
+        var tl = n[8] === 'tall' ? wrapText(t.title, 15) : [t.title];
+        tl.forEach(function (ln, i) { h += '<text x="' + tx + '" y="' + (y + 72 + i * 17) + '" class="nt"' + anc + '>' + esc(ln) + '</text>'; });
+        wrapText(t.sub, Math.floor((w - 24) / 6.4)).slice(0, n[8] === 'tall' ? 5 : 3).forEach(function (ln, i) { h += '<text x="' + tx + '" y="' + (y + (n[8] === 'tall' ? 92 : 88) + (tl.length - 1) * 17 + i * 16) + '" class="ns"' + anc + '>' + esc(ln) + '</text>'; });
         if (lay && !/^sf/.test(id) && id !== 'billing' && id !== 'avail' && id !== 'oss') h += '<text x="' + (x + w - 12) + '" y="' + (y + 22) + '" text-anchor="end" class="ln">' + lay + '</text>';
         if (UD.adapters && UD.adapters[id]) h += '<text x="' + (x + w - 10) + '" y="' + (y + 22) + '" text-anchor="end" class="ad">' + esc(UD.adapters[id]) + '</text>';
-        if (n[7]) h += '<g class="mk"><rect x="' + (x + w - 64) + '" y="' + (y + ht - 28) + '" width="54" height="18" rx="9"/><text x="' + (x + w - 37) + '" y="' + (y + ht - 15) + '" text-anchor="middle">' + esc(chips.mocked || 'Mocked') + '</text></g>';
+        if (n[7]) h += '<g class="mk"><rect x="' + (x + w - 64) + '" y="' + (y + ht - 22) + '" width="54" height="17" rx="8"/><text x="' + (x + w - 37) + '" y="' + (y + ht - 10) + '" text-anchor="middle">' + esc(chips.mocked || 'Mocked') + '</text></g>';
       }
       h += '</g>';
     });
     var OR = UD.orchestration || {};   // Salesforce order orchestration sends the network order through the network order adapter (mocked)
-    h += '<g class="olbl"><rect x="540" y="506" width="290" height="17" rx="8"/><text x="685" y="518" text-anchor="middle">' + esc(OR.label) + '</text></g>' +
-      '<g class="mk"><rect x="838" y="506" width="54" height="17" rx="8"/><text x="865" y="518" text-anchor="middle">' + esc(OR.tag || chips.mocked || 'Mocked') + '</text></g>';
+    h += '<g class="olbl"><rect x="580" y="520" width="290" height="17" rx="8"/><text x="725" y="532" text-anchor="middle">' + esc(OR.label) + '</text></g>' +
+      '<g class="mk"><rect x="878" y="520" width="54" height="17" rx="8"/><text x="905" y="532" text-anchor="middle">' + esc(OR.tag || chips.mocked || 'Mocked') + '</text></g>';
     return h + '</svg>';
   }
   function shellCio() {
@@ -391,7 +401,7 @@
       '<div class="banner"><div class="big">' + esc(UC.banner).replace(/ · /g, '<i>·</i>') + '</div><div class="small">' + esc(UC.bannerSmall) + '</div></div>' +
       '<div class="c3">' + (UC.cards || []).map(function (c, i) { return '<div class="cc"><div class="ci">' + '<svg viewBox="0 0 24 24" width="26" height="26">' + icon(['agent', 'shield', 'flow'][i], 0, 0, 24, 'currentColor') + '</svg></div><div><b>' + esc(c.title) + '</b><p>' + esc(c.text) + '</p></div></div>'; }).join('') + '</div>' +
       '<div class="cmain"><div class="panel dgm"><div class="strip" id="cstrip"></div><div class="dcap" id="dcap"></div>' + diagramSvg() +
-      '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '<div class="tl"><b>' + esc((UD.orchestration || {}).legendTitle) + '</b> ' + esc((UD.orchestration || {}).legend) + '</div></div>' +
+      '<div class="glegend">' + (UD.groups || []).map(function (g) { return '<div><b>' + esc(g.id + ' ' + g.name) + '</b> ' + esc(g.text) + '</div>'; }).join('') + '<div class="tl"><b>' + esc((UD.orchestration || {}).legendTitle) + '</b> ' + esc((UD.orchestration || {}).legend) + '</div></div>' +
       '<div class="dtree" id="dtree"></div></div>' +
       '<div class="msgs">' + (UC.messages || []).map(function (m) { return '<div class="mc"><b>' + esc(m.title) + '</b><p>' + esc(m.text) + '</p></div>'; }).join('') + '</div></div>' +
       '<div class="gal" id="gallery"><h2>' + esc(UC.galleryHeading) + '</h2><p class="small">' + esc(UC.galleryIntro) + '</p>' +
